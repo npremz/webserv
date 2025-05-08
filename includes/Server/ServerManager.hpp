@@ -1,27 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.h                                             :+:      :+:    :+:   */
+/*   ServerManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/04 15:23:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/04 15:23:34 by npremont         ###   ########.fr       */
+/*   Created: 2025/05/08 10:42:09 by npremont          #+#    #+#             */
+/*   Updated: 2025/05/08 10:42:09 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef MAIN_HPP
-# define MAIN_HPP
+#ifndef SERVERMANAGER_HPP
+# define SERVERMANAGER_HPP
 
-# include "defines.hpp"
+class ServerManager
+{
+    private:
 
-# include "Server/Server.hpp"
-# include "Server/ServerManager.hpp"
-# include "Logger/Logger.hpp"
-# include "Config/ParserConfig.hpp"
-
-
-# define PORT 2025
-# define BUFFER_SIZE 4096
+    public:
+        ServerManager();
+        ~ServerManager();
+};
 
 #endif

@@ -1,27 +1,37 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.h                                             :+:      :+:    :+:   */
+/*   Logger.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/04 15:23:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/04 15:23:34 by npremont         ###   ########.fr       */
+/*   Created: 2025/05/08 11:53:50 by npremont          #+#    #+#             */
+/*   Updated: 2025/05/08 11:53:50 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef MAIN_HPP
-# define MAIN_HPP
+#ifndef LOGGER_HPP
+# define LOGGER_HPP
 
-# include "defines.hpp"
+# include "../defines.hpp"
+# include <iostream>
+# include <unistd.h>
 
-# include "Server/Server.hpp"
-# include "Server/ServerManager.hpp"
-# include "Logger/Logger.hpp"
-# include "Config/ParserConfig.hpp"
+class Logger
+{
+    private:
 
+    public:
+        enum level {
+            FATAL = 0,
+            INFO
+        };
 
-# define PORT 2025
-# define BUFFER_SIZE 4096
+        static void log(Logger::level level, std::string msg);
+
+        static void printLog(Logger::level level, std::string msg);
+        static void addLevel(Logger::level level);
+
+};
 
 #endif

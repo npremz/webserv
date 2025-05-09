@@ -27,3 +27,16 @@ void    trim(std::string &s)
         s.erase(rit.base(), s.end());
     }
 }
+
+std::vector<std::string>    ws_split(const std::string& str)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(str);
+    std::string token;
+    
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+    
+    return tokens;
+}

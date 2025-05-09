@@ -1,32 +1,41 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ParserConfig.hpp                                   :+:      :+:    :+:   */
+/*   BlocLocation.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/08 10:58:11 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/08 10:58:11 by npremont         ###   ########.fr       */
+/*   Created: 2025/05/09 23:21:19 by npremont          #+#    #+#             */
+/*   Updated: 2025/05/09 23:21:19 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PARSERCONFIG_HPP
-# define PARSERCONFIG_HPP
+#ifndef BLOCLOCATION_HPP
+# define BLOCLOCATION_HPP
 
-# include <iostream>
+# include <map>
+# include <vector>
 # include <string>
+# include <sstream>
+# include <iostream>
 # include <fstream>
-# include "../../includes/Config/BlocServer.hpp"
 
-class ParserConfig {
+# include "../../includes/Logger/Logger.hpp"
+# include "../../includes/Utils/Utils.hpp"
+
+
+
+class BlocLocation 
+{
     private:
-        std::string _file_src;
 
     public:
-        ParserConfig();
-        ~ParserConfig();
+        BlocLocation();
+        //BlocLocation(const BlocLocation& other);
+        //BlocLocation& operator=(const BlocLocation& other);
+        ~BlocLocation();
 
-        void    parse(std::string file_src);
+        void    parseLocation(std::ifstream& file);
 };
 
 #endif

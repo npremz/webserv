@@ -25,7 +25,7 @@ int main (int ac, char* av[])
     try
     {
         ParserConfig te;
-        te.Parse(av[1]);
+        te.parse(av[1]);
     }
     catch (const std::exception& e)
     {

@@ -20,7 +20,7 @@ ParserConfig::ParserConfig() : _file_src("")
 ParserConfig::~ParserConfig()
 {}
 
-void    ParserConfig::Parse(std::string file_src)
+void    ParserConfig::parse(std::string file_src)
 {
     this->_file_src = file_src;
     std::ifstream file(_file_src.c_str());
@@ -40,5 +40,12 @@ void    ParserConfig::Parse(std::string file_src)
             continue ;
 
         Logger::log(Logger::DEBUG, line);
+
+        std::vector<std::string> tokens = ws_split(line);
+        if ((tokens[0] == "server" && tokens[1] == "{") || tokens[0] == "server{")
+        {
+            BlocServer serv;
+            serv.parseBloc(file);
+        }
     }
 }

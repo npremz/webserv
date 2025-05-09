@@ -12,6 +12,7 @@
 
 #include "../../includes/Config/ParserConfig.hpp"
 #include "../../includes/Logger/Logger.hpp"
+#include "../../includes/Utils/Utils.hpp"
 
 ParserConfig::ParserConfig() : _file_src("")
 {}
@@ -28,5 +29,16 @@ void    ParserConfig::Parse(std::string file_src)
     {
         Logger::log(Logger::FATAL, "unable to open config file.");
         return ;
+    }
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        trim(line);
+
+        if (line.empty() || line.at(0) == '#')
+            continue ;
+
+        Logger::log(Logger::DEBUG, line);
     }
 }

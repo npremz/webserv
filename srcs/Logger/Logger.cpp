@@ -22,6 +22,9 @@ void    Logger::addLevel(Logger::level level)
         case Logger::INFO:
             std::cout << C_CYAN << "[INFO] ";
             break ;
+        case Logger::DEBUG:
+            std::cout << C_YELLOW << "[DEBUG] ";
+            break ;
     }
 }
 

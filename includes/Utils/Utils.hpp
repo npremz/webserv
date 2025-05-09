@@ -1,28 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.h                                             :+:      :+:    :+:   */
+/*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/04 15:23:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/04 15:23:34 by npremont         ###   ########.fr       */
+/*   Created: 2025/05/09 15:02:27 by npremont          #+#    #+#             */
+/*   Updated: 2025/05/09 15:02:27 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef MAIN_HPP
-# define MAIN_HPP
+#ifndef UTILS_HPP
+# define UTILS_HPP
 
-# include "defines.hpp"
+#include <string>
+#include <cctype>
 
-# include "Utils/Utils.hpp"
-# include "Server/Server.hpp"
-# include "Server/ServerManager.hpp"
-# include "Logger/Logger.hpp"
-# include "Config/ParserConfig.hpp"
-
-
-# define PORT 2025
-# define BUFFER_SIZE 4096
+void    trim(std::string &s);
 
 #endif

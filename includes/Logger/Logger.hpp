@@ -24,7 +24,8 @@ class Logger
     public:
         enum level {
             FATAL = 0,
-            INFO
+            INFO,
+            DEBUG
         };
 
         static void log(Logger::level level, std::string msg);

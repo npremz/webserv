@@ -24,7 +24,7 @@ int main (int ac, char* av[])
 
     try
     {
-        Server Serv;
+        //Server Serv;
         ParserConfig te;
         te.parse(av[1]);
     }

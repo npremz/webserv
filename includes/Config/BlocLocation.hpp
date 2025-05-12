@@ -21,7 +21,7 @@
 # include <fstream>
 
 # include "../../includes/Logger/Logger.hpp"
-# include "../../includes/Utils/Utils.hpp"
+# include "../../includes/Utils/utils.hpp"
 
 class BlocLocation 
 {
@@ -39,6 +39,16 @@ class BlocLocation
         std::string _redirect_path;
 
         void        _tokensRedirect(std::vector<std::string> tokens);
+
+        void        _handleMethods(std::vector<std::string> tokens);
+        void        _handleRoot(std::vector<std::string> tokens);
+        void        _handleAutoIndex(std::vector<std::string> tokens);
+        void        _handleIndex(std::vector<std::string> tokens);
+        void        _handleUploadEnable(std::vector<std::string> tokens);
+        void        _handleUploadPath(std::vector<std::string> tokens);
+        void        _handleCGIExt(std::vector<std::string> tokens);
+        void        _handleCGIPass(std::vector<std::string> tokens);
+        void        _handleRedirect(std::vector<std::string> tokens);
 
     public:
         BlocLocation();

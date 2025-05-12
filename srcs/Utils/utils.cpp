@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/Utils/Utils.hpp"
+#include "../../includes/Utils/utils.hpp"
 
 void    trim(std::string &s)
 {

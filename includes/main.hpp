@@ -15,7 +15,7 @@
 
 # include "defines.hpp"
 
-# include "Utils/Utils.hpp"
+# include "Utils/utils.hpp"
 # include "Server/Server.hpp"
 # include "Server/ServerManager.hpp"
 # include "Logger/Logger.hpp"

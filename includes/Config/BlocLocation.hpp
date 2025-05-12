@@ -23,11 +23,22 @@
 # include "../../includes/Logger/Logger.hpp"
 # include "../../includes/Utils/Utils.hpp"
 
-
-
 class BlocLocation 
 {
     private:
+        bool        _get;
+        bool        _post;
+        bool        _delete;
+        bool        _autoindex;
+        bool        _upload_enable;
+        std::string _cgi_extension;
+        std::string _cgi_pass;
+        std::string _root_path;
+        std::string _index;
+        int         _redirect_code;
+        std::string _redirect_path;
+
+        void        _tokensRedirect(std::vector<std::string> tokens);
 
     public:
         BlocLocation();

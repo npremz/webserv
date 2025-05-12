@@ -20,7 +20,8 @@
 
 class ParserConfig {
     private:
-        std::string _file_src;
+        std::string             _file_src;
+        std::vector<BlocServer> _servers;
 
     public:
         ParserConfig();

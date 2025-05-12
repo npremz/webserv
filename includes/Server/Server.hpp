@@ -16,6 +16,7 @@
 # include <iostream>
 # include <cstdlib>
 # include <cstring>
+# include <cstdio>
 # include <unistd.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
@@ -32,7 +33,7 @@ class Server {
     private:
         
     public:
-        Server(t_serv_config conf);
+        Server();
         ~Server();
 };
 

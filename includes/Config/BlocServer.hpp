@@ -32,7 +32,7 @@ class BlocServer {
         int                         _client_max_body_size;
         std::string                 _server_name;
         std::map<int, std::string>  _error_pages;
-        //std::vector<BlocLocation>   _location_blocs;
+        std::vector<BlocLocation>   _location_blocs;
 
     public:
         BlocServer();

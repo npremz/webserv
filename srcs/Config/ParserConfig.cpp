@@ -11,8 +11,6 @@
 /* ************************************************************************** */
 
 #include "../../includes/Config/ParserConfig.hpp"
-#include "../../includes/Logger/Logger.hpp"
-#include "../../includes/Utils/Utils.hpp"
 
 ParserConfig::ParserConfig() : _file_src("")
 {}

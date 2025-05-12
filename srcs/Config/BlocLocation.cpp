@@ -18,30 +18,66 @@ BlocLocation::BlocLocation()
 BlocLocation::~BlocLocation()
 {}
 
+void    BlocLocation::_handleMethods(std::vector<std::string> tokens)
+{
+    for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
+    {
+        if (*it == "GET")
+            this->_get = true;
+        else if (*it == "POST")
+            this->_post = true;
+        else if (*it == "DELETE")
+            this->_delete = true;
+        else
+            Logger::log(Logger::FATAL, "invalid config file.");
+    }
+
+    std::cout << this->_get << std::endl;
+    std::cout << this->_post << std::endl;
+    std::cout << this->_delete << std::endl;
+}
+
 void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
 {
-    switch (tokens[0])
+    if (tokens[0] == "allow_methods")
     {
-        case "allow_methods":
-            break ;
-        case "root":
-            break ;
-        case "autoindex":
-            break ;
-        case "index":
-            break ;
-        case "upload_enable":
-            break ;
-        case "upload_path":
-            break ;
-        case "cgi_extension":
-            break ;
-        case "cgi_pass":
-            break ;
-        case "redirect":
-            break ;
-        default:
-            Logger::log(Logger::FATAL, "invalid config file.");
+        this->_handleMethods(tokens);
+    } 
+    else if (tokens[0] == "root")
+    {
+
+    } 
+    else if (tokens[0] == "autoindex")
+    {
+
+    } 
+    else if (tokens[0] == "index")
+    {
+
+    } 
+    else if (tokens[0] == "upload_enable")
+    {
+
+    } 
+    else if (tokens[0] == "upload_path")
+    {
+
+    } 
+    else if (tokens[0] == "cgi_extension")
+    {
+
+    } 
+    else if (tokens[0] == "cgi_pass")
+    {
+
+    } 
+    else if (tokens[0] == "redirect")
+    {
+
+    } 
+    else 
+    {
+        Logger::log(Logger::FATAL, "invalid config file.");
     }
 }
 

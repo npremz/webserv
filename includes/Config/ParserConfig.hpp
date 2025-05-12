@@ -17,6 +17,8 @@
 # include <string>
 # include <fstream>
 # include "../../includes/Config/BlocServer.hpp"
+# include "../../includes/Logger/Logger.hpp"
+# include "../../includes/Utils/utils.hpp"
 
 class ParserConfig {
     private:

@@ -6,7 +6,7 @@
 /*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/12 15:13:46 by armetix          ###   ########.fr       */
+/*   Updated: 2025/05/12 15:51:44 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,7 @@
 
 class HttpLexer
 {
-private:
-	/* data */
+
 public:
 
 	enum HttpMethod {
@@ -43,11 +42,15 @@ public:
 		DONE,
 		ERR	
 	};
-	std::string _buf;
-	State 		_state = START_LINE;
+	
 	Status		feed(const char *data, size_t len);
 	HttpLexer();
 	~HttpLexer();
+	
+private:
+	std::string _buf;
+	State 		_state;
+
 };
 
 #endif

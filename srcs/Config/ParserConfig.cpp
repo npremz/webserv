@@ -42,7 +42,8 @@ void    ParserConfig::parse(std::string file_src)
         Logger::log(Logger::DEBUG, line);
 
         std::vector<std::string> tokens = ws_split(line);
-        if ((tokens[0] == "server" && tokens[1] == "{") || tokens[0] == "server{")
+        if (((tokens[0] == "server" && tokens[1] == "{") && tokens.size() == 2)
+            || (tokens[0] == "server{" && tokens.size()))
         {
             BlocServer serv;
             serv.parseBloc(file);

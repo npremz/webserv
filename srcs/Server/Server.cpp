@@ -12,7 +12,7 @@
 
 #include "../../includes/Server/Server.hpp"
 
-Server::Server(t_serv_config conf)
+Server::Server()
 {
     int epoll_fd = epoll_create1(0);
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -20,7 +20,7 @@ Server::Server(t_serv_config conf)
     
     struct sockaddr_in sa;
     sa.sin_family = AF_INET;
-    sa.sin_port = htons(conf.port);
+    sa.sin_port = htons(2025);
     sa.sin_addr.s_addr = INADDR_ANY;
 
     bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa));
@@ -45,8 +45,9 @@ Server::Server(t_serv_config conf)
                 ev.data.fd = c_socket_fd;
                 epoll_ctl(epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev);
             } else {
-                char buf[256];
+                char buf[2048];
                 int r = read(events[i].data.fd, buf, 255);
+                printf("%s", buf);
                 if (r > 0) {
                     write(events[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello", 44);
                 }

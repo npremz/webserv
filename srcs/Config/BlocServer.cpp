@@ -16,17 +16,19 @@ BlocServer::BlocServer() :
     _ip(0),
     _port(2025),
     _client_max_body_size(4096),
-    _server_name("waf.com")
+    _server_name("waf.com"),
+    _root_path("./../../server_files")
 {}
 
 BlocServer::BlocServer(const BlocServer& other) : 
     _ip(other._ip),
     _port(other._port),
     _client_max_body_size(other._client_max_body_size),
-    _server_name(other._server_name)
+    _server_name(other._server_name),
+    _root_path("./../../server_files")
 {
     this->_error_pages = other._error_pages;
-    //this->_location_blocs = other._location_blocs;
+    this->_location_blocs = other._location_blocs;
 }
 
 BlocServer& BlocServer::operator=(const BlocServer& other)
@@ -38,7 +40,7 @@ BlocServer& BlocServer::operator=(const BlocServer& other)
         this->_client_max_body_size = other._client_max_body_size;
         this->_server_name = other._server_name;
         this->_error_pages = other._error_pages;
-        //this->_location_blocs = other._location_blocs;
+        this->_location_blocs = other._location_blocs;
     }
     return (*this);
 }
@@ -62,7 +64,7 @@ void    BlocServer::parseBloc(std::ifstream& file)
         std::vector<std::string> tokens = ws_split(line);
         if (((tokens[0] == "location" && tokens[2] == "{") && tokens.size() == 3))
         {
-            BlocLocation location;
+            BlocLocation location(this);
             location.parseLocation(file);
         }
     }

@@ -40,3 +40,16 @@ std::vector<std::string>    ws_split(const std::string& str)
     
     return tokens;
 }
+
+bool    isDirectory(const std::string& path)
+{
+    struct stat statbuf;
+    if (stat(path.c_str(), &statbuf) != 0)
+        return false;
+    return S_ISDIR(statbuf.st_mode);
+}
+
+bool    isReadable(const std::string& path)
+{
+    return (access(path.c_str(), R_OK) == 0);
+}

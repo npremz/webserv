@@ -13,6 +13,8 @@
 #ifndef MAIN_HPP
 # define MAIN_HPP
 
+# include <iostream>
+
 # include "defines.hpp"
 
 # include "Utils/utils.hpp"

@@ -31,6 +31,7 @@ class BlocServer {
         int                         _port;
         int                         _client_max_body_size;
         std::string                 _server_name;
+        std::string                 _root_path;
         std::map<int, std::string>  _error_pages;
         std::vector<BlocLocation>   _location_blocs;
 

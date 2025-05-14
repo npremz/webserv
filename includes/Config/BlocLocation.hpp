@@ -23,9 +23,13 @@
 # include "../../includes/Logger/Logger.hpp"
 # include "../../includes/Utils/utils.hpp"
 
+class BlocServer;
+
 class BlocLocation 
 {
     private:
+        BlocServer* _parent;
+
         bool        _get;
         bool        _post;
         bool        _delete;
@@ -51,7 +55,7 @@ class BlocLocation
         void        _handleRedirect(std::vector<std::string> tokens);
 
     public:
-        BlocLocation();
+        BlocLocation(BlocServer* parent);
         //BlocLocation(const BlocLocation& other);
         //BlocLocation& operator=(const BlocLocation& other);
         ~BlocLocation();

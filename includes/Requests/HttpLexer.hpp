@@ -6,7 +6,7 @@
 /*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/14 13:39:09 by armetix          ###   ########.fr       */
+/*   Updated: 2025/05/14 13:55:47 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,18 +16,6 @@
 # include <string>
 # include <map>
 # include "../Utils/utils.hpp"
-
-typedef struct s_parsedRequest
-{
-	HttpLexer::HttpMethod	method;
-	std::string	targetraw;
-	std::string	path;
-	std::string query;
-	unsigned int	httpversion;
-	std::map<std::string, std::string, CiLess> headers;
-	
-} t_parsedRequest;
-
 
 class HttpLexer
 {
@@ -53,7 +41,7 @@ public:
 	
 	enum Status {
 		NEED_MORE,
-		DONE,
+		COMPLETE,
 		ERR	
 	};
 	
@@ -65,6 +53,22 @@ private:
 	std::string _buf;
 	State 		_state;
 
+};
+
+struct s_parsedRequest
+{
+	HttpLexer::HttpMethod	method;
+	std::string	targetraw;
+	std::string	path;
+	std::string query;
+	unsigned int	httpversion;
+	std::map<std::string, std::string, CiLess> headers;
+	bool	ischunked;
+	size_t	expectedoctets;
+	size_t	receivedoctets;
+	unsigned int	endstatus;
+	size_t	headerbytes;
+	
 };
 
 #endif

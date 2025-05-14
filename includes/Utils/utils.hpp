@@ -23,7 +23,7 @@ struct CiLess
 	bool operator()(const std::string &a, const std::string &b) const
 	{
 		size_t max;
-		int	i;
+		size_t	i;
 		unsigned char	ca;
 		unsigned char	cb;
 

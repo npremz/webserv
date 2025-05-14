@@ -18,6 +18,34 @@
 # include <vector>
 # include <sstream>
 
+struct CiLess
+{
+	bool operator()(const std::string &a, const std::string &b) const
+	{
+		size_t max;
+		int	i;
+		unsigned char	ca;
+		unsigned char	cb;
+
+		max = b.size();
+		if (a.size() < b.size())
+			max = a.size();
+		i = 0;
+		while (i < max)
+		{
+			ca = static_cast<unsigned char>(a[i]);
+			ca = static_cast<unsigned char>(b[i]);
+
+			if (ca < cb)
+				return (true);
+			if (ca > cb)
+				return (false);
+		}
+		return (a.size() < b.size());
+	}
+};
+
+
 void                        trim(std::string &s);
 std::vector<std::string>    ws_split(const std::string& str);
 

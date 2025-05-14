@@ -17,6 +17,8 @@
 # include <cctype>
 # include <vector>
 # include <sstream>
+# include <sys/stat.h>
+# include <unistd.h>
 
 struct CiLess
 {
@@ -45,8 +47,9 @@ struct CiLess
 	}
 };
 
-
 void                        trim(std::string &s);
 std::vector<std::string>    ws_split(const std::string& str);
+bool                        isDirectory(const std::string& path);
+bool                        isReadable(const std::string& path);
 
 #endif

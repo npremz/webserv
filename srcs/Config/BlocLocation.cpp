@@ -12,7 +12,12 @@
 
 #include "../../includes/Config/BlocLocation.hpp"
 
-BlocLocation::BlocLocation()
+BlocLocation::BlocLocation(BlocServer* parent) : 
+    _parent(parent),
+    _get(false),
+    _post(false),
+    _delete(false),
+    _autoindex(false)
 {}
 
 BlocLocation::~BlocLocation()
@@ -23,38 +28,67 @@ void    BlocLocation::_handleMethods(std::vector<std::string> tokens)
     for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
     {
         if (*it == "GET")
+        {
+            if (this->_get == true)
+                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
             this->_get = true;
+        }
         else if (*it == "POST")
+        {
+            if (this->_post == true)
+                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
             this->_post = true;
+        }
         else if (*it == "DELETE")
+        {
+            if (this->_delete == true)
+                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
             this->_delete = true;
+        }
         else
-            Logger::log(Logger::FATAL, "invalid config file.");
+            Logger::log(Logger::FATAL, "invalid config file. -> unknown method");
     }
+}
 
-    std::cout << this->_get << std::endl;
-    std::cout << this->_post << std::endl;
-    std::cout << this->_delete << std::endl;
+void    BlocLocation::_handleRoot(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (!isDirectory(tokens[1]) || !isReadable(tokens[1]))
+        Logger::log(Logger::FATAL, "invalid config file. -> invalid path \"" + tokens[1] + "\"");
+
+    this->_root_path = tokens[1];
+}
+
+void    BlocLocation::_handleAutoIndex(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (tokens[1] == "on")
+        this->_autoindex = true;
+    else if (tokens[1] == "off")
+        this->_autoindex = false;
+    else
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+}
+
+void    BlocLocation::_handleIndex(std::vector<std::string> tokens)
+{
+    (void)tokens;
 }
 
 void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
 {
     if (tokens[0] == "allow_methods")
-    {
         this->_handleMethods(tokens);
-    } 
     else if (tokens[0] == "root")
-    {
-
-    } 
+        this->_handleRoot(tokens);
     else if (tokens[0] == "autoindex")
-    {
-
-    } 
+        this->_handleAutoIndex(tokens);
     else if (tokens[0] == "index")
-    {
-
-    } 
+        this->_handleIndex(tokens);
     else if (tokens[0] == "upload_enable")
     {
 
@@ -77,7 +111,8 @@ void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
     } 
     else 
     {
-        Logger::log(Logger::FATAL, "invalid config file.");
+        Logger::log(Logger::FATAL,
+            "invalid config file. -> \"" + tokens[0] + "\" unknown parameter");
     }
 }
 

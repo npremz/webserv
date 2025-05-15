@@ -22,14 +22,18 @@
 
 class ParserConfig {
     private:
-        std::string             _file_src;
-        std::vector<BlocServer> _servers;
+        std::string                 _file_src;
+        std::vector<BlocServer>     _servers;
+
+        std::vector<std::string>    _tokenise(const std::string& input);
 
     public:
         ParserConfig();
         ~ParserConfig();
 
         void    parse(std::string file_src);
+
+        void    print(int indent = 0) const;
 };
 
 #endif

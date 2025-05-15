@@ -58,3 +58,36 @@ bool    isExecutable(const std::string& path)
 {
     return (access(path.c_str(), X_OK) == 0);
 }
+
+unsigned int ipStringToInt(const std::string& ip) {
+    unsigned int a, b, c, d;
+    char dot;
+    std::istringstream iss(ip);
+    if (iss >> a >> dot >> b >> dot >> c >> dot >> d)
+    {
+        if (a > 255 
+            || b > 255
+            || c > 255
+            || d > 255)
+            return 4294967295; //error
+        return (a << 24) | (b << 16) | (c << 8) | d;
+    }
+    return 4294967295; //error
+}
+
+std::string ipIntToString(unsigned int ip_int)
+{
+    std::ostringstream oss;
+    oss << ((ip_int >> 24) & 0xFF) << "."
+        << ((ip_int >> 16) & 0xFF) << "."
+        << ((ip_int >> 8) & 0xFF) << "."
+        << (ip_int & 0xFF);
+    return oss.str();
+}
+
+bool    is_numeric(const std::string& s)
+{
+    std::string::const_iterator it = s.begin();
+    while (it != s.end() && std::isdigit(*it)) ++it;
+    return !s.empty() && it == s.end();
+}

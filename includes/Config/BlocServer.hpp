@@ -26,22 +26,44 @@
 
 
 class BlocServer {
+
+    typedef void (BlocServer::*HandlerFunc)(std::vector<std::string>);
+
+    struct s_ip_port {
+        unsigned int    ip;
+        unsigned int    port;
+    };
+
     private:
-        int                         _ip;
-        int                         _port;
-        int                         _client_max_body_size;
-        std::string                 _server_name;
-        std::string                 _root_path;
-        std::map<int, std::string>  _error_pages;
-        std::vector<BlocLocation>   _location_blocs;
+        std::map<std::string, HandlerFunc>  _function_table;
+
+        std::vector<s_ip_port>              _ip_tab;
+        size_t                              _client_max_body_size;
+        std::vector<std::string>            _server_names;
+        std::string                         _root_path;
+        std::map<int, std::string>          _error_pages;
+        std::vector<BlocLocation>           _location_blocs;
+        
+        void    _parseBloc(std::vector<std::string> bloc);
+        
+        int     _isLocation(std::vector<std::string> tokens);
+        void    _handleLocation(std::ifstream& file, std::vector<std::string> tokens,
+            int location_pos);
+        void    _tokensRedirect(std::vector<std::string> tokens);
+        void    _initFunctionTable();
+
+        void    _handleListen(std::vector<std::string> tokens);
+        void    _handleServerName(std::vector<std::string> tokens);
+        void    _handleClientMaxBodySize(std::vector<std::string> tokens);
+        void    _handleErrors(std::vector<std::string> tokens);
 
     public:
-        BlocServer();
+        BlocServer(std::vector<std::string> bloc);
         BlocServer(const BlocServer& other);
         BlocServer& operator=(const BlocServer& other);
         ~BlocServer();
 
-        void    parseBloc(std::ifstream& file);
+        void print(int indent) const;
 
         // Getters
         std::string getRootPath();

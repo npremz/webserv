@@ -52,5 +52,8 @@ std::vector<std::string>    ws_split(const std::string& str);
 bool                        isDirectory(const std::string& path);
 bool                        isReadable(const std::string& path);
 bool                        isExecutable(const std::string& path);
+unsigned int				ipStringToInt(const std::string& ip);
+std::string					ipIntToString(unsigned int ip_int);
+bool						is_numeric(const std::string& s);
 
 #endif

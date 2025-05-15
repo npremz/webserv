@@ -28,15 +28,16 @@ class BlocServer;
 class BlocLocation 
 {
     struct redirection_config {
-        int code;
+        int         code;
         std::string url;
-        bool is_set;
+        bool        is_set;
     };
 
     typedef void (BlocLocation::*HandlerFunc)(std::vector<std::string>);
 
     private:
         BlocServer*                         _parent;
+        std::string                         _location_path;
         std::map<std::string, HandlerFunc>  _function_table;
 
         bool                                _get;
@@ -52,6 +53,7 @@ class BlocLocation
         redirection_config                  _return;
 
         void        _initFunctionTable();
+        void        _handlingContent(std::vector<std::string> content);
         void        _tokensRedirect(std::vector<std::string> tokens);
 
         void        _handleMethods(std::vector<std::string> tokens);
@@ -65,12 +67,13 @@ class BlocLocation
         void        _handleRedirect(std::vector<std::string> tokens);
 
     public:
-        BlocLocation(BlocServer* parent);
+        BlocLocation(BlocServer* parent, std::string location_path,
+            std::vector<std::string> content);
         //BlocLocation(const BlocLocation& other);
         //BlocLocation& operator=(const BlocLocation& other);
         ~BlocLocation();
 
-        void    parseLocation(std::ifstream& file);
+        void print(int indent) const;
 };
 
 #endif

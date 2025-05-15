@@ -26,4 +26,6 @@
 # define C_BEIGE   "\033[93m"
 # define C_RESET   "\033[0m"
 
+# define MAX_CLIENT_SIZE 67108864
+
 #endif

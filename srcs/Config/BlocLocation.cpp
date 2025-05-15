@@ -13,16 +13,19 @@
 #include "../../includes/Config/BlocLocation.hpp"
 #include "../../includes/Config/BlocServer.hpp"
 
-BlocLocation::BlocLocation(BlocServer* parent) : 
+BlocLocation::BlocLocation(BlocServer* parent, std::string location_path,
+    std::vector<std::string> content) : 
     _parent(parent),
-    _get(false),
-    _post(false),
-    _delete(false),
+    _location_path(location_path),
+    _get(true),
+    _post(true),
+    _delete(true),
     _autoindex(false),
     _upload_enable(false)
 {
     this->_return.is_set = false;
     this->_initFunctionTable();
+    this->_handlingContent(content);
 }
 
 BlocLocation::~BlocLocation()
@@ -43,6 +46,10 @@ void    BlocLocation::_initFunctionTable()
 
 void    BlocLocation::_handleMethods(std::vector<std::string> tokens)
 {
+    this->_get = false;
+    this->_post = false;
+    this->_delete = false;
+
     for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
     {
         if (*it == "GET")
@@ -184,6 +191,21 @@ void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
     }
 }
 
+void    BlocLocation::_handlingContent(std::vector<std::string> content)
+{
+    for (std::vector<std::string>::iterator it = content.begin(); it != content.end(); ++it)
+    {
+        std::vector<std::string>    tokens;
+            
+        while (*it != ";")
+        {
+            tokens.push_back(*it);
+            ++it;
+        }
+        this->_tokensRedirect(tokens);
+    }
+}
+
 void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
 {
     std::map<std::string, HandlerFunc>::iterator it = _function_table.find(tokens[0]);
@@ -198,23 +220,34 @@ void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
     }
 }
 
-void    BlocLocation::parseLocation(std::ifstream& file)
+static void printIndent(int indent) {
+    for (int i = 0; i < indent; ++i)
+        std::cout << "  ";
+}
+
+void BlocLocation::print(int indent) const
 {
-    std::string bloc;
-    std::getline(file, bloc, '}');
+    printIndent(indent);
+    std::cout << "BlocLocation:" << std::endl;
 
-    std::istringstream  iss(bloc);
-    std::string         line;
-    while (getline(iss, line, ';'))
-    {
-        trim(line);
+    printIndent(indent+1); std::cout << "location_path: " << _location_path << std::endl;
+    printIndent(indent+1); std::cout << "allowed methods: "
+        << (_get ? "GET " : "") << (_post ? "POST " :"") << (_delete ? "DELETE " : "") << std::endl;
+    printIndent(indent+1); std::cout << "autoindex: " << (_autoindex ? "on" : "off") << std::endl;
+    printIndent(indent+1); std::cout << "upload_enable: " << (_upload_enable ? "on" : "off") << std::endl;
+    printIndent(indent+1); std::cout << "upload_path: " << _upload_path << std::endl;
+    printIndent(indent+1); std::cout << "cgi_extension: " << _cgi_extension << std::endl;
+    printIndent(indent+1); std::cout << "cgi_pass: " << _cgi_pass << std::endl;
+    printIndent(indent+1); std::cout << "root_path: " << _root_path << std::endl;
 
-        if (line.empty() || line.at(0) == '#')
-            continue ;
+    printIndent(indent+1); std::cout << "index: ";
+    for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); ++it)
+        std::cout << *it << " ";
+    std::cout << std::endl;
 
-        Logger::log(Logger::DEBUG, "BLOCLOCATION " + line);
-
-        std::vector<std::string> tokens = ws_split(line);
-        this->_tokensRedirect(tokens);
-    }
+    printIndent(indent+1); std::cout << "redirection: ";
+    if (_return.is_set)
+        std::cout << "code " << _return.code << " url " << _return.url << std::endl;
+    else
+        std::cout << "none" << std::endl;
 }

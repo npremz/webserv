@@ -26,6 +26,7 @@ int main (int ac, char* av[])
     {
         ParserConfig te;
         te.parse(av[1]);
+        te.print();
     }
     catch (const std::exception& e)
     {

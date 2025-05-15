@@ -27,21 +27,31 @@ class BlocServer;
 
 class BlocLocation 
 {
+    struct redirection_config {
+        int code;
+        std::string url;
+        bool is_set;
+    };
+
+    typedef void (BlocLocation::*HandlerFunc)(std::vector<std::string>);
+
     private:
-        BlocServer* _parent;
+        BlocServer*                         _parent;
+        std::map<std::string, HandlerFunc>  _function_table;
 
-        bool        _get;
-        bool        _post;
-        bool        _delete;
-        bool        _autoindex;
-        bool        _upload_enable;
-        std::string _cgi_extension;
-        std::string _cgi_pass;
-        std::string _root_path;
-        std::string _index;
-        int         _redirect_code;
-        std::string _redirect_path;
+        bool                                _get;
+        bool                                _post;
+        bool                                _delete;
+        bool                                _autoindex;
+        bool                                _upload_enable;
+        std::string                         _upload_path;
+        std::string                         _cgi_extension;
+        std::string                         _cgi_pass;
+        std::string                         _root_path;
+        std::vector<std::string>            _index;
+        redirection_config                  _return;
 
+        void        _initFunctionTable();
         void        _tokensRedirect(std::vector<std::string> tokens);
 
         void        _handleMethods(std::vector<std::string> tokens);

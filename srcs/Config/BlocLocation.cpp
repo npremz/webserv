@@ -11,17 +11,35 @@
 /* ************************************************************************** */
 
 #include "../../includes/Config/BlocLocation.hpp"
+#include "../../includes/Config/BlocServer.hpp"
 
 BlocLocation::BlocLocation(BlocServer* parent) : 
     _parent(parent),
     _get(false),
     _post(false),
     _delete(false),
-    _autoindex(false)
-{}
+    _autoindex(false),
+    _upload_enable(false)
+{
+    this->_return.is_set = false;
+    this->_initFunctionTable();
+}
 
 BlocLocation::~BlocLocation()
 {}
+
+void    BlocLocation::_initFunctionTable()
+{
+    this->_function_table["allow_methods"] = &BlocLocation::_handleMethods;
+    this->_function_table["root"] = &BlocLocation::_handleRoot;
+    this->_function_table["autoindex"] = &BlocLocation::_handleAutoIndex;
+    this->_function_table["index"] = &BlocLocation::_handleIndex;
+    this->_function_table["upload_enable"] = &BlocLocation::_handleUploadEnable;
+    this->_function_table["upload_path"] = &BlocLocation::_handleUploadPath;
+    this->_function_table["cgi_extension"] = &BlocLocation::_handleCGIExt;
+    this->_function_table["cgi_pass"] = &BlocLocation::_handleCGIPass;
+    this->_function_table["return"] = &BlocLocation::_handleRedirect;
+}
 
 void    BlocLocation::_handleMethods(std::vector<std::string> tokens)
 {
@@ -76,43 +94,107 @@ void    BlocLocation::_handleAutoIndex(std::vector<std::string> tokens)
 
 void    BlocLocation::_handleIndex(std::vector<std::string> tokens)
 {
-    (void)tokens;
+    if (tokens.size() < 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
+    {
+        this->_index.push_back(*it);
+    }
+}
+
+void    BlocLocation::_handleUploadEnable(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (tokens[1] == "on")
+        this->_upload_enable = true;
+    else if (tokens[1] == "off")
+        this->_upload_enable = false;
+    else
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+}
+
+void    BlocLocation::_handleUploadPath(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (!isDirectory(tokens[1]) || !isReadable(tokens[1]))
+        Logger::log(Logger::FATAL, "invalid config file. -> invalid path \"" + tokens[1] + "\"");
+
+    this->_upload_path = tokens[1];
+}
+
+void    BlocLocation::_handleCGIExt(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (tokens[1] == ".php")
+        this->_cgi_pass = tokens[1];
+    else if (tokens[1] == ".py")
+        this->_cgi_pass = tokens[1];
+    else
+        Logger::log(Logger::FATAL, "invalid config file. -> unsupported cgi " + tokens[1]);
+}
+
+void    BlocLocation::_handleCGIPass(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (isDirectory(tokens[1]))
+        Logger::log(Logger::FATAL, "invalid config file. -> path is a directory: " + tokens[1]);
+    
+    if (!isExecutable(tokens[1]))
+        Logger::log(Logger::FATAL, "invalid config file. -> not executable: " + tokens[1]);
+
+    this->_cgi_pass = tokens[1];
+}
+
+void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 3)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    std::istringstream iss(tokens[1]);
+    int code;
+    iss >> code;
+
+    if (code < 300 || code > 307)
+        Logger::log(Logger::FATAL, "invalid config file. -> invalid code " + tokens[1]);
+
+    this->_return.code = code;
+
+    if (!(tokens[2].rfind("http://", 0) == 0)
+        && !(tokens[2].rfind("https://", 0) == 0))
+    {
+        std::string url = this->_parent->getRootPath() + tokens[2];
+        if (!isReadable(url))
+            Logger::log(Logger::FATAL, "invalid config file. -> not readable: " + url);
+        this->_return.url = url;
+        this->_return.is_set = true;
+    }
+    else
+    {
+        this->_return.url = tokens[2];
+        this->_return.is_set = true;
+    }
 }
 
 void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
 {
-    if (tokens[0] == "allow_methods")
-        this->_handleMethods(tokens);
-    else if (tokens[0] == "root")
-        this->_handleRoot(tokens);
-    else if (tokens[0] == "autoindex")
-        this->_handleAutoIndex(tokens);
-    else if (tokens[0] == "index")
-        this->_handleIndex(tokens);
-    else if (tokens[0] == "upload_enable")
+    std::map<std::string, HandlerFunc>::iterator it = _function_table.find(tokens[0]);
+    if (it != _function_table.end())
     {
-
-    } 
-    else if (tokens[0] == "upload_path")
+        HandlerFunc handler = it->second;
+        (this->*handler)(tokens);
+    }
+    else
     {
-
-    } 
-    else if (tokens[0] == "cgi_extension")
-    {
-
-    } 
-    else if (tokens[0] == "cgi_pass")
-    {
-
-    } 
-    else if (tokens[0] == "redirect")
-    {
-
-    } 
-    else 
-    {
-        Logger::log(Logger::FATAL,
-            "invalid config file. -> \"" + tokens[0] + "\" unknown parameter");
+        Logger::log(Logger::FATAL, "invalid config file. -> \"" + tokens[0] + "\" unknown parameter");
     }
 }
 
@@ -136,6 +218,3 @@ void    BlocLocation::parseLocation(std::ifstream& file)
         this->_tokensRedirect(tokens);
     }
 }
-
-// gerer les ;
-// choper le data

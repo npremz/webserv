@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/14 13:55:47 by armetix          ###   ########.fr       */
+/*   Updated: 2025/05/14 14:28:48 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ public:
 private:
 	std::string _buf;
 	State 		_state;
+	
 
 };
 

@@ -53,3 +53,8 @@ bool    isReadable(const std::string& path)
 {
     return (access(path.c_str(), R_OK) == 0);
 }
+
+bool    isExecutable(const std::string& path)
+{
+    return (access(path.c_str(), X_OK) == 0);
+}

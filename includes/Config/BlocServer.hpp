@@ -42,6 +42,9 @@ class BlocServer {
         ~BlocServer();
 
         void    parseBloc(std::ifstream& file);
+
+        // Getters
+        std::string getRootPath();
 };
 
 #endif

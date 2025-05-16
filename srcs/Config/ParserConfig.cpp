@@ -12,7 +12,7 @@
 
 #include "../../includes/Config/ParserConfig.hpp"
 
-ParserConfig::ParserConfig() : _file_src("")
+ParserConfig::ParserConfig() : _isLoaded(false), _file_src("")
 {}
 
 ParserConfig::~ParserConfig()
@@ -85,9 +85,10 @@ void    ParserConfig::parse(std::string file_src)
             }
 
             BlocServer serv(bloc);
-            this->_servers.push_back(serv);
+            this->_servers_ctx.push_back(serv);
         }
     }
+    this->_isLoaded = true;
 }
 
 static void printIndent(int indent) {
@@ -101,8 +102,19 @@ void ParserConfig::print(int indent) const
 
     printIndent(indent+1); std::cout << "file_src: " << _file_src << std::endl;
     printIndent(indent+1); std::cout << "servers:" << std::endl;
-    for (std::vector<BlocServer>::const_iterator it = _servers.begin(); it != _servers.end(); ++it) {
+    for (std::vector<BlocServer>::const_iterator it = _servers_ctx.begin(); it != _servers_ctx.end(); ++it) {
         it->print(indent+2);
     }
 }
 
+//Getters
+
+bool    ParserConfig::getIsLoaded() const
+{
+    return _isLoaded;
+}
+
+const std::vector<BlocServer>&    ParserConfig::getServersCtx() const
+{
+    return _servers_ctx;
+}

@@ -20,19 +20,13 @@
 # include <iostream>
 # include <fstream>
 
-# include "../../includes/Config/BlocLocation.hpp"
 # include "../../includes/Utils/utils.hpp"
+# include "../../includes/Config/BlocLocation.hpp"
 # include "../../includes/Logger/Logger.hpp"
-
 
 class BlocServer {
 
     typedef void (BlocServer::*HandlerFunc)(std::vector<std::string>);
-
-    struct s_ip_port {
-        unsigned int    ip;
-        unsigned int    port;
-    };
 
     private:
         std::map<std::string, HandlerFunc>  _function_table;
@@ -71,10 +65,22 @@ class BlocServer {
         BlocServer(std::vector<std::string> bloc);
         ~BlocServer();
 
+        bool    operator==(const BlocServer& other) const;
+
         void print(int indent) const;
 
         // Getters
-        std::string getRootPath();
+        const std::vector<s_ip_port>&           getIpTab() const;
+        const std::vector<std::string>&         getServerNames() const;
+        const std::map<int, std::string>&       getErrorPages() const;
+        const std::vector<std::string>&         getIndex() const;
+        bool                                    getGetMethod() const;
+        bool                                    getPostMethod() const;
+        bool                                    getDeleteMethod() const;
+        bool                                    getAutoindex() const;
+        const std::string&                      getRootPath() const;
+        size_t                                  getClientMaxBodySize() const;
+        const std::vector<BlocLocation>&        getLocationBlocs() const;
 };
 
 #endif

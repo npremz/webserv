@@ -27,6 +27,11 @@ BlocServer::BlocServer(std::vector<std::string> bloc) :
 BlocServer::~BlocServer()
 {}
 
+bool    BlocServer::operator==(const BlocServer& other) const
+{
+    return (_ip_tab == other._ip_tab && _server_names == other._server_names);
+}
+
 void    BlocServer::_initFunctionTable()
 {
     this->_function_table["listen"] = &BlocServer::_handleListen;
@@ -57,13 +62,13 @@ void    BlocServer::_handleListen(std::vector<std::string> tokens)
     size_t dual_dots_pos = tokens[1].find(':');
     if (dual_dots_pos == std::string::npos)
     {
-        if (!is_numeric(tokens[1]))
+        if (!isNumeric(tokens[1]))
             Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
         std::istringstream  iss(tokens[1]);
         unsigned int        port;
         if (iss >> port && port < 65535)
         {
-            BlocServer::s_ip_port ip_port = {0, port};
+            s_ip_port ip_port = {0, port};
             this->_ip_tab.push_back(ip_port);
         }
         else
@@ -77,11 +82,11 @@ void    BlocServer::_handleListen(std::vector<std::string> tokens)
         if (ip == 4294967295)
             Logger::log(Logger::FATAL, "invalid config file. -> near " + ip_str);
 
-        BlocServer::s_ip_port ip_port;
+        s_ip_port ip_port;
         ip_port.ip = ip;
 
         std::string port_str = tokens[1].substr(dual_dots_pos + 1);\
-        if (!is_numeric(port_str))
+        if (!isNumeric(port_str))
             Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
         std::istringstream  iss(port_str);
         unsigned int        port;
@@ -184,11 +189,9 @@ void    BlocServer::_handleClientMaxBodySize(std::vector<std::string> tokens)
     char         c;
     char         last = (tokens[1])[tokens[1].size() - 1];
 
-    std::cout << last << std::endl;
-
     if (last >= '0' && last <= '9')
     {
-        if (!is_numeric(tokens[1].substr(0, tokens[1].size() - 1)))
+        if (!isNumeric(tokens[1].substr(0, tokens[1].size() - 1)))
             Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
         std::istringstream iss(tokens[1]);
         if (iss >> val)
@@ -230,7 +233,7 @@ void    BlocServer::_handleErrors(std::vector<std::string> tokens)
     std::vector<int> codes;
     size_t i = 1;
     for (; i < tokens.size() - 1; ++i) {
-        if (!is_numeric(tokens[i]))
+        if (!isNumeric(tokens[i]))
             Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[i]);
         int code;
         std::istringstream iss(tokens[i]);
@@ -302,7 +305,7 @@ void BlocServer::print(int indent) const
 {
     printIndent(indent);
     std::cout << "BlocServer:" << std::endl;
-    for (std::vector<BlocServer::s_ip_port>::const_iterator it = _ip_tab.begin(); it != _ip_tab.end(); ++it)
+    for (std::vector<s_ip_port>::const_iterator it = _ip_tab.begin(); it != _ip_tab.end(); ++it)
     {
         printIndent(indent+1); std::cout << "listen: " << ipIntToString((*it).ip) << ":" <<  (*it).port << std::endl;
     }
@@ -333,7 +336,58 @@ void BlocServer::print(int indent) const
 
 // Getters
 
-std::string BlocServer::getRootPath()
+const std::vector<s_ip_port>& BlocServer::getIpTab() const 
 {
-    return (this->_root_path);
+    return _ip_tab;
 }
+
+const std::vector<std::string>& BlocServer::getServerNames() const 
+{
+    return _server_names;
+}
+
+const std::map<int, std::string>& BlocServer::getErrorPages() const 
+{
+    return _error_pages;
+}
+
+const std::vector<std::string>& BlocServer::getIndex() const 
+{
+    return _index;
+}
+
+bool BlocServer::getGetMethod() const 
+{
+    return _get;
+}
+
+bool BlocServer::getPostMethod() const 
+{
+    return _post;
+}
+
+bool BlocServer::getDeleteMethod() const 
+{
+    return _delete;
+}
+
+bool BlocServer::getAutoindex() const 
+{
+    return _autoindex;
+}
+
+const std::string& BlocServer::getRootPath() const 
+{
+    return _root_path;
+}
+
+size_t BlocServer::getClientMaxBodySize() const 
+{
+    return _client_max_body_size;
+}
+
+const std::vector<BlocLocation>& BlocServer::getLocationBlocs() const 
+{
+    return _location_blocs;
+}
+

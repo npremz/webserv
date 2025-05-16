@@ -184,8 +184,6 @@ void    BlocServer::_handleClientMaxBodySize(std::vector<std::string> tokens)
     char         c;
     char         last = (tokens[1])[tokens[1].size() - 1];
 
-    std::cout << last << std::endl;
-
     if (last >= '0' && last <= '9')
     {
         if (!is_numeric(tokens[1].substr(0, tokens[1].size() - 1)))

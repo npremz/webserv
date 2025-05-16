@@ -19,20 +19,22 @@ int main (int ac, char* av[])
         std::cerr << "This program takes one or no arguments." << std::endl;
         return (1);
     }
+    
+    std::string config_src = "config_files/default.conf";
 
-    (void)av;
+    if (av[1])
+        config_src = av[1];
 
     try
     {
-        ParserConfig te;
-        te.parse(av[1]);
-        te.print();
+        ServerManager webserv;
+        webserv.initConfig(config_src);
+        webserv.run();
     }
     catch (const std::exception& e)
     {
         std::cerr << e.what() << std::endl;
     }
-
 
     return (EXIT_SUCCESS);
 }

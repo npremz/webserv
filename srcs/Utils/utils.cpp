@@ -59,6 +59,13 @@ bool    isExecutable(const std::string& path)
     return (access(path.c_str(), X_OK) == 0);
 }
 
+bool    isNumeric(const std::string& s)
+{
+    std::string::const_iterator it = s.begin();
+    while (it != s.end() && std::isdigit(*it)) ++it;
+    return !s.empty() && it == s.end();
+}
+
 unsigned int ipStringToInt(const std::string& ip) {
     unsigned int a, b, c, d;
     char dot;
@@ -85,9 +92,12 @@ std::string ipIntToString(unsigned int ip_int)
     return oss.str();
 }
 
-bool    is_numeric(const std::string& s)
+std::string ipPortToString(const s_ip_port& ip_port)
 {
-    std::string::const_iterator it = s.begin();
-    while (it != s.end() && std::isdigit(*it)) ++it;
-    return !s.empty() && it == s.end();
+    std::ostringstream oss;
+    oss << ipIntToString(ip_port.ip)
+        << ":"
+        << ip_port.port;
+    return (oss.str());
 }
+

@@ -206,7 +206,7 @@ void    BlocLocation::_handleClientMaxBodySize(std::vector<std::string> tokens)
 
     if (last >= '0' && last <= '9')
     {
-        if (!is_numeric(tokens[1].substr(0, tokens[1].size() - 1)))
+        if (!isNumeric(tokens[1].substr(0, tokens[1].size() - 1)))
             Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
         std::istringstream iss(tokens[1]);
         if (iss >> val)
@@ -300,4 +300,86 @@ void BlocLocation::print(int indent) const
         std::cout << "code " << _return.code << " url " << _return.url << std::endl;
     else
         std::cout << "none" << std::endl;
+}
+
+//Getters
+
+BlocServer* BlocLocation::getParent() const 
+{
+    return _parent;
+}
+
+const std::string& BlocLocation::getLocationPath() const 
+{
+    return _location_path;
+}
+
+bool BlocLocation::getGetMethod() const 
+{
+    return _get;
+}
+
+bool BlocLocation::getPostMethod() const 
+{
+    return _post;
+}
+
+bool BlocLocation::getDeleteMethod() const 
+{
+    return _delete;
+}
+
+bool BlocLocation::getAutoindex() const 
+{
+    return _autoindex;
+}
+
+bool BlocLocation::getUploadEnable() const 
+{
+    return _upload_enable;
+}
+
+const std::string& BlocLocation::getUploadPath() const 
+{
+    return _upload_path;
+}
+
+const std::string& BlocLocation::getCGIExtension() const 
+{
+    return _cgi_extension;
+}
+
+const std::string& BlocLocation::getCGIPass() const 
+{
+    return _cgi_pass;
+}
+
+const std::string& BlocLocation::getRootPath() const 
+{
+    return _root_path;
+}
+
+const std::vector<std::string>& BlocLocation::getIndex() const 
+{
+    return _index;
+}
+
+int BlocLocation::getRedirectCode() const 
+{
+    return _return.code;
+}
+
+const std::string& BlocLocation::getRedirectUrl() const 
+{
+    return _return.url;
+}
+
+bool BlocLocation::isRedirectSet() const 
+{
+    return _return.is_set;
+}
+
+size_t BlocLocation::getClientMaxBodySize() const 
+{
+    return _client_max_body_size;
 }

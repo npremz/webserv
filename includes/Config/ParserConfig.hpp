@@ -22,8 +22,9 @@
 
 class ParserConfig {
     private:
+        bool                        _isLoaded;
         std::string                 _file_src;
-        std::vector<BlocServer>     _servers;
+        std::vector<BlocServer>     _servers_ctx;
 
         std::vector<std::string>    _tokenise(const std::string& input);
 
@@ -34,6 +35,10 @@ class ParserConfig {
         void    parse(std::string file_src);
 
         void    print(int indent = 0) const;
+
+        // Getters;
+        bool                            getIsLoaded() const;
+        const std::vector<BlocServer>&  getServersCtx() const;
 };
 
 #endif

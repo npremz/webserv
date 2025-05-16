@@ -77,6 +77,25 @@ class BlocLocation
         ~BlocLocation();
 
         void print(int indent) const;
+
+        //Getters
+        BlocServer*                     getParent() const;
+        const std::string&              getLocationPath() const;
+        bool                            getGetMethod() const;
+        bool                            getPostMethod() const;
+        bool                            getDeleteMethod() const;
+        bool                            getAutoindex() const;
+        bool                            getUploadEnable() const;
+        const std::string&              getUploadPath() const;
+        const std::string&              getCGIExtension() const;
+        const std::string&              getCGIPass() const;
+        const std::string&              getRootPath() const;
+        const std::vector<std::string>& getIndex() const;
+        int                             getRedirectCode() const;
+        const std::string&              getRedirectUrl() const;
+        bool                            isRedirectSet() const;
+        size_t                          getClientMaxBodySize() const;
+
 };
 
 #endif

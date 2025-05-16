@@ -14,6 +14,7 @@
 # define UTILS_HPP
 
 # include <string>
+# include <iostream>
 # include <cctype>
 # include <vector>
 # include <sstream>
@@ -47,6 +48,27 @@ struct CiLess
 	}
 };
 
+struct s_ip_port
+{
+    unsigned int    ip;
+    unsigned int    port;
+
+	bool operator==(const s_ip_port& other) const
+	{
+		return (ip == other.ip && port == other.port);
+	}
+};
+
+struct s_ip_portCompare
+{
+	bool operator()(const s_ip_port& left, const s_ip_port& right)
+	{
+		if (left.ip < right.ip) return true;
+        if (left.ip > right.ip) return false;
+        return left.port < right.port;
+	}
+};
+
 void                        trim(std::string &s);
 std::vector<std::string>    ws_split(const std::string& str);
 bool                        isDirectory(const std::string& path);
@@ -54,6 +76,7 @@ bool                        isReadable(const std::string& path);
 bool                        isExecutable(const std::string& path);
 unsigned int				ipStringToInt(const std::string& ip);
 std::string					ipIntToString(unsigned int ip_int);
-bool						is_numeric(const std::string& s);
+std::string 				ipPortToString(const s_ip_port& ip_port);
+bool						isNumeric(const std::string& s);
 
 #endif

@@ -37,11 +37,17 @@ class BlocServer {
     private:
         std::map<std::string, HandlerFunc>  _function_table;
 
+
         std::vector<s_ip_port>              _ip_tab;
-        size_t                              _client_max_body_size;
         std::vector<std::string>            _server_names;
-        std::string                         _root_path;
         std::map<int, std::string>          _error_pages;
+        std::vector<std::string>            _index;
+        bool                                _get;
+        bool                                _post;
+        bool                                _delete;
+        bool                                _autoindex;
+        std::string                         _root_path;
+        size_t                              _client_max_body_size;
         std::vector<BlocLocation>           _location_blocs;
         
         void    _parseBloc(std::vector<std::string> bloc);
@@ -54,13 +60,15 @@ class BlocServer {
 
         void    _handleListen(std::vector<std::string> tokens);
         void    _handleServerName(std::vector<std::string> tokens);
+        void    _handleMethods(std::vector<std::string> tokens);
+        void    _handleIndex(std::vector<std::string> tokens);
+        void    _handleRoot(std::vector<std::string> tokens);
+        void    _handleAutoIndex(std::vector<std::string> tokens);
         void    _handleClientMaxBodySize(std::vector<std::string> tokens);
         void    _handleErrors(std::vector<std::string> tokens);
 
     public:
         BlocServer(std::vector<std::string> bloc);
-        BlocServer(const BlocServer& other);
-        BlocServer& operator=(const BlocServer& other);
         ~BlocServer();
 
         void print(int indent) const;

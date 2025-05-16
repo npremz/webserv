@@ -13,34 +13,15 @@
 #include "../../includes/Config/BlocServer.hpp"
 
 BlocServer::BlocServer(std::vector<std::string> bloc) : 
-    _client_max_body_size(4096),
-    _root_path("./server_files")
+    _get(true),
+    _post(true),
+    _delete(true),
+    _autoindex(false),
+    _root_path("./server_files"),
+    _client_max_body_size(4096)
 {
     this->_initFunctionTable();
     this->_parseBloc(bloc);
-}
-
-BlocServer::BlocServer(const BlocServer& other) : 
-    _ip_tab(other._ip_tab),
-    _client_max_body_size(other._client_max_body_size),
-    _server_names(other._server_names),
-    _root_path("./server_files")
-{
-    this->_error_pages = other._error_pages;
-    this->_location_blocs = other._location_blocs;
-}
-
-BlocServer& BlocServer::operator=(const BlocServer& other)
-{
-    if (this != &other)
-    {
-        this->_ip_tab = other._ip_tab;
-        this->_client_max_body_size = other._client_max_body_size;
-        this->_server_names = other._server_names;
-        this->_error_pages = other._error_pages;
-        this->_location_blocs = other._location_blocs;
-    }
-    return (*this);
 }
 
 BlocServer::~BlocServer()
@@ -50,7 +31,11 @@ void    BlocServer::_initFunctionTable()
 {
     this->_function_table["listen"] = &BlocServer::_handleListen;
     this->_function_table["server_name"] = &BlocServer::_handleServerName;
+    this->_function_table["allow_methods"] = &BlocServer::_handleMethods;
     this->_function_table["client_max_body_size"] = &BlocServer::_handleClientMaxBodySize;
+    this->_function_table["index"] = &BlocServer::_handleIndex;
+    this->_function_table["root"] = &BlocServer::_handleRoot;
+    this->_function_table["autoindex"] = &BlocServer::_handleAutoIndex;
     this->_function_table["error_page"] = &BlocServer::_handleErrors;
 }
 
@@ -122,6 +107,72 @@ void    BlocServer::_handleServerName(std::vector<std::string> tokens)
             Logger::log(Logger::FATAL, "invalid config file. -> near " + *it);
         this->_server_names.push_back(*it);
     }
+}
+
+void    BlocServer::_handleIndex(std::vector<std::string> tokens)
+{
+    if (tokens.size() < 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
+    {
+        this->_index.push_back(*it);
+    }
+}
+
+void    BlocServer::_handleMethods(std::vector<std::string> tokens)
+{
+    this->_get = false;
+    this->_post = false;
+    this->_delete = false;
+
+    for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
+    {
+        if (*it == "GET")
+        {
+            if (this->_get == true)
+                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
+            this->_get = true;
+        }
+        else if (*it == "POST")
+        {
+            if (this->_post == true)
+                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
+            this->_post = true;
+        }
+        else if (*it == "DELETE")
+        {
+            if (this->_delete == true)
+                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
+            this->_delete = true;
+        }
+        else
+            Logger::log(Logger::FATAL, "invalid config file. -> unknown method");
+    }
+}
+
+void    BlocServer::_handleRoot(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (!isDirectory(tokens[1]) || !isReadable(tokens[1]))
+        Logger::log(Logger::FATAL, "invalid config file. -> invalid path \"" + tokens[1] + "\"");
+
+    this->_root_path = tokens[1];
+}
+
+void    BlocServer::_handleAutoIndex(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    if (tokens[1] == "on")
+        this->_autoindex = true;
+    else if (tokens[1] == "off")
+        this->_autoindex = false;
+    else
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
 }
 
 void    BlocServer::_handleClientMaxBodySize(std::vector<std::string> tokens)
@@ -259,8 +310,16 @@ void BlocServer::print(int indent) const
     for (std::vector<std::string>::const_iterator it = _server_names.begin(); it != _server_names.end(); ++it)
         std::cout << *it << " ";
     std::cout << std::endl;
-    printIndent(indent+1); std::cout << "client_max_body_size: " << _client_max_body_size << std::endl;
+    printIndent(indent+1); std::cout << "allowed methods: "
+        << (_get ? "GET " : "") << (_post ? "POST " :"") << (_delete ? "DELETE " : "") << std::endl;
+    printIndent(indent+1); std::cout << "autoindex: " << (_autoindex ? "on" : "off") << std::endl;
+    printIndent(indent+1); std::cout << "index: ";
+    for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); ++it)
+        std::cout << *it << " ";
+    std::cout << std::endl;
     printIndent(indent+1); std::cout << "root_path: " << _root_path << std::endl;
+    printIndent(indent+1); std::cout << "client_max_body_size: " << _client_max_body_size << std::endl;
+
 
     printIndent(indent+1); std::cout << "error_pages:" << std::endl;
     for (std::map<int,std::string>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); ++it) {

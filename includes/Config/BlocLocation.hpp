@@ -51,6 +51,7 @@ class BlocLocation
         std::string                         _root_path;
         std::vector<std::string>            _index;
         redirection_config                  _return;
+        size_t                              _client_max_body_size;
 
         void        _initFunctionTable();
         void        _handlingContent(std::vector<std::string> content);
@@ -65,6 +66,8 @@ class BlocLocation
         void        _handleCGIExt(std::vector<std::string> tokens);
         void        _handleCGIPass(std::vector<std::string> tokens);
         void        _handleRedirect(std::vector<std::string> tokens);
+        void        _handleClientMaxBodySize(std::vector<std::string> tokens);
+
 
     public:
         BlocLocation(BlocServer* parent, std::string location_path,

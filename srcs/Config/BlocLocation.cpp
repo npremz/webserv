@@ -21,7 +21,8 @@ BlocLocation::BlocLocation(BlocServer* parent, std::string location_path,
     _post(true),
     _delete(true),
     _autoindex(false),
-    _upload_enable(false)
+    _upload_enable(false),
+    _client_max_body_size(4096)
 {
     this->_return.is_set = false;
     this->_initFunctionTable();
@@ -42,6 +43,7 @@ void    BlocLocation::_initFunctionTable()
     this->_function_table["cgi_extension"] = &BlocLocation::_handleCGIExt;
     this->_function_table["cgi_pass"] = &BlocLocation::_handleCGIPass;
     this->_function_table["return"] = &BlocLocation::_handleRedirect;
+    this->_function_table["client_max_body_size"] = &BlocLocation::_handleClientMaxBodySize;
 }
 
 void    BlocLocation::_handleMethods(std::vector<std::string> tokens)
@@ -191,6 +193,53 @@ void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
     }
 }
 
+void    BlocLocation::_handleClientMaxBodySize(std::vector<std::string> tokens)
+{
+    if (tokens.size() != 2)
+        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+
+    unsigned int val;
+    char         c;
+    char         last = (tokens[1])[tokens[1].size() - 1];
+
+    std::cout << last << std::endl;
+
+    if (last >= '0' && last <= '9')
+    {
+        if (!is_numeric(tokens[1].substr(0, tokens[1].size() - 1)))
+            Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+        std::istringstream iss(tokens[1]);
+        if (iss >> val)
+        {
+            this->_client_max_body_size = val;
+            if (this->_client_max_body_size > MAX_CLIENT_SIZE)
+                Logger::log(Logger::FATAL, "invalid config file. -> too big " + tokens[1]);
+        }
+        else
+        {
+            Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+        }
+    } 
+    else 
+    {
+        std::istringstream iss(tokens[1]);
+        if (iss >> val >> c && c == last)
+        {
+
+            if (c == 'K' || c == 'k')
+                this->_client_max_body_size = val * 1024;
+            else if (c == 'M' || c == 'm')
+                this->_client_max_body_size = val * (1024 * 1024);
+            else
+                Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+            if (this->_client_max_body_size > MAX_CLIENT_SIZE)
+                Logger::log(Logger::FATAL, "invalid config file. -> too big " + tokens[1]);
+        }
+        else
+            Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+    }
+}
+
 void    BlocLocation::_handlingContent(std::vector<std::string> content)
 {
     for (std::vector<std::string>::iterator it = content.begin(); it != content.end(); ++it)
@@ -239,6 +288,7 @@ void BlocLocation::print(int indent) const
     printIndent(indent+1); std::cout << "cgi_extension: " << _cgi_extension << std::endl;
     printIndent(indent+1); std::cout << "cgi_pass: " << _cgi_pass << std::endl;
     printIndent(indent+1); std::cout << "root_path: " << _root_path << std::endl;
+    printIndent(indent+1); std::cout << "client_max_body_size: " << _client_max_body_size << std::endl;
 
     printIndent(indent+1); std::cout << "index: ";
     for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); ++it)

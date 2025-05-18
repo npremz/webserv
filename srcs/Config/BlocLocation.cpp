@@ -57,33 +57,33 @@ void    BlocLocation::_handleMethods(std::vector<std::string> tokens)
         if (*it == "GET")
         {
             if (this->_get == true)
-                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
+                Logger::log(Logger::FATAL, "invalid config file. => " + *it);
             this->_get = true;
         }
         else if (*it == "POST")
         {
             if (this->_post == true)
-                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
+                Logger::log(Logger::FATAL, "invalid config file. => " + *it);
             this->_post = true;
         }
         else if (*it == "DELETE")
         {
             if (this->_delete == true)
-                Logger::log(Logger::FATAL, "invalid config file. -> " + *it);
+                Logger::log(Logger::FATAL, "invalid config file. => " + *it);
             this->_delete = true;
         }
         else
-            Logger::log(Logger::FATAL, "invalid config file. -> unknown method");
+            Logger::log(Logger::FATAL, "invalid config file. => unknown method");
     }
 }
 
 void    BlocLocation::_handleRoot(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (!isDirectory(tokens[1]) || !isReadable(tokens[1]))
-        Logger::log(Logger::FATAL, "invalid config file. -> invalid path \"" + tokens[1] + "\"");
+        Logger::log(Logger::FATAL, "invalid config file. => invalid path \"" + tokens[1] + "\"");
 
     this->_root_path = tokens[1];
 }
@@ -91,20 +91,20 @@ void    BlocLocation::_handleRoot(std::vector<std::string> tokens)
 void    BlocLocation::_handleAutoIndex(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (tokens[1] == "on")
         this->_autoindex = true;
     else if (tokens[1] == "off")
         this->_autoindex = false;
     else
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
 }
 
 void    BlocLocation::_handleIndex(std::vector<std::string> tokens)
 {
     if (tokens.size() < 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
     {
@@ -115,23 +115,23 @@ void    BlocLocation::_handleIndex(std::vector<std::string> tokens)
 void    BlocLocation::_handleUploadEnable(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (tokens[1] == "on")
         this->_upload_enable = true;
     else if (tokens[1] == "off")
         this->_upload_enable = false;
     else
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
 }
 
 void    BlocLocation::_handleUploadPath(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (!isDirectory(tokens[1]) || !isReadable(tokens[1]))
-        Logger::log(Logger::FATAL, "invalid config file. -> invalid path \"" + tokens[1] + "\"");
+        Logger::log(Logger::FATAL, "invalid config file. => invalid path \"" + tokens[1] + "\"");
 
     this->_upload_path = tokens[1];
 }
@@ -139,26 +139,26 @@ void    BlocLocation::_handleUploadPath(std::vector<std::string> tokens)
 void    BlocLocation::_handleCGIExt(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (tokens[1] == ".php")
         this->_cgi_pass = tokens[1];
     else if (tokens[1] == ".py")
         this->_cgi_pass = tokens[1];
     else
-        Logger::log(Logger::FATAL, "invalid config file. -> unsupported cgi " + tokens[1]);
+        Logger::log(Logger::FATAL, "invalid config file. => unsupported cgi " + tokens[1]);
 }
 
 void    BlocLocation::_handleCGIPass(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (isDirectory(tokens[1]))
-        Logger::log(Logger::FATAL, "invalid config file. -> path is a directory: " + tokens[1]);
+        Logger::log(Logger::FATAL, "invalid config file. => path is a directory: " + tokens[1]);
     
     if (!isExecutable(tokens[1]))
-        Logger::log(Logger::FATAL, "invalid config file. -> not executable: " + tokens[1]);
+        Logger::log(Logger::FATAL, "invalid config file. => not executable: " + tokens[1]);
 
     this->_cgi_pass = tokens[1];
 }
@@ -166,14 +166,14 @@ void    BlocLocation::_handleCGIPass(std::vector<std::string> tokens)
 void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
 {
     if (tokens.size() != 3)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     std::istringstream iss(tokens[1]);
     int code;
     iss >> code;
 
     if (code < 300 || code > 307)
-        Logger::log(Logger::FATAL, "invalid config file. -> invalid code " + tokens[1]);
+        Logger::log(Logger::FATAL, "invalid config file. => invalid code " + tokens[1]);
 
     this->_return.code = code;
 
@@ -182,7 +182,7 @@ void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
     {
         std::string url = this->_parent->getRootPath() + tokens[2];
         if (!isReadable(url))
-            Logger::log(Logger::FATAL, "invalid config file. -> not readable: " + url);
+            Logger::log(Logger::FATAL, "invalid config file. => not readable: " + url);
         this->_return.url = url;
         this->_return.is_set = true;
     }
@@ -196,7 +196,7 @@ void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
 void    BlocLocation::_handleClientMaxBodySize(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[0]);
+        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     unsigned int val;
     char         c;
@@ -207,17 +207,17 @@ void    BlocLocation::_handleClientMaxBodySize(std::vector<std::string> tokens)
     if (last >= '0' && last <= '9')
     {
         if (!isNumeric(tokens[1].substr(0, tokens[1].size() - 1)))
-            Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
         std::istringstream iss(tokens[1]);
         if (iss >> val)
         {
             this->_client_max_body_size = val;
             if (this->_client_max_body_size > MAX_CLIENT_SIZE)
-                Logger::log(Logger::FATAL, "invalid config file. -> too big " + tokens[1]);
+                Logger::log(Logger::FATAL, "invalid config file. => too big " + tokens[1]);
         }
         else
         {
-            Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
         }
     } 
     else 
@@ -231,12 +231,12 @@ void    BlocLocation::_handleClientMaxBodySize(std::vector<std::string> tokens)
             else if (c == 'M' || c == 'm')
                 this->_client_max_body_size = val * (1024 * 1024);
             else
-                Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+                Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
             if (this->_client_max_body_size > MAX_CLIENT_SIZE)
-                Logger::log(Logger::FATAL, "invalid config file. -> too big " + tokens[1]);
+                Logger::log(Logger::FATAL, "invalid config file. => too big " + tokens[1]);
         }
         else
-            Logger::log(Logger::FATAL, "invalid config file. -> near " + tokens[1]);
+            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
     }
 }
 
@@ -246,17 +246,21 @@ void    BlocLocation::_handlingContent(std::vector<std::string> content)
     {
         std::vector<std::string>    tokens;
             
-        while (*it != ";")
+        while (it != content.end() && *it != ";")
         {
             tokens.push_back(*it);
             ++it;
         }
         this->_tokensRedirect(tokens);
+        if (it == content.end())
+            Logger::log(Logger::FATAL, "invalid config file. => expected ';'");
     }
 }
 
 void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
 {
+    if (tokens.size() < 1)
+        return;
     std::map<std::string, HandlerFunc>::iterator it = _function_table.find(tokens[0]);
     if (it != _function_table.end())
     {
@@ -265,7 +269,7 @@ void    BlocLocation::_tokensRedirect(std::vector<std::string> tokens)
     }
     else
     {
-        Logger::log(Logger::FATAL, "invalid config file. -> \"" + tokens[0] + "\" unknown parameter");
+        Logger::log(Logger::FATAL, "invalid config file. => \"" + tokens[0] + "\" unknown parameter");
     }
 }
 

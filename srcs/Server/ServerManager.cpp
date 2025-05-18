@@ -27,39 +27,9 @@ void    ServerManager::initConfig(std::string config_src)
 
 void    ServerManager::_initRouter()
 {
-    const std::vector<BlocServer>& servers = _config.getServersCtx();
-
-    for (std::vector<BlocServer>::const_iterator bloc_it = servers.begin();
-        bloc_it != servers.end(); ++bloc_it)
-    {
-        const std::vector<s_ip_port>& ip_tab = bloc_it->getIpTab();
-
-        for (std::vector<s_ip_port>::const_iterator ip_it = ip_tab.begin();
-            ip_it != ip_tab.end(); ++ip_it)
-        {
-            if (_router.find(*ip_it) != _router.end())
-            {
-                bool isInMap = false;
-                for (std::vector<BlocServer>::const_iterator it = _router[*ip_it].begin();
-                    it != _router[*ip_it].end(); ++it)
-                {
-                    if (*it == *bloc_it)
-                        isInMap = true;
-                }
-                if (!isInMap)
-                    _router[*ip_it].push_back(*bloc_it);
-            }
-            else
-            {
-                std::vector<BlocServer> tab;
-                tab.push_back(*bloc_it);
-                _router[*ip_it] = tab;
-            }
-        }
-    }
-
-    for (std::map<s_ip_port, std::vector<BlocServer>, s_ip_portCompare>::iterator it = _router.begin();
-        it != _router.end(); ++it)
+    _router = _config.initRouter();
+    for (RouterMap::iterator it = _router.begin();
+    it != _router.end(); ++it)
     {
         std::cout << (it->first).ip << " " << (it->first).port << std::endl;
         for (std::vector<BlocServer>::iterator s_it = (it->second).begin(); s_it != (it->second).end(); ++s_it)
@@ -69,10 +39,34 @@ void    ServerManager::_initRouter()
     }
 }
 
+void    ServerManager::_initListenSockets()
+{
+    for (RouterMap::iterator it = _router.begin();
+        it != _router.end(); ++it)
+    {
+        int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (socket_fd == -1)
+            Logger::log(Logger::FATAL, "Initialisation error => socket error");
+        
+        struct sockaddr_in sa;
+        sa.sin_family = AF_INET;
+        sa.sin_port = htons(it->first.port);
+        sa.sin_addr.s_addr = htonl(it->first.ip);
+
+        if (bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa)) == -1)
+            Logger::log(Logger::FATAL, "Initialisation error => bind error");
+        if (listen(socket_fd, 10) == -1)
+            Logger::log(Logger::FATAL, "Initialisation error => listen error");
+        
+        _listen_sockets.push_back(socket_fd);
+    }
+}
+
 void    ServerManager::run()
 {
     if (!this->_config.getIsLoaded())
-        Logger::log(Logger::FATAL, "Can't run server -> config not loaded");
+        Logger::log(Logger::FATAL, "Can't run server => config not loaded");
 
     _initRouter();
+    _initListenSockets();
 }

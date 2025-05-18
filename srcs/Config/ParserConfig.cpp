@@ -28,7 +28,10 @@ std::vector<std::string>    ParserConfig::_tokenise(const std::string& input)
         if (c == '#')
         {
             while (c != '\n' && c != '\0' && c != EOF)
+            {
                 ++i;
+                c = input[i];
+            }
         }
         else if (c == '{' || c == '}' || c == ';') {
             if (!current.empty()) {
@@ -101,6 +104,8 @@ void    ParserConfig::parse(std::string file_src)
         else
             Logger::log(Logger::FATAL, "invalid config file. => unexpected token at global scope: '" + *it + "'");
     }
+    if (this->_servers_ctx.empty())
+        Logger::log(Logger::FATAL, "invalid config file. => server bloc not found");
     this->_isLoaded = true;
 }
 

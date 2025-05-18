@@ -20,6 +20,9 @@
 # include <sstream>
 # include <sys/stat.h>
 # include <unistd.h>
+# include <map>
+
+class BlocServer;
 
 struct CiLess
 {
@@ -68,6 +71,8 @@ struct s_ip_portCompare
         return left.port < right.port;
 	}
 };
+
+typedef std::map<s_ip_port, std::vector<BlocServer>, s_ip_portCompare> RouterMap;
 
 void                        trim(std::string &s);
 std::vector<std::string>    ws_split(const std::string& str);

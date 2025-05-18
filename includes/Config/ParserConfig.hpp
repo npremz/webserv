@@ -32,13 +32,15 @@ class ParserConfig {
         ParserConfig();
         ~ParserConfig();
 
-        void    parse(std::string file_src);
+        void        parse(std::string file_src);
+        RouterMap   initRouter();
 
         void    print(int indent = 0) const;
 
         // Getters;
         bool                            getIsLoaded() const;
         const std::vector<BlocServer>&  getServersCtx() const;
+
 };
 
 #endif

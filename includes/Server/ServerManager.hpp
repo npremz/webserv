@@ -36,9 +36,15 @@ class ServerManager
         ParserConfig        _config;
         RouterMap           _router;
         std::vector<int>    _listen_sockets;
+        int                 _epoll_fd;
 
         void    _initRouter();
         void    _initListenSockets();
+        void    _initEpoll();
+        void    _linkEpollToListensFD();
+        void    _run();
+
+        int     _isListenSocket(int event_fd); // -1 if not found
 
     public:
         ServerManager();

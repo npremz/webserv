@@ -28,7 +28,9 @@ int main (int ac, char* av[])
     try
     {
         ServerManager webserv;
+        ServerManager::instance = &webserv;
         webserv.initConfig(config_src);
+        signal(SIGINT, ServerManager::signalHandler);
         webserv.run();
     }
     catch (const std::exception& e)

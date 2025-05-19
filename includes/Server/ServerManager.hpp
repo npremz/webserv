@@ -25,6 +25,8 @@
 # include <sys/epoll.h>
 # include <string.h>
 # include <errno.h>
+# include <list>
+# include <sys/types.h>
 
 # include "../Config/ParserConfig.hpp"
 # include "../Utils/utils.hpp"
@@ -37,21 +39,37 @@ class ServerManager
         RouterMap           _router;
         std::vector<int>    _listen_sockets;
         int                 _epoll_fd;
+        int                 _exit_pipe[2];
+        std::list<int>      _client_fds;
 
         void    _initRouter();
         void    _initListenSockets();
+        void    _initExitPipe();
         void    _initEpoll();
         void    _linkEpollToListensFD();
+        void    _linkEpollToExitPipe();
         void    _run();
-
+        void    _addClient(int fd);
+        void    _removeClient(int fd);
+        void    _closeAllClients();
+        void    _logRunningInfos();
+        void    _cleanup();
+        
         int     _isListenSocket(int event_fd); // -1 if not found
 
     public:
         ServerManager();
         ~ServerManager();
 
-        void    initConfig(std::string config_src);
-        void    run();
+        static ServerManager    *instance;
+        static void             signalHandler(int signum);
+
+        bool                    isRunning;
+
+        void                    initConfig(std::string config_src);
+        void                    run();
+        void                    stop();
+
 };
 
 #endif

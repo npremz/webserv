@@ -14,6 +14,7 @@
 # define MAIN_HPP
 
 # include <iostream>
+# include <signal.h>
 
 # include "defines.hpp"
 

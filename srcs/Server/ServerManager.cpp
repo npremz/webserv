@@ -12,11 +12,22 @@
 
 #include "../../includes/Server/ServerManager.hpp"
 
+ServerManager* ServerManager::instance = NULL;
+
 ServerManager::ServerManager()
 {}
 
 ServerManager::~ServerManager()
 {}
+
+void    ServerManager::signalHandler(int signum)
+{
+    (void)signum;
+    std::cout << std::endl;
+    Logger::log(Logger::INFO, "Stopping Webserv...");
+    if (ServerManager::instance)
+        ServerManager::instance->stop();
+}
 
 void    ServerManager::initConfig(std::string config_src)
 {
@@ -79,6 +90,12 @@ void    ServerManager::_initListenSockets()
     }
 }
 
+void    ServerManager::_initExitPipe()
+{
+    if (pipe(_exit_pipe) == -1)
+        Logger::log(Logger::FATAL, "Initialisation error => exit pipe error");
+}
+
 void    ServerManager::_initEpoll()
 {
     _epoll_fd = epoll_create1(0);
@@ -95,8 +112,17 @@ void    ServerManager::_linkEpollToListensFD()
         ev.events = EPOLLIN;
         ev.data.fd = *it;
         if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, *it, &ev) == -1)
-            Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl error");
+            Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl l_socket error");
     }
+}
+
+void    ServerManager::_linkEpollToExitPipe()
+{
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = _exit_pipe[0];
+    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _exit_pipe[0], &ev) == -1)
+        Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl pipe error");
 }
 
 int     ServerManager::_isListenSocket(int event_fd)
@@ -110,17 +136,97 @@ int     ServerManager::_isListenSocket(int event_fd)
     return (-1);
 }
 
+void    ServerManager::_addClient(int fd) {
+    _client_fds.push_back(fd);
+}
+
+void    ServerManager::_removeClient(int fd) {
+    _client_fds.remove(fd); // retire le fd de la liste
+}
+
+void    ServerManager::_closeAllClients() {
+    for (std::list<int>::iterator it = _client_fds.begin();
+         it != _client_fds.end(); ++it)
+    {
+        if (close(*it) == -1)
+            Logger::log(Logger::FATAL, "close error");
+    }
+    _client_fds.clear();
+}
+
+void    ServerManager::_cleanup()
+{
+    for (std::vector<int>::iterator it = _listen_sockets.begin();
+        it != _listen_sockets.end(); ++it)
+    {
+        if (close(*it) == -1)
+            Logger::log(Logger::FATAL, "close error");
+    }
+    _closeAllClients();
+    if (close(_exit_pipe[0]) == -1)
+        Logger::log(Logger::FATAL, "close error");
+    if (close(_exit_pipe[1]) == -1)
+        Logger::log(Logger::FATAL, "close error");
+    if (close(_epoll_fd) == -1)
+        Logger::log(Logger::FATAL, "close error");
+
+    Logger::log(Logger::INFO, "Webserv Stopped without issues.");
+}
+
+std::string print_listen_address(int socket_fd) {
+    struct sockaddr_in sin;
+    socklen_t len = sizeof(sin);
+    memset(&sin, 0, sizeof(sin));
+
+    if (getsockname(socket_fd, (struct sockaddr *)&sin, &len) == -1) {
+        perror("getsockname");
+        return NULL;
+    }
+
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(sin.sin_addr), ip, INET_ADDRSTRLEN);
+
+    std::ostringstream oss;
+    oss << ip
+        << ":"
+        << ntohs(sin.sin_port);
+    return oss.str();
+}
+
+void    ServerManager::_logRunningInfos()
+{
+    Logger::log(Logger::INFO, "Webserv is running.");
+    for (std::vector<int>::iterator it = _listen_sockets.begin();
+        it != _listen_sockets.end(); ++it)
+    {
+        Logger::log(Logger::INFO, "Listenning to " + print_listen_address(*it));
+    }
+    Logger::log(Logger::INFO, "Ctrl + C to clean stop the server");
+}
+
 void    ServerManager::_run()
 {
-    while (true)
+    isRunning = true;
+    while (isRunning)
     {
-        struct epoll_event events[16];
+        struct epoll_event  events[16];
         int n = epoll_wait(_epoll_fd, events, 16, -1);
-        if (n == -1)
+        if (n == -1) {
+            if (errno == EINTR) {
+                if (!isRunning)
+                    break;
+                continue;
+            }
             Logger::log(Logger::FATAL, "Initialisation error => epoll_wait error");
+        }
         
         for (int i = 0; i < n; ++i)
         {
+            if (events[i].data.fd == _exit_pipe[0])
+            {
+                isRunning = false;
+                break;
+            }
             int f_socket_fd;
             if ((f_socket_fd = _isListenSocket(events[i].data.fd)) != -1) {
                 int c_socket_fd = accept(f_socket_fd, 0, 0);
@@ -131,6 +237,7 @@ void    ServerManager::_run()
                 ev.data.fd = c_socket_fd;
                 if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
+                _addClient(c_socket_fd);
             } else {
                 char buf[2048];
                 int r = read(events[i].data.fd, buf, 255);
@@ -141,9 +248,11 @@ void    ServerManager::_run()
                 if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl del c_socket error");
                 close(events[i].data.fd);
+                _removeClient(events[i].data.fd);
             }
         }
     }
+    _cleanup();
 }
 
 void    ServerManager::run()
@@ -153,7 +262,16 @@ void    ServerManager::run()
 
     _initRouter();
     _initListenSockets();
+    _initExitPipe();
     _initEpoll();
     _linkEpollToListensFD();
+    _linkEpollToExitPipe();
+    _logRunningInfos();
     _run();
+}
+
+void    ServerManager::stop()
+{
+    if (write(_exit_pipe[1], "waf", 4) == -1)
+        Logger::log(Logger::FATAL, "Write to fd error");
 }

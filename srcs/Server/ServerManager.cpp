@@ -75,13 +75,17 @@ void    ServerManager::_initListenSockets()
         if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1)
             Logger::log(Logger::FATAL, "Initialisation error => socket fcntl error");
         
+        int yes = 1;
+        if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+            Logger::log(Logger::FATAL, "Initialisation error => REUSEADDR error");
+
         struct sockaddr_in sa;
         sa.sin_family = AF_INET;
         sa.sin_port = htons(it->first.port);
         sa.sin_addr.s_addr = INADDR_ANY;
 
         if (bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa)) == -1)
-            Logger::log(Logger::FATAL, "Initialisation error => bind error");
+            Logger::log(Logger::FATAL, "Initialisation error => bind error " + std::string(strerror(errno)));
         if (listen(socket_fd, 10) == -1)
             Logger::log(Logger::FATAL, "Initialisation error => listen error");
         
@@ -199,9 +203,9 @@ void    ServerManager::_logRunningInfos()
     for (std::vector<int>::iterator it = _listen_sockets.begin();
         it != _listen_sockets.end(); ++it)
     {
-        Logger::log(Logger::INFO, "Listenning to " + print_listen_address(*it));
+        Logger::log(Logger::INFO, "Listening to " + print_listen_address(*it) + "...");
     }
-    Logger::log(Logger::INFO, "Ctrl + C to clean stop the server");
+    Logger::log(Logger::INFO, "Ctrl + C to clean stop the server.");
 }
 
 void    ServerManager::_run()

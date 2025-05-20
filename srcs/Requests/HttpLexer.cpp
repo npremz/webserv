@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 15:54:56 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 16:02:37 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,12 @@ HttpLexer::HttpLexer() : _state(START_LINE), _req_size(0)
 
 HttpLexer::~HttpLexer()
 {}
+
+HttpLexer::ParseState HttpLexer::_handleStatusError(unsigned int endstatus, ParseState state)
+{
+	_req.endstatus = endstatus;
+	return (state);
+}
 
 HttpLexer::ParseState HttpLexer::_parseStartLine()
 {
@@ -29,13 +35,15 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	pos = _buf.find("\r\n");
 	if (pos == std::string::npos)
 		return (PAUSE);
+	_req_size += pos + 2;
+	if (_req_size > MAX_CLIENT_SIZE)
+	{
+
+	}
 	std::istringstream iss(_buf.substr(0, pos));
 	iss >> method >> target >> httpv;
 	if (method.empty() || target.empty() || httpv.empty())
-	{
-		_req.endstatus = 400;
-		return (PARSE_ERROR);
-	}
+		_handleStatusError(400, PARSE_ERROR);
 	if (method == "GET")
 		_req.method = HTTP_GET;
 	else if (method == "HEAD")
@@ -57,8 +65,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	else
 	{
 		_req.method = HTTP_UNKNOWN;
-		_req.endstatus = 405;
-		return (PARSE_ERROR);
+		_handleStatusError(405, PARSE_ERROR);
 	}
 	_req.targetraw = target;
 	pos = target.find("?");
@@ -70,22 +77,14 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_req.query = target.substr(pos + 1);
 	}
 	if (httpv.length() != 8)
-	{
-		_req.endstatus = 400;
-		return (PARSE_ERROR);
-	}
+		_handleStatusError(400, PARSE_ERROR);
 	pos = httpv.find("/");
 	if (pos == std::string::npos)
-	{
-		_req.endstatus = 400;
-		return (PARSE_ERROR);
-	}
+		_handleStatusError(400, PARSE_ERROR);
 	if (httpv.substr(0, pos + 1) != "HTTP/")
-	{
-		_req.endstatus = 400;
-		return (PARSE_ERROR);
-	}
+		_handleStatusError(400, PARSE_ERROR);
 	_req.httpver = httpv.substr(pos + 1);
+	_buf.erase(0, _req_size);
 	return (GOOD);
 }
 

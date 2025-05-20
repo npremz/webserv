@@ -30,6 +30,7 @@
 
 # include "../Config/ParserConfig.hpp"
 # include "../Utils/utils.hpp"
+# include "../Server/Client.hpp"
 
 
 class ServerManager

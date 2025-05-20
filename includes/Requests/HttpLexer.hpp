@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 15:58:24 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 16:02:52 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,15 @@ class HttpLexer
 		Status				feed(const char *data, size_t len);
 		const parsedRequest &getrequest() const;
 		
+	private:
+		ParseState		_handleStatusError(unsigned int endstatus, ParseState state);
+		ParseState		_parseStartLine();
+		ParseState		_parseHeaders();
+		std::string 	_buf;
+		State 			_state;
+		parsedRequest	_req;
+		size_t			_req_size;
+
 };
 
 #endif

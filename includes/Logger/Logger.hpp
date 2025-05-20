@@ -25,6 +25,7 @@ class Logger
         enum level {
             FATAL = 0,
             INFO,
+            ERROR,
             DEBUG
         };
 

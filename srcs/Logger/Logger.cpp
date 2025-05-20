@@ -22,8 +22,11 @@ void    Logger::addLevel(Logger::level level)
         case Logger::INFO:
             std::cout << C_CYAN << "[INFO] ";
             break ;
+        case Logger::ERROR:
+            std::cout << C_YELLOW << "[ERROR] ";
+            break ;
         case Logger::DEBUG:
-            std::cout << C_YELLOW << "[DEBUG] ";
+            std::cout << C_GRAY << "[DEBUG] ";
             break ;
     }
 }
@@ -34,9 +37,15 @@ void    Logger::printLog(Logger::level level, std::string msg)
     std::cout << msg  << C_RESET << std::endl;
 }
 
+
+
 void    Logger::log(Logger::level level, std::string msg)
 {
     if (level == FATAL)
+    {
+        Logger::addLevel(level);
+        throw std::runtime_error(msg);
+    } else if (level == ERROR)
     {
         Logger::addLevel(level);
         throw std::runtime_error(msg);

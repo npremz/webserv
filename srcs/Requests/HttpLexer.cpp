@@ -6,15 +6,16 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 13:20:22 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 13:49:11 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Requests/HttpLexer.hpp"
-#include "../../includes/defines.hpp"
 
 HttpLexer::HttpLexer() : _state(START_LINE)
-{}
+{
+	_req.receivedoctets = 0;
+}
 
 HttpLexer::~HttpLexer()
 {}
@@ -78,12 +79,19 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	return (GOOD);
 }
 
+HttpLexer::ParseState HttpLexer::_parseHeaders()
+{
+	return (GOOD);
+}
+
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 {
-	if (_buf.size() + len > MAX_BUF_SIZE)
-	{
+	if ((_req.receivedoctets += len) > MAX_CLIENT_SIZE
+		|| _buf.size() + len > MAX_CLIENT_SIZE)
+	{	
 		_state = ERROR;
 		_req.endstatus = 413;
+		Logger::log(Logger::ERROR, "Max client size exceeded.");
 	}
 	_buf.append(data, len);
 	while (_state != DONE && _state != ERROR)
@@ -91,10 +99,12 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 		switch (_state)
 		{
 		case START_LINE:
-			_parseStartLine();
-			_state = DONE;
+			if (_parseStartLine() == GOOD)
+				_state = HEADERS;
 			break;
-		
+		case HEADERS:
+			if (_parseHeaders() == GOOD)
+				_state = BODY;
 		default:
 			break;
 		}

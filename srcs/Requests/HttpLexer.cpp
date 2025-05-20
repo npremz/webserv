@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 13:49:11 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 15:12:27 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,10 +40,22 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	}
 	if (method == "GET")
 		_req.method = HTTP_GET;
+	else if (method == "HEAD")
+		_req.method = HTTP_HEAD;
 	else if (method == "POST")
 		_req.method = HTTP_POST;
+	else if (method == "PUT")
+		_req.method = HTTP_PUT;
 	else if (method == "DELETE")
 		_req.method = HTTP_DELETE;
+	else if (method == "CONNECT")
+		_req.method = HTTP_CONNECT;
+	else if (method == "OPTIONS")
+		_req.method = HTTP_OPTIONS;
+	else if (method == "TRACE")
+		_req.method = HTTP_TRACE;
+	else if (method == "PATCH")
+		_req.method = HTTP_PATCH;
 	else
 	{
 		_req.method = HTTP_UNKNOWN;
@@ -70,7 +82,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_req.endstatus = 400;
 		return (PARSE_ERROR);
 	}
-	if (httpv.substr(0, pos) != "HTTP/")
+	if (httpv.substr(0, pos + 1) != "HTTP/")
 	{
 		_req.endstatus = 400;
 		return (PARSE_ERROR);
@@ -104,7 +116,7 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			break;
 		case HEADERS:
 			if (_parseHeaders() == GOOD)
-				_state = BODY;
+				_state = DONE;
 		default:
 			break;
 		}

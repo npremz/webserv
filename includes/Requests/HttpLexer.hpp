@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 13:45:46 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 14:53:13 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,14 @@ class HttpLexer
 
 		enum HttpMethod {
 			HTTP_GET,
+			HTTP_HEAD,
 			HTTP_POST,
+			HTTP_PUT,
 			HTTP_DELETE,
+			HTTP_CONNECT,
+			HTTP_OPTIONS,
+			HTTP_TRACE,
+			HTTP_PATCH,
 			HTTP_UNKNOWN
 		};
 

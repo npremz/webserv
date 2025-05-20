@@ -20,7 +20,7 @@ SRC             :=      main.cpp \
 						Config/ParserConfig.cpp Config/BlocServer.cpp \
 						Config/BlocLocation.cpp \
 						Logger/Logger.cpp \
-						CGI/cgi.cpp \
+						CGI/CGI.cpp \
 
 
 SRCPATH         :=      ./srcs/

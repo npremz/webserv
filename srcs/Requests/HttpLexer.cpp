@@ -3,30 +3,28 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 15:12:27 by armetix          ###   ########.fr       */
+/*   Updated: 2025/05/20 15:29:57 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Requests/HttpLexer.hpp"
 
-HttpLexer::HttpLexer() : _state(START_LINE)
-{
-	_req.receivedoctets = 0;
-}
+HttpLexer::HttpLexer() : _state(START_LINE), _req_size(0)
+{}
 
 HttpLexer::~HttpLexer()
 {}
 
 HttpLexer::ParseState HttpLexer::_parseStartLine()
 {
-	std::string::size_type pos;
-	std::string method;
-	std::string target;
-	std::string httpv;
-	std::string ver;
+	std::string::size_type 	pos;
+	std::string 			method;
+	std::string 			target;
+	std::string 			httpv;
+	std::string 			ver;
 	
 	pos = _buf.find("\r\n");
 	if (pos == std::string::npos)
@@ -92,13 +90,19 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 }
 
 HttpLexer::ParseState HttpLexer::_parseHeaders()
-{
+{	
+	std::string::size_type 	pos = _buf.find("\r\n");
+
+	if (pos == std::string::npos)
+		return (PAUSE);
 	return (GOOD);
+	
+	std::istringstream 		iss(_buf.substr(0, pos));
 }
 
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 {
-	if ((_req.receivedoctets += len) > MAX_CLIENT_SIZE
+	if ((_req_size += len) > MAX_CLIENT_SIZE
 		|| _buf.size() + len > MAX_CLIENT_SIZE)
 	{	
 		_state = ERROR;

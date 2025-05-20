@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 15:29:57 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 15:54:56 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,6 +89,25 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	return (GOOD);
 }
 
+std::vector<std::string>	HttpLexer::_splitHeader(std::string header_block)
+{
+	std::vector<std::string>	lines;
+    size_t						start = 0;
+
+    while (start < header_block.length()) {
+        size_t end = header_block.find("\r\n", start);
+        size_t sep_len = 2;
+
+        if (end == std::string::npos) {
+            lines.push_back(header_block.substr(start));
+            break;
+        }
+        lines.push_back(header_block.substr(start, end - start));
+        start = end + sep_len;
+    }
+    return lines;
+}
+
 HttpLexer::ParseState HttpLexer::_parseHeaders()
 {	
 	std::string::size_type 	pos = _buf.find("\r\n");
@@ -97,7 +116,7 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 		return (PAUSE);
 	return (GOOD);
 	
-	std::istringstream 		iss(_buf.substr(0, pos));
+	std::vector<std::string> header_lines = _splitHeader(_buf);
 }
 
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)

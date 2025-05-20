@@ -3,20 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/19 16:36:39 by armetix          ###   ########.fr       */
+/*   Updated: 2025/05/20 13:20:22 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Requests/HttpLexer.hpp"
 #include "../../includes/defines.hpp"
 
-HttpLexer::HttpLexer() : _buf(), _state(START_LINE), _req()
-{
-	
-}
+HttpLexer::HttpLexer() : _state(START_LINE)
+{}
+
+HttpLexer::~HttpLexer()
+{}
 
 HttpLexer::ParseState HttpLexer::_parseStartLine()
 {
@@ -73,15 +74,8 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_req.endstatus = 400;
 		return (PARSE_ERROR);
 	}
-	ver = httpv.substr(pos + 1);
-	pos = ver.find(".");
-	if (pos == std::string::npos)
-	{
-		_req.endstatus = 400;
-		return (PARSE_ERROR);
-	}
-	
-	
+	_req.httpver = httpv.substr(pos + 1);
+	return (GOOD);
 }
 
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
@@ -98,6 +92,7 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 		{
 		case START_LINE:
 			_parseStartLine();
+			_state = DONE;
 			break;
 		
 		default:
@@ -106,4 +101,5 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 	}
 	if (_state == ERROR)
 		return (ERR);
+	return (COMPLETE);
 }

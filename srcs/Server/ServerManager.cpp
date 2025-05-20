@@ -243,12 +243,11 @@ void    ServerManager::_run()
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
                 _addClient(c_socket_fd);
             } else {
-                char buf[2048];
-                int r = read(events[i].data.fd, buf, 255);
-                printf("%s", buf);
-                if (r > 0) {
-                    write(events[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello\n", 44);
-                }
+                Client  client(events[i].data.fd, _router);
+                client.handleRequest();
+                // if (r > 0) {
+                //     write(events[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello\n", 44);
+                // }
                 if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl del c_socket error");
                 close(events[i].data.fd);

@@ -16,7 +16,7 @@ CFLAGS          :=      -Wall -Wextra -Werror -MMD -MP -pedantic -std=c++98
 
 SRC             :=      main.cpp \
 						Utils/utils.cpp \
-						Server/Server.cpp Server/ServerManager.cpp \
+						Server/Client.cpp Server/ServerManager.cpp \
 						Config/ParserConfig.cpp Config/BlocServer.cpp \
 						Config/BlocLocation.cpp \
 						Logger/Logger.cpp \

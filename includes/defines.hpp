@@ -13,6 +13,7 @@
 #ifndef DEFINE_HPP
 # define DEFINE_HPP
 
+# define MAX_BUF_SIZE 65536
 # define C_BLACK   "\033[30m"
 # define C_RED     "\033[31m"
 # define C_GREEN   "\033[32m"

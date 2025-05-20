@@ -40,7 +40,7 @@ struct CiLess
 		while (i < max)
 		{
 			ca = static_cast<unsigned char>(a[i]);
-			ca = static_cast<unsigned char>(b[i]);
+			cb = static_cast<unsigned char>(b[i]);
 
 			if (ca < cb)
 				return (true);

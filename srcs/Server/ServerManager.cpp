@@ -243,8 +243,15 @@ void    ServerManager::_run()
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
                 _addClient(c_socket_fd);
             } else {
-                Client  client(events[i].data.fd, _router);
-                client.handleRequest();
+                try 
+                {
+                    Client  client(events[i].data.fd, _router);
+                    client.handleRequest();
+                }
+                catch (const std::exception &e)
+                {
+                    std::cout << e.what() << std::endl;
+                }
                 // if (r > 0) {
                 //     write(events[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello\n", 44);
                 // }

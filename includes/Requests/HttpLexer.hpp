@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 13:20:40 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 13:45:46 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,10 @@
 
 # include <string>
 # include <map>
+
 # include "../Utils/utils.hpp"
+# include "../../includes/defines.hpp"
+# include "../Logger/Logger.hpp"
 
 class HttpLexer
 {
@@ -72,6 +75,7 @@ class HttpLexer
 		
 	private:
 		ParseState		_parseStartLine();
+		ParseState		_parseHeaders();
 		std::string 	_buf;
 		State 			_state;
 		parsedRequest	_req;

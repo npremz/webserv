@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/14 14:28:48 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 11:18:20 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ public:
 		HTTP_DELETE,
 		HTTP_UNKNOWN
 	};
-	
+
 	enum State {
 		START_LINE,
 		HEADERS,
@@ -45,31 +45,38 @@ public:
 		ERR	
 	};
 	
-	Status		feed(const char *data, size_t len);
-	HttpLexer();
-	~HttpLexer();
+	enum ParseState {
+		GOOD,
+		PAUSE,
+		PARSE_ERROR	
+	};
 	
-private:
-	std::string _buf;
-	State 		_state;
-	
-
-};
-
-struct s_parsedRequest
-{
-	HttpLexer::HttpMethod	method;
+	struct parsedRequest {
+	HttpMethod	method;
 	std::string	targetraw;
 	std::string	path;
 	std::string query;
-	unsigned int	httpversion;
+	unsigned int	httpver;
+	unsigned int	httpsubver;
 	std::map<std::string, std::string, CiLess> headers;
 	bool	ischunked;
 	size_t	expectedoctets;
 	size_t	receivedoctets;
 	unsigned int	endstatus;
 	size_t	headerbytes;
+	};
 	
+	Status		feed(const char *data, size_t len);
+	HttpLexer();
+	~HttpLexer();
+	const parsedRequest &getrequest() const;
+	
+private:
+	ParseState		_parseStartLine();
+	std::string 	_buf;
+	State 			_state;
+	parsedRequest	_req;
+
 };
 
 #endif

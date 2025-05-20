@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 15:30:14 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/20 15:58:24 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,9 @@
 # include "../Logger/Logger.hpp"
 
 class HttpLexer
-{
+{ 
 	public:
+		typedef std::map<std::string, std::string, CiLess> HeaderMap;
 
 		enum HttpMethod {
 			HTTP_GET,
@@ -60,18 +61,32 @@ class HttpLexer
 		};
 		
 		struct parsedRequest {
-			HttpMethod	method;
-			std::string	targetraw;
-			std::string	path;
-			std::string query;
-			std::string httpver;
-			std::map<std::string, std::string, CiLess> headers;
-			bool	ischunked;
-			size_t	expectedoctets;
-			size_t	receivedoctets;
+			HttpMethod		method;
+			std::string		targetraw;
+			std::string		path;
+			std::string 	query;
+			std::string 	httpver;
+			HeaderMap		headers;
+			bool			ischunked;
+			size_t			expectedoctets;
+			size_t			receivedoctets;
 			unsigned int	endstatus;
-			size_t	headerbytes;
+			size_t			headerbytes;
 		};
+
+	private:
+		std::string 				_buf;
+		State 						_state;
+		parsedRequest				_req;
+		size_t						_req_size;
+		
+		ParseState					_parseStartLine();
+		ParseState					_parseHeaders();
+
+		std::vector<std::string>	_splitHeader(std::string _buf);
+
+
+	public:
 		
 		HttpLexer();
 		~HttpLexer();
@@ -79,14 +94,6 @@ class HttpLexer
 		Status				feed(const char *data, size_t len);
 		const parsedRequest &getrequest() const;
 		
-	private:
-		ParseState		_parseStartLine();
-		ParseState		_parseHeaders();
-		std::string 	_buf;
-		State 			_state;
-		parsedRequest	_req;
-		size_t			_req_size;
-
 };
 
 #endif

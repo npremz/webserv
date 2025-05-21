@@ -27,6 +27,7 @@
 # include <errno.h>
 # include <list>
 # include <sys/types.h>
+# include <map>
 
 # include "../Config/ParserConfig.hpp"
 # include "../Utils/utils.hpp"
@@ -36,12 +37,13 @@
 class ServerManager
 {
     private:
-        ParserConfig        _config;
-        RouterMap           _router;
-        std::vector<int>    _listen_sockets;
-        int                 _epoll_fd;
-        int                 _exit_pipe[2];
-        std::list<int>      _client_fds;
+        ParserConfig            _config;
+        RouterMap               _router;
+        std::vector<int>        _listen_sockets;
+        int                     _epoll_fd;
+        int                     _exit_pipe[2];
+        std::list<int>          _client_fds;
+        std::map<int, Client*>   _clients;
 
         void    _initRouter();
         void    _initListenSockets();

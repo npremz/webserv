@@ -141,14 +141,23 @@ int     ServerManager::_isListenSocket(int event_fd)
 }
 
 void    ServerManager::_addClient(int fd) {
+    _clients[fd] = new Client(fd, _router);
     _client_fds.push_back(fd);
 }
 
 void    ServerManager::_removeClient(int fd) {
-    _client_fds.remove(fd); // retire le fd de la liste
+    delete _clients[fd];
+    _clients.erase(fd);
+    _client_fds.remove(fd);
 }
 
 void    ServerManager::_closeAllClients() {
+    for (std::map<int, Client*>::iterator it = _clients.begin();
+        it != _clients.end(); ++it)
+    {
+        delete it->second;
+        _clients.erase(it);
+    }
     for (std::list<int>::iterator it = _client_fds.begin();
          it != _client_fds.end(); ++it)
     {
@@ -243,10 +252,10 @@ void    ServerManager::_run()
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
                 _addClient(c_socket_fd);
             } else {
+                Client* c_client = _clients[events[i].data.fd];
                 try 
                 {
-                    Client  client(events[i].data.fd, _router);
-                    client.handleRequest();
+                    c_client->handleRequest();
                 }
                 catch (const std::exception &e)
                 {
@@ -255,10 +264,13 @@ void    ServerManager::_run()
                 // if (r > 0) {
                 //     write(events[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello\n", 44);
                 // }
-                if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-                    Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl del c_socket error");
-                close(events[i].data.fd);
-                _removeClient(events[i].data.fd);
+                if (c_client->isFinished)
+                {
+                    if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
+                        Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl del c_socket error");
+                    close(events[i].data.fd);
+                    _removeClient(events[i].data.fd);
+                }
             }
         }
     }

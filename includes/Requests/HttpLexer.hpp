@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 16:05:10 by armetix          ###   ########.fr       */
+/*   Updated: 2025/05/21 10:42:51 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ class HttpLexer
 { 
 	public:
 		typedef std::map<std::string, std::string, CiLess> HeaderMap;
+		typedef std::multimap<std::string, std::string, CiLess> HeaderMultiMap;
 
 		enum HttpMethod {
 			HTTP_GET,
@@ -61,17 +62,18 @@ class HttpLexer
 		};
 		
 		struct parsedRequest {
-			HttpMethod		method;
-			std::string		targetraw;
-			std::string		path;
-			std::string 	query;
-			std::string 	httpver;
-			HeaderMap		headers;
-			bool			ischunked;
-			size_t			expectedoctets;
-			size_t			receivedoctets;
-			unsigned int	endstatus;
-			size_t			headerbytes;
+			HttpMethod			method;
+			std::string			targetraw;
+			std::string			path;
+			std::string 		query;
+			std::string 		httpver;
+			HeaderMap			non_duplicable_headers;
+			HeaderMultiMap		duplicable_headers;
+			bool				ischunked;
+			size_t				expectedoctets;
+			size_t				receivedoctets;
+			unsigned int		endstatus;
+			size_t				headerbytes;
 		};
 
 	private:
@@ -85,6 +87,7 @@ class HttpLexer
 		ParseState					_parseHeaders();
 
 		std::vector<std::string>	_splitHeader(std::string _buf);
+		bool 						_isNonDuplicableHeader(const std::string& key);
 
 
 	public:

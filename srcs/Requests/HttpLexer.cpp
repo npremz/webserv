@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/20 16:02:37 by armetix          ###   ########.fr       */
+/*   Updated: 2025/05/21 10:42:58 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,15 +107,46 @@ std::vector<std::string>	HttpLexer::_splitHeader(std::string header_block)
     return lines;
 }
 
+bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
+    return key == "Host" ||
+           key == "Content-Length" ||
+           key == "Content-Type" ||
+           key == "Content-Encoding" ||
+           key == "Content-Range" ||
+           key == "User-Agent" ||
+           key == "Server";
+}
+
 HttpLexer::ParseState HttpLexer::_parseHeaders()
 {	
 	std::string::size_type 	pos = _buf.find("\r\n");
 
 	if (pos == std::string::npos)
 		return (PAUSE);
-	return (GOOD);
 	
 	std::vector<std::string> header_lines = _splitHeader(_buf);
+
+	for (std::vector<std::string>::iterator it = header_lines.begin(); 
+		it != header_lines.end(); ++it)
+	{
+		size_t		delim = (*it).find(':');
+		std::string key = (*it).substr(0, delim);
+		std::string val = (*it).substr(delim + 1);
+
+		while (!(*it).empty() && ((*it)[0] == ' ' || (*it)[0] == '\r'))
+            (*it).erase(0, 1);
+		
+		if (_isNonDuplicableHeader(key))
+		{
+			if (_req.non_duplicable_headers.find(key) != _req.non_duplicable_headers.end())
+				Logger::log(Logger::ERROR, "Invalid request. => unautorized duplicable header.");
+			_req.non_duplicable_headers[key] = val;
+		}
+		else
+			_req.duplicable_headers.insert(std::make_pair(key, val));
+	}
+
+	return (GOOD);
 }
 
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/21 10:42:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/21 13:11:17 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,25 +21,29 @@ HttpLexer::~HttpLexer()
 HttpLexer::ParseState HttpLexer::_handleStatusError(unsigned int endstatus, ParseState state)
 {
 	_req.endstatus = endstatus;
+	_state = ERROR;
 	return (state);
 }
 
 HttpLexer::ParseState HttpLexer::_parseStartLine()
 {
+	std::string::size_type 	end;
 	std::string::size_type 	pos;
 	std::string 			method;
 	std::string 			target;
 	std::string 			httpv;
 	std::string 			ver;
 	
-	pos = _buf.find("\r\n");
-	if (pos == std::string::npos)
+	end = _buf.find("\r\n");
+	if (end == std::string::npos)
 		return (PAUSE);
+	pos = end;
 	_req_size += pos + 2;
 	if (_req_size > MAX_CLIENT_SIZE)
 	{
 
 	}
+
 	std::istringstream iss(_buf.substr(0, pos));
 	iss >> method >> target >> httpv;
 	if (method.empty() || target.empty() || httpv.empty())
@@ -67,6 +71,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_req.method = HTTP_UNKNOWN;
 		_handleStatusError(405, PARSE_ERROR);
 	}
+
 	_req.targetraw = target;
 	pos = target.find("?");
 	if (pos == std::string::npos)
@@ -84,7 +89,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	if (httpv.substr(0, pos + 1) != "HTTP/")
 		_handleStatusError(400, PARSE_ERROR);
 	_req.httpver = httpv.substr(pos + 1);
-	_buf.erase(0, _req_size);
+	_buf.erase(0, end);
 	return (GOOD);
 }
 
@@ -119,12 +124,12 @@ bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
 
 HttpLexer::ParseState HttpLexer::_parseHeaders()
 {	
-	std::string::size_type 	pos = _buf.find("\r\n");
+	std::string::size_type 	pos = _buf.find("\r\n\r\n");
 
 	if (pos == std::string::npos)
 		return (PAUSE);
-	
-	std::vector<std::string> header_lines = _splitHeader(_buf);
+
+	std::vector<std::string> header_lines = _splitHeader(_buf.substr(0, pos));
 
 	for (std::vector<std::string>::iterator it = header_lines.begin(); 
 		it != header_lines.end(); ++it)
@@ -139,7 +144,7 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 		if (_isNonDuplicableHeader(key))
 		{
 			if (_req.non_duplicable_headers.find(key) != _req.non_duplicable_headers.end())
-				Logger::log(Logger::ERROR, "Invalid request. => unautorized duplicable header.");
+				_handleStatusError(400, PARSE_ERROR);
 			_req.non_duplicable_headers[key] = val;
 		}
 		else
@@ -159,20 +164,30 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 		Logger::log(Logger::ERROR, "Max client size exceeded.");
 	}
 	_buf.append(data, len);
+	ParseState	parsing_state;
 	while (_state != DONE && _state != ERROR)
 	{
 		switch (_state)
 		{
 		case START_LINE:
-			if (_parseStartLine() == GOOD)
+			parsing_state = _parseStartLine();
+			if (parsing_state == GOOD)
+			{
 				_state = HEADERS;
+			}
 			break;
 		case HEADERS:
-			if (_parseHeaders() == GOOD)
+			parsing_state = _parseHeaders();
+			if (parsing_state == GOOD)
+			{
 				_state = DONE;
+			}
+			break;
 		default:
 			break;
 		}
+		if (parsing_state == PAUSE)
+			return (NEED_MORE);
 	}
 	if (_state == ERROR)
 		return (ERR);

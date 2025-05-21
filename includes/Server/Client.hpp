@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/20 13:07:37 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/21 13:08:53 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,8 @@ class Client
         
 
     public:
+        bool        isFinished;
+       
         Client(int fd, RouterMap& router);
         ~Client();
 

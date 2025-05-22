@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/22 13:18:05 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/22 15:08:36 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,7 +140,11 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 
 		size_t		delim = (*it).find(':');
 		if (delim == std::string::npos)
+		{
+			if (countWords(*it) > 1)
+				return (_handleStatusError(400, PARSE_ERROR));
             continue;
+		}
 
 		std::string key = (*it).substr(0, delim);
 		std::string val = (*it).substr(delim + 1);

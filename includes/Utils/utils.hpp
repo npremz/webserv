@@ -85,5 +85,6 @@ std::string					ipIntToString(unsigned int ip_int);
 std::string 				ipPortToString(const s_ip_port& ip_port);
 bool						isNumeric(const std::string& s);
 std::string					to_lowercase(const std::string& input);
+int							countWords(const std::string& str);
 
 #endif

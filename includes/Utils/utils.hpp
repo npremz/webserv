@@ -39,13 +39,14 @@ struct CiLess
 		i = 0;
 		while (i < max)
 		{
-			ca = static_cast<unsigned char>(a[i]);
-			cb = static_cast<unsigned char>(b[i]);
+			ca = std::tolower(static_cast<unsigned char>(a[i]));
+			cb = std::tolower(static_cast<unsigned char>(b[i]));
 
 			if (ca < cb)
 				return (true);
 			if (ca > cb)
 				return (false);
+			i++;
 		}
 		return (a.size() < b.size());
 	}

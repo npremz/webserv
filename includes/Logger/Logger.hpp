@@ -16,6 +16,9 @@
 # include "../defines.hpp"
 # include <iostream>
 # include <unistd.h>
+# include <ctime>
+# include <iomanip>
+# include <cstdio>
 
 class Logger
 {

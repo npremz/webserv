@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/22 12:21:04 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/22 13:18:05 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,13 +113,14 @@ std::vector<std::string>	HttpLexer::_splitHeader(std::string header_block)
 }
 
 bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
-    return key == "Host" ||
-           key == "Content-Length" ||
-           key == "Content-Type" ||
-           key == "Content-Encoding" ||
-           key == "Content-Range" ||
-           key == "User-Agent" ||
-           key == "Server";
+	std::string lower_key = to_lowercase(key);
+    return lower_key == "host" ||
+           lower_key == "content-length" ||
+           lower_key == "content-type" ||
+           lower_key == "content-encoding" ||
+           lower_key == "content-range" ||
+           lower_key == "user-agent" ||
+           lower_key == "server";
 }
 
 HttpLexer::ParseState HttpLexer::_parseHeaders()
@@ -128,8 +129,6 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 
 	if (pos == std::string::npos)
 		return (PAUSE);
-
-    Logger::log(Logger::DEBUG, "End of headers found.");
 
 	std::vector<std::string> header_lines = _splitHeader(_buf.substr(0, pos));
 
@@ -159,20 +158,23 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
             continue;
 			
     	Logger::log(Logger::DEBUG, key + ":" + val);
+
+		HeaderMap::iterator key_in_map;
 		
-		if (_isNonDuplicableHeader(key))
+		if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
 		{
-			if (_req.non_duplicable_headers.find(key) != _req.non_duplicable_headers.end())
-				_handleStatusError(400, PARSE_ERROR);
-			Logger::log(Logger::DEBUG, "About to insert: <" + key + "> = <" + val + ">");
-			_req.non_duplicable_headers[key] = val;
+    		Logger::log(Logger::DEBUG, "About to insert: <" + key + "> = <" + val + ">");
+			_req.headers[key] = val;
 		}
 		else
 		{
-			Logger::log(Logger::DEBUG, "About to insert: <" + key + "> = <" + val + ">");
-			std::pair<std::string, std::string> pair= std::make_pair(key, val);
-			Logger::log(Logger::DEBUG, "Pair created.");
-			_req.duplicable_headers.insert(pair);
+			if (_isNonDuplicableHeader(key_in_map->first))
+				return (_handleStatusError(400, PARSE_ERROR));
+			else
+			{
+				Logger::log(Logger::DEBUG, "About to insert: <" + key_in_map->first + "> += <" + val + ">");
+				_req.headers[key_in_map->first] += "," + val; 
+			}
 		}
 	}
 

@@ -29,4 +29,6 @@
 
 # define MAX_CLIENT_SIZE 67108864
 
+# define DEBUG_MODE 1
+
 #endif

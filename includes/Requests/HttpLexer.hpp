@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/22 12:30:40 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/22 13:00:57 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@ class HttpLexer
 { 
 	public:
 		typedef std::map<std::string, std::string, CiLess> HeaderMap;
-		typedef std::multimap<std::string, std::string, CiLess> HeaderMultiMap;
 
 		enum HttpMethod {
 			HTTP_GET,
@@ -67,8 +66,7 @@ class HttpLexer
 			std::string			path;
 			std::string 		query;
 			std::string 		httpver;
-			HeaderMap			non_duplicable_headers;
-			HeaderMultiMap		duplicable_headers;
+			HeaderMap			headers;
 			bool				ischunked;
 			size_t				expectedoctets;
 			size_t				receivedoctets;

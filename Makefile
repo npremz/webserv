@@ -8,7 +8,7 @@ NAME            :=		webserv
 ########################################################################################
 
 COMP            :=      c++
-CFLAGS          :=      -Wall -Wextra -Werror -MMD -MP -pedantic -std=c++98
+CFLAGS          :=      -Wall -Wextra -Werror -MMD -MP -pedantic -std=c++98 -fsanitize=address -g
 
 ########################################################################################
 #------------------------SOURCE+OBJECT+DEPENDANCE_FILE---------------------------------#

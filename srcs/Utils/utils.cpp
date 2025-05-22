@@ -101,3 +101,10 @@ std::string ipPortToString(const s_ip_port& ip_port)
     return (oss.str());
 }
 
+std::string to_lowercase(const std::string& input) {
+    std::string output = input;
+    for (std::string::size_type i = 0; i < output.length(); ++i) {
+        output[i] = static_cast<char>(std::tolower(output[i]));
+    }
+    return output;
+}

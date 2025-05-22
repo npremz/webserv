@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/21 13:11:17 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/22 13:18:05 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,13 +113,14 @@ std::vector<std::string>	HttpLexer::_splitHeader(std::string header_block)
 }
 
 bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
-    return key == "Host" ||
-           key == "Content-Length" ||
-           key == "Content-Type" ||
-           key == "Content-Encoding" ||
-           key == "Content-Range" ||
-           key == "User-Agent" ||
-           key == "Server";
+	std::string lower_key = to_lowercase(key);
+    return lower_key == "host" ||
+           lower_key == "content-length" ||
+           lower_key == "content-type" ||
+           lower_key == "content-encoding" ||
+           lower_key == "content-range" ||
+           lower_key == "user-agent" ||
+           lower_key == "server";
 }
 
 HttpLexer::ParseState HttpLexer::_parseHeaders()
@@ -134,21 +135,47 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 	for (std::vector<std::string>::iterator it = header_lines.begin(); 
 		it != header_lines.end(); ++it)
 	{
+		if ((*it).empty())
+            continue;
+
 		size_t		delim = (*it).find(':');
+		if (delim == std::string::npos)
+            continue;
+
 		std::string key = (*it).substr(0, delim);
 		std::string val = (*it).substr(delim + 1);
 
-		while (!(*it).empty() && ((*it)[0] == ' ' || (*it)[0] == '\r'))
-            (*it).erase(0, 1);
+		while (!key.empty() && (key[0] == ' ' || key[0] == '\t'))
+            key.erase(0, 1);
+        while (!key.empty() && (key[key.length() - 1] == ' ' || key[key.length() - 1] == '\t'))
+            key.erase(key.length() - 1, 1);
+        while (!val.empty() && (val[0] == ' ' || val[0] == '\t'))
+            val.erase(0, 1);
+        while (!val.empty() && (val[val.length() - 1] == ' ' || val[val.length() - 1] == '\t'))
+            val.erase(val.length() - 1, 1);
+
+        if (key.empty())
+            continue;
+			
+    	Logger::log(Logger::DEBUG, key + ":" + val);
+
+		HeaderMap::iterator key_in_map;
 		
-		if (_isNonDuplicableHeader(key))
+		if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
 		{
-			if (_req.non_duplicable_headers.find(key) != _req.non_duplicable_headers.end())
-				_handleStatusError(400, PARSE_ERROR);
-			_req.non_duplicable_headers[key] = val;
+    		Logger::log(Logger::DEBUG, "About to insert: <" + key + "> = <" + val + ">");
+			_req.headers[key] = val;
 		}
 		else
-			_req.duplicable_headers.insert(std::make_pair(key, val));
+		{
+			if (_isNonDuplicableHeader(key_in_map->first))
+				return (_handleStatusError(400, PARSE_ERROR));
+			else
+			{
+				Logger::log(Logger::DEBUG, "About to insert: <" + key_in_map->first + "> += <" + val + ">");
+				_req.headers[key_in_map->first] += "," + val; 
+			}
+		}
 	}
 
 	return (GOOD);
@@ -170,17 +197,21 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 		switch (_state)
 		{
 		case START_LINE:
+        	Logger::log(Logger::DEBUG, "Startline parsing...");
 			parsing_state = _parseStartLine();
 			if (parsing_state == GOOD)
 			{
 				_state = HEADERS;
+        		Logger::log(Logger::DEBUG, "Startline parsing done.");
 			}
 			break;
 		case HEADERS:
+        	Logger::log(Logger::DEBUG, "Header parsing...");
 			parsing_state = _parseHeaders();
 			if (parsing_state == GOOD)
 			{
 				_state = DONE;
+        		Logger::log(Logger::DEBUG, "Header parsing done");
 			}
 			break;
 		default:

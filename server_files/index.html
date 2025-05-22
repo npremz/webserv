@@ -1,11 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webserv</title>
+    <title>Test Webserv</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
 </head>
+
 <body>
-    Hello World
+    <div class="container fade-in">
+        <h1 class="main-title">Testeur Webserv</h1>
+        <!-- Upload Form -->
+        <section class="section">
+            <h2 class="section-title">Uploader un fichier (POST /)</h2>
+            <form id="uploadForm" class="form" enctype="multipart/form-data">
+                <label for="file-upload" class="file-label">Choisir un fichier</label>
+                <input type="file" id="file-upload" name="file" class="input-file" required />
+                <span id="selectedFile" class="selected-file"></span>
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+                <div id="uploadMsg" class="msg"></div>
+            </form>
+        </section>
+        <!-- Liste des fichiers -->
+        <section class="section">
+            <h2 class="section-title">Fichiers dans /images (GET /images)</h2>
+            <button id="refreshBtn" class="btn btn-secondary">Rafraîchir</button>
+            <ul id="fileList" class="file-list"></ul>
+            <div id="fileMsg" class="msg"></div>
+        </section>
+        <!-- CGI Test -->
+        <section class="section">
+            <h2 class="section-title">Tester un CGI (PHP ou Python)</h2>
+            <form id="cgiForm" class="form">
+                <label class="label">Chemin du script (ex: <code>/scripts/test.py</code> ou
+                    <code>/index.php</code>)</label>
+                <input type="text" name="script" placeholder="/scripts/test.py" required class="input-text" />
+                <label class="label">Paramètres (clé=valeur, séparés par &)</label>
+                <input type="text" name="params" placeholder="foo=bar&baz=qux" class="input-text" />
+                <button type="submit" class="btn btn-success">Exécuter CGI</button>
+                <div id="cgiMsg" class="msg"></div>
+            </form>
+            <pre id="cgiResult" class="cgi-result"></pre>
+        </section>
+        <!-- Section supplémentaire pour les tests avancés -->
+        <section class="section">
+            <h2 class="section-title">Tests avancés</h2>
+            <ul class="test-list">
+                <li><b>Test d'erreur personnalisée</b> : <button id="test404" class="btn btn-danger">404</button> <span
+                        id="msg404"></span></li>
+                <li><b>Test de redirection</b> : <button id="testRedirect" class="btn btn-warning">/old-path</button>
+                    <span id="msgRedirect"></span>
+                </li>
+                <li><b>Test d'autoindex</b> : <button id="testAutoindex" class="btn btn-info">/images</button> <span
+                        id="msgAutoindex"></span></li>
+                <li><b>Test POST sur une route CGI</b> : <button id="testPostCgi" class="btn btn-success">POST
+                        /scripts/test.py</button> <span id="msgPostCgi"></span></li>
+                <li><b>Test limite taille upload</b> : <button id="testBigUpload" class="btn btn-purple">Fichier &gt;
+                        4Mo</button> <span id="msgBigUpload"></span></li>
+            </ul>
+        </section>
+    </div>
+    <script src="main.js"></script>
 </body>
+
 </html>

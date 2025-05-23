@@ -12,13 +12,8 @@
 
 #include "GET.hpp"
 
-bool isDirectory(const std::string& path) {
-    struct stat statbuf;
-    return (stat(path.c_str(), &statbuf) == 0 && S_ISDIR(statbuf.st_mode));
-}
-
 std::string generateAutoIndex() { // TO DO
-
+    return "";
 }
 
 std::string handleGET(const std::string& uriPath, const std::string& root, bool autoindex) {
@@ -27,7 +22,7 @@ std::string handleGET(const std::string& uriPath, const std::string& root, bool 
     struct stat pathStat;
     if (stat(fullPath.c_str(), &pathStat) == 0) {
         if (S_ISDIR(pathStat.st_mode)) {
-            if (fullPath.back() != '/')
+            if (*(fullPath.end()) != '/')
                 fullPath += "/";
 
             std::string indexPath = fullPath + "index.html";

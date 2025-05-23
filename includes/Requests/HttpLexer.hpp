@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/22 13:00:57 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/22 15:51:19 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,6 +83,7 @@ class HttpLexer
 		ParseState					_handleStatusError(unsigned int endstatus, ParseState state);
 		ParseState					_parseStartLine();
 		ParseState					_parseHeaders();
+		ParseState					_parseBody();
 
 		std::vector<std::string>	_splitHeader(std::string _buf);
 		bool 						_isNonDuplicableHeader(const std::string& key);

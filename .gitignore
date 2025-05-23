@@ -31,6 +31,6 @@
 *.out
 *.app
 
-.vscode/settings.json
+settings.json
 
 webserv

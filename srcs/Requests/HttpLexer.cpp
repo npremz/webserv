@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/22 15:08:36 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/22 16:04:47 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_handleStatusError(400, PARSE_ERROR);
 	_req.httpver = httpv.substr(pos + 1);
 	_buf.erase(0, end);
+	Logger::log(Logger::DEBUG, std::string(_req.method == HTTP_GET ? "GET" : "") + std::string(_req.method == HTTP_POST ? "POST" : "") + std::string(_req.method == HTTP_DELETE ? "DELETE" : "") + " " + _req.targetraw + " " + _req.httpver);
 	return (GOOD);
 }
 
@@ -167,7 +168,6 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 		
 		if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
 		{
-    		Logger::log(Logger::DEBUG, "About to insert: <" + key + "> = <" + val + ">");
 			_req.headers[key] = val;
 		}
 		else
@@ -176,11 +176,22 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 				return (_handleStatusError(400, PARSE_ERROR));
 			else
 			{
-				Logger::log(Logger::DEBUG, "About to insert: <" + key_in_map->first + "> += <" + val + ">");
 				_req.headers[key_in_map->first] += "," + val; 
 			}
 		}
 	}
+	_buf.erase(0, pos + 4);
+	return (GOOD);
+}
+
+HttpLexer::ParseState HttpLexer::_parseBody()
+{
+	std::string::size_type 	pos = _buf.find("\r\n\r\n");
+
+	if (pos == std::string::npos)
+		return (PAUSE);
+
+	std::cout << _buf << std::endl;
 
 	return (GOOD);
 }
@@ -214,8 +225,21 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			parsing_state = _parseHeaders();
 			if (parsing_state == GOOD)
 			{
-				_state = DONE;
+				if (_req.headers.find("content-length") != _req.headers.end()
+					|| _req.headers.find("transfer-encoding") != _req.headers.end())
+					_state = BODY;
+				else
+					_state = DONE;
         		Logger::log(Logger::DEBUG, "Header parsing done");
+			}
+			break;
+		case BODY:
+			Logger::log(Logger::DEBUG, "Body parsing...");
+			parsing_state = _parseBody();
+			if (parsing_state == GOOD)
+			{
+				_state = DONE;
+        		Logger::log(Logger::DEBUG, "Body parsing done");
 			}
 			break;
 		default:

@@ -67,6 +67,8 @@ bool    isNumeric(const std::string& s)
 }
 
 unsigned int ipStringToInt(const std::string& ip) {
+    if (ip == "localhost")
+        return 2130706433;
     unsigned int a, b, c, d;
     char dot;
     std::istringstream iss(ip);

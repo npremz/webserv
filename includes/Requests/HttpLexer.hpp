@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/22 15:51:19 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/23 10:30:54 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,8 @@ class HttpLexer
 			size_t				receivedoctets;
 			unsigned int		endstatus;
 			size_t				headerbytes;
+			bool				has_host;
+			s_ip_port			host;
 		};
 
 	private:
@@ -87,6 +89,8 @@ class HttpLexer
 
 		std::vector<std::string>	_splitHeader(std::string _buf);
 		bool 						_isNonDuplicableHeader(const std::string& key);
+        bool        				_isValidHostValue(const std::string& val);
+
 
 
 	public:
@@ -95,7 +99,7 @@ class HttpLexer
 		~HttpLexer();
 		
 		Status				feed(const char *data, size_t len);
-		const parsedRequest &getrequest() const;
+		const parsedRequest &getRequest() const;
 
 };
 

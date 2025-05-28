@@ -6,14 +6,16 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/22 15:08:36 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/23 10:32:33 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Requests/HttpLexer.hpp"
 
 HttpLexer::HttpLexer() : _state(START_LINE), _req_size(0)
-{}
+{
+	_req.has_host = false;
+}
 
 HttpLexer::~HttpLexer()
 {}
@@ -90,6 +92,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_handleStatusError(400, PARSE_ERROR);
 	_req.httpver = httpv.substr(pos + 1);
 	_buf.erase(0, end);
+	Logger::log(Logger::DEBUG, std::string(_req.method == HTTP_GET ? "GET" : "") + std::string(_req.method == HTTP_POST ? "POST" : "") + std::string(_req.method == HTTP_DELETE ? "DELETE" : "") + " " + _req.targetraw + " " + _req.httpver);
 	return (GOOD);
 }
 
@@ -121,6 +124,33 @@ bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
            lower_key == "content-range" ||
            lower_key == "user-agent" ||
            lower_key == "server";
+}
+
+bool        HttpLexer::_isValidHostValue(const std::string& val)
+{
+	size_t		dual_dots_pos = val.find(':');
+	std::string ip_str = val.substr(0, dual_dots_pos);
+        
+	unsigned int ip = ipStringToInt(ip_str);
+	if (ip == 4294967295)
+		return (false);
+
+	s_ip_port ip_port;
+	ip_port.ip = ip;
+
+	std::string port_str = val.substr(dual_dots_pos + 1);\
+	if (!isNumeric(port_str))
+		return (false);
+	std::istringstream  iss(port_str);
+	unsigned int        port;
+	if (iss >> port && port < 65536)
+	{
+		ip_port.port = port;
+		_req.host = ip_port;
+	}
+	else
+		return (false);
+	return (true);
 }
 
 HttpLexer::ParseState HttpLexer::_parseHeaders()
@@ -163,24 +193,44 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 			
     	Logger::log(Logger::DEBUG, key + ":" + val);
 
-		HeaderMap::iterator key_in_map;
-		
-		if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
+		if (to_lowercase(key) == "host")
 		{
-    		Logger::log(Logger::DEBUG, "About to insert: <" + key + "> = <" + val + ">");
-			_req.headers[key] = val;
+			if (!_isValidHostValue(val))
+				return (_handleStatusError(400, PARSE_ERROR));
+			_req.has_host = true;
+			Logger::log(Logger::DEBUG, "Host detected: " + ipPortToString(_req.host));
 		}
 		else
 		{
-			if (_isNonDuplicableHeader(key_in_map->first))
-				return (_handleStatusError(400, PARSE_ERROR));
+			HeaderMap::iterator key_in_map;
+			
+			if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
+			{
+				_req.headers[key] = val;
+			}
 			else
 			{
-				Logger::log(Logger::DEBUG, "About to insert: <" + key_in_map->first + "> += <" + val + ">");
-				_req.headers[key_in_map->first] += "," + val; 
+				if (_isNonDuplicableHeader(key_in_map->first))
+					return (_handleStatusError(400, PARSE_ERROR));
+				else
+				{
+					_req.headers[key_in_map->first] += "," + val; 
+				}
 			}
 		}
 	}
+	_buf.erase(0, pos + 4);
+	return (GOOD);
+}
+
+HttpLexer::ParseState HttpLexer::_parseBody()
+{
+	std::string::size_type 	pos = _buf.find("\r\n\r\n");
+
+	if (pos == std::string::npos)
+		return (PAUSE);
+
+	std::cout << _buf << std::endl;
 
 	return (GOOD);
 }
@@ -214,8 +264,23 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			parsing_state = _parseHeaders();
 			if (parsing_state == GOOD)
 			{
-				_state = DONE;
+				if (_req.headers.find("content-length") != _req.headers.end()
+					|| _req.headers.find("transfer-encoding") != _req.headers.end())
+					_state = BODY;
+				else if (!_req.has_host)
+					_state = ERROR;
+				else
+					_state = DONE;
         		Logger::log(Logger::DEBUG, "Header parsing done");
+			}
+			break;
+		case BODY:
+			Logger::log(Logger::DEBUG, "Body parsing...");
+			parsing_state = _parseBody();
+			if (parsing_state == GOOD)
+			{
+				_state = DONE;
+        		Logger::log(Logger::DEBUG, "Body parsing done");
 			}
 			break;
 		default:
@@ -227,4 +292,9 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 	if (_state == ERROR)
 		return (ERR);
 	return (COMPLETE);
+}
+
+const HttpLexer::parsedRequest& HttpLexer::getRequest() const
+{
+	return (_req);
 }

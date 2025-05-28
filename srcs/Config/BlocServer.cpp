@@ -90,7 +90,7 @@ void    BlocServer::_handleListen(std::vector<std::string> tokens)
             Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
         std::istringstream  iss(port_str);
         unsigned int        port;
-        if (iss >> port && port < 65535)
+        if (iss >> port && port < 65536)
         {
             ip_port.port = port;
             this->_ip_tab.push_back(ip_port);

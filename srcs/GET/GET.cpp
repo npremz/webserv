@@ -34,6 +34,7 @@ std::string generateAutoIndex(const std::string& fullPath, const std::string& ur
 
     html << "</ul></body></html>";
     return html.str();
+
 }
 
 std::string handleGET(const std::string& uriPath, const std::string& root, bool autoindex) {
@@ -42,7 +43,7 @@ std::string handleGET(const std::string& uriPath, const std::string& root, bool 
     struct stat pathStat;
     if (stat(fullPath.c_str(), &pathStat) == 0) {
         if (S_ISDIR(pathStat.st_mode)) {
-            if (fullPath.back() != '/')
+            if (*(fullPath.end()) != '/')
                 fullPath += "/";
 
             std::string indexPath = fullPath + "index.html";

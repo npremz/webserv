@@ -10,11 +10,18 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <dirent.h>
-#include <sys/stat.h>
+#ifndef GET_HPP
+# define GET_HPP
+
+# include <string>
+# include <iostream>
+# include <fstream>
+# include <sstream>
+# include <dirent.h>
+# include <sys/stat.h>
+
+# include "../../includes/Utils/utils.hpp"
 
 std::string handleGET(const std::string& uriPath, const std::string& root, bool autoindex);
+
+#endif

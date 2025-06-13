@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/26 13:46:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/13 10:58:32 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,30 +16,41 @@
 # include <sys/socket.h>
 
 # include "../Config/BlocServer.hpp"
+# include "../Server/ServerManager.hpp"
 # include "../Utils/utils.hpp"
 # include "../Requests/HttpLexer.hpp"
+
+class ServerManager;
 
 class Client
 {
     private:
-        HttpLexer   _lexer;
-        int         _socket_fd;
-        RouterMap   _router;
-        char        _buf[1024];
-        std::string _request;
-        BlocServer* _response_ctx;
+        HttpLexer       _lexer;
+        int             _socket_fd;
+        RouterMap       _router;
+        char            _buf[4096];
+        std::string     _request;
+        std::string     _response_str;
+        size_t          _response_len;
+        size_t          _response_sent;
+        BlocServer*     _response_ctx;
+        ServerManager*  _server;
 
-        BlocServer* _responseRouting();
+        BlocServer*     _responseRouting();
         
+        void            _addEpollout();
+        void            _removeEpollout();
+        void            _prepareAndSend();
 
     public:
         bool        isFinished;
        
-        Client(int fd, RouterMap& router);
+        Client(int fd, RouterMap& router, ServerManager* server);
         ~Client();
 
-        void    execRequest();
         void    handleRequest();
         void    handleResponse();
+        void    handleSend();
+
 };
 #endif

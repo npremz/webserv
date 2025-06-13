@@ -12,11 +12,6 @@
 
 #include "GET.hpp"
 
-bool isDirectory(const std::string& path) {
-    struct stat statbuf;
-    return (stat(path.c_str(), &statbuf) == 0 && S_ISDIR(statbuf.st_mode));
-}
-
 std::string generateAutoIndex(const std::string& fullPath, const std::string& uriPath) {
     std::ostringstream html;
     html << "<html><head><title>Index of " << uriPath << "</title></head><body>";

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/06/13 10:04:36 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/13 11:01:25 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ class HttpLexer
 			size_t				expectedoctets;
 			size_t				receivedoctets;
 			unsigned int		endstatus;
-			int					content_lenght;
+			size_t				content_lenght;
 			std::string			body;
 			size_t				headerbytes;
 			bool				has_host;

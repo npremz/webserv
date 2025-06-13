@@ -33,6 +33,7 @@
 # include "../Utils/utils.hpp"
 # include "../Server/Client.hpp"
 
+class Client;
 
 class ServerManager
 {
@@ -72,6 +73,8 @@ class ServerManager
         void                    initConfig(std::string config_src);
         void                    run();
         void                    stop();
+
+        int               getEpollFd() const;
 
 };
 

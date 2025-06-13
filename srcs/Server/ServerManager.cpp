@@ -141,7 +141,7 @@ int     ServerManager::_isListenSocket(int event_fd)
 }
 
 void    ServerManager::_addClient(int fd) {
-    _clients[fd] = new Client(fd, _router);
+    _clients[fd] = new Client(fd, _router, this);
     _client_fds.push_back(fd);
 }
 
@@ -246,7 +246,7 @@ void    ServerManager::_run()
                 if (fcntl(c_socket_fd, F_SETFL, O_NONBLOCK) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => fcntl c_socket error");
                 epoll_event ev;
-                ev.events = EPOLLIN | EPOLLOUT;
+                ev.events = EPOLLIN;
                 ev.data.fd = c_socket_fd;
                 if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
@@ -258,7 +258,7 @@ void    ServerManager::_run()
                     if (events[i].events & EPOLLIN)
                         c_client->handleRequest();
                     if (events[i].events & EPOLLOUT)
-                        c_client->handleResponse();
+                        c_client->handleSend();
                 }
                 catch (const std::exception &e)
                 {
@@ -300,4 +300,9 @@ void    ServerManager::stop()
 {
     if (write(_exit_pipe[1], "waf", 4) == -1)
         Logger::log(Logger::FATAL, "Write to fd error");
+}
+
+int   ServerManager::getEpollFd() const
+{
+    return (this->_epoll_fd);
 }

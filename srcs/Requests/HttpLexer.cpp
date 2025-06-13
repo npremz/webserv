@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/06/13 10:04:45 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/13 11:01:58 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -252,6 +252,7 @@ HttpLexer::ParseState HttpLexer::_bodyParseCL()
 		_buf.erase(0, _req.content_lenght);
 		return (GOOD);
 	}
+	return (PARSE_ERROR);
 }
 
 HttpLexer::ParseState HttpLexer::_bodyParseChunked()

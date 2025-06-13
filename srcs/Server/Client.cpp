@@ -6,16 +6,19 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/26 13:44:49 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/13 11:12:18 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Server/Client.hpp"
 
-Client::Client(int fd, RouterMap& router) :
+Client::Client(int fd, RouterMap& router, ServerManager* server) :
     _socket_fd(fd),
     _router(router),
+    _response_len(0),
+    _response_sent(0),
     _response_ctx(NULL),
+    _server(server),
     isFinished(false)
 {}
 
@@ -59,7 +62,9 @@ void    Client::handleRequest()
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
-            
+            Logger::log(Logger::DEBUG, "Request parsed");
+            handleResponse();
+            Logger::log(Logger::DEBUG, "Response created");
             break;
         }
         else if (c_status == HttpLexer::ERR)
@@ -69,5 +74,57 @@ void    Client::handleRequest()
 
 void    Client::handleResponse()
 {
-    isFinished = true;
+    _response_str = "HTTP/1.1 200 OK\r\n\r\nHello";
+    _prepareAndSend();
+}
+
+void    Client::_addEpollout()
+{
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLOUT;
+    ev.data.fd = _socket_fd;
+    epoll_ctl(_server->getEpollFd(), EPOLL_CTL_MOD, _socket_fd, &ev);
+}
+
+void    Client::_removeEpollout()
+{
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = _socket_fd;
+    epoll_ctl(_server->getEpollFd(), EPOLL_CTL_MOD, _socket_fd, &ev); 
+}
+
+void    Client::_prepareAndSend()
+{
+    strcpy(_buf, _response_str.c_str());
+    _response_len  = strlen(_response_str.c_str());
+    _response_sent = 0;
+    _addEpollout();
+}
+
+void    Client::handleSend()
+{
+    Logger::log(Logger::DEBUG, "Sending response...");
+    while (_response_sent < _response_len) {
+        ssize_t n = send(_socket_fd,
+                         _buf + _response_sent,
+                         _response_len - _response_sent,
+                         MSG_NOSIGNAL);
+
+        if (n > 0) {
+            _response_sent += n;
+            if (_response_sent == _response_len) {
+                _removeEpollout();
+            }
+            Logger::log(Logger::DEBUG, "Response totally sent");
+            isFinished = true;
+        } else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            Logger::log(Logger::DEBUG, "Response partially sent");
+            break;
+        } else {
+            Logger::log(Logger::DEBUG, "CATASTROPHE");
+            // A faire: clean client + fermeture.
+            break;
+        }
+    }
 }

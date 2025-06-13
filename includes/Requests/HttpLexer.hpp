@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/23 10:30:54 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/11 12:21:20 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,8 @@ class HttpLexer
 			size_t				expectedoctets;
 			size_t				receivedoctets;
 			unsigned int		endstatus;
+			int					content_lenght;
+			std::string			body;
 			size_t				headerbytes;
 			bool				has_host;
 			s_ip_port			host;
@@ -86,6 +88,8 @@ class HttpLexer
 		ParseState					_parseStartLine();
 		ParseState					_parseHeaders();
 		ParseState					_parseBody();
+		ParseState					_bodyParseChunked();
+		ParseState					_bodyParseCL();
 
 		std::vector<std::string>	_splitHeader(std::string _buf);
 		bool 						_isNonDuplicableHeader(const std::string& key);

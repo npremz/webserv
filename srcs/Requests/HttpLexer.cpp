@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/05/23 10:32:33 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/11 15:10:03 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,8 @@ HttpLexer::ParseState HttpLexer::_handleStatusError(unsigned int endstatus, Pars
 
 HttpLexer::ParseState HttpLexer::_parseStartLine()
 {
-	std::string::size_type 	end;
 	std::string::size_type 	pos;
+	std::string::size_type 	end;
 	std::string 			method;
 	std::string 			target;
 	std::string 			httpv;
@@ -40,16 +40,11 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	if (end == std::string::npos)
 		return (PAUSE);
 	pos = end;
-	_req_size += pos + 2;
-	if (_req_size > MAX_CLIENT_SIZE)
-	{
-
-	}
 
 	std::istringstream iss(_buf.substr(0, pos));
 	iss >> method >> target >> httpv;
 	if (method.empty() || target.empty() || httpv.empty())
-		_handleStatusError(400, PARSE_ERROR);
+		return (_handleStatusError(400, PARSE_ERROR));
 	if (method == "GET")
 		_req.method = HTTP_GET;
 	else if (method == "HEAD")
@@ -71,7 +66,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	else
 	{
 		_req.method = HTTP_UNKNOWN;
-		_handleStatusError(405, PARSE_ERROR);
+		return (_handleStatusError(405, PARSE_ERROR));
 	}
 
 	_req.targetraw = target;
@@ -84,12 +79,12 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_req.query = target.substr(pos + 1);
 	}
 	if (httpv.length() != 8)
-		_handleStatusError(400, PARSE_ERROR);
+		return (_handleStatusError(400, PARSE_ERROR));
 	pos = httpv.find("/");
 	if (pos == std::string::npos)
-		_handleStatusError(400, PARSE_ERROR);
+		return (_handleStatusError(400, PARSE_ERROR));
 	if (httpv.substr(0, pos + 1) != "HTTP/")
-		_handleStatusError(400, PARSE_ERROR);
+		return (_handleStatusError(400, PARSE_ERROR));
 	_req.httpver = httpv.substr(pos + 1);
 	_buf.erase(0, end);
 	Logger::log(Logger::DEBUG, std::string(_req.method == HTTP_GET ? "GET" : "") + std::string(_req.method == HTTP_POST ? "POST" : "") + std::string(_req.method == HTTP_DELETE ? "DELETE" : "") + " " + _req.targetraw + " " + _req.httpver);
@@ -223,16 +218,54 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 	return (GOOD);
 }
 
+HttpLexer::ParseState HttpLexer::_bodyParseCL()
+{
+	if (_buf.size() < _req.content_lenght)
+		return (PAUSE);
+	else if (_buf.size() >= _req.content_lenght)
+	{
+		_req.body.append(_buf, 0, _req.content_lenght);
+		_buf.erase(0, _req.content_lenght);
+		return (GOOD);
+	}
+}
+
+HttpLexer::ParseState HttpLexer::_bodyParseChunked()
+{
+	int chunk_size;
+	std::string::size_type 	pos;
+
+	while (true)
+	{
+		std::stringstream ss;
+		pos = _buf.find("\r\n");
+		if (pos == std::string::npos)
+			return (PAUSE);
+    	ss << _buf.substr(0, pos);
+		ss >> std::hex >> chunk_size;
+		if (ss.fail())
+			return (_handleStatusError(400, PARSE_ERROR));
+		if (chunk_size == 0)
+		{
+			if (_buf.size() < pos + 4)
+				return (PAUSE);
+			_buf.erase(0, pos + 4);
+			return (GOOD);
+		}
+		if (_buf.size() < ((pos + 2) + chunk_size + 2))
+			return (PAUSE);
+		_req.body.append(_buf, pos + 2, chunk_size);
+		_buf.erase(0, ((pos + 2) + chunk_size + 2));
+	}
+}
+
 HttpLexer::ParseState HttpLexer::_parseBody()
 {
-	std::string::size_type 	pos = _buf.find("\r\n\r\n");
+	if (_req.ischunked)
+		return (_bodyParseChunked());
+	else
+		return (_bodyParseCL());
 
-	if (pos == std::string::npos)
-		return (PAUSE);
-
-	std::cout << _buf << std::endl;
-
-	return (GOOD);
 }
 
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)

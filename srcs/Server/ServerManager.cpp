@@ -246,7 +246,7 @@ void    ServerManager::_run()
                 if (fcntl(c_socket_fd, F_SETFL, O_NONBLOCK) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => fcntl c_socket error");
                 epoll_event ev;
-                ev.events = EPOLLIN;
+                ev.events = EPOLLIN | EPOLLOUT;
                 ev.data.fd = c_socket_fd;
                 if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
@@ -255,7 +255,10 @@ void    ServerManager::_run()
                 Client* c_client = _clients[events[i].data.fd];
                 try 
                 {
-                    c_client->handleRequest();
+                    if (events[i].events & EPOLLIN)
+                        c_client->handleRequest();
+                    if (events[i].events & EPOLLOUT)
+                        c_client->handleResponse();
                 }
                 catch (const std::exception &e)
                 {

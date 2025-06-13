@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/06/11 15:10:03 by armetix          ###   ########.fr       */
+/*   Updated: 2025/06/13 10:04:45 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,6 +148,18 @@ bool        HttpLexer::_isValidHostValue(const std::string& val)
 	return (true);
 }
 
+bool	HttpLexer::_isValidContentLengthValue(const std::string& val)
+{
+	if (!isNumeric(val))
+		return false;
+	std::istringstream 	iss(val);
+	size_t 				len;
+	
+	iss >> len;
+	_req.expectedoctets = len;
+	return (true);
+}
+
 HttpLexer::ParseState HttpLexer::_parseHeaders()
 {	
 	std::string::size_type 	pos = _buf.find("\r\n\r\n");
@@ -186,7 +198,7 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
         if (key.empty())
             continue;
 			
-    	Logger::log(Logger::DEBUG, key + ":" + val);
+    	Logger::log(Logger::DEBUG, "<" + key + ">:<" + val + ">");
 
 		if (to_lowercase(key) == "host")
 		{
@@ -194,6 +206,18 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 				return (_handleStatusError(400, PARSE_ERROR));
 			_req.has_host = true;
 			Logger::log(Logger::DEBUG, "Host detected: " + ipPortToString(_req.host));
+		}
+		else if (to_lowercase(key) == "content-length")
+		{
+			if (!_isValidContentLengthValue(val))
+				return (_handleStatusError(400, PARSE_ERROR));
+			Logger::log(Logger::DEBUG, "Content-length detected: " + val);
+		}
+		else if (to_lowercase(key) == "transfer-encoding")
+		{
+			if (val == "chunked")
+				_req.ischunked = true;
+			Logger::log(Logger::DEBUG, "transfer-encoding detected: " + val);
 		}
 		else
 		{
@@ -297,10 +321,7 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			parsing_state = _parseHeaders();
 			if (parsing_state == GOOD)
 			{
-				if (_req.headers.find("content-length") != _req.headers.end()
-					|| _req.headers.find("transfer-encoding") != _req.headers.end())
-					_state = BODY;
-				else if (!_req.has_host)
+				if (!_req.has_host)
 					_state = ERROR;
 				else
 					_state = DONE;

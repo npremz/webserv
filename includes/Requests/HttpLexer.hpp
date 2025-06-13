@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/06/11 12:21:20 by armetix          ###   ########.fr       */
+/*   Updated: 2025/06/13 10:04:36 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,7 @@ class HttpLexer
 		std::vector<std::string>	_splitHeader(std::string _buf);
 		bool 						_isNonDuplicableHeader(const std::string& key);
         bool        				_isValidHostValue(const std::string& val);
+		bool						_isValidContentLengthValue(const std::string& val);
 
 
 

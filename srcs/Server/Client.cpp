@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/23 11:03:12 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/26 13:44:49 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,8 @@
 Client::Client(int fd, RouterMap& router) :
     _socket_fd(fd),
     _router(router),
-    isFinished(false),
-    _response_ctx(NULL)
+    _response_ctx(NULL),
+    isFinished(false)
 {}
 
 Client::~Client()
@@ -59,6 +59,7 @@ void    Client::handleRequest()
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
+            
             break;
         }
         else if (c_status == HttpLexer::ERR)

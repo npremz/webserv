@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/05/23 10:20:04 by npremont         ###   ########.fr       */
+/*   Updated: 2025/05/26 13:46:58 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ class Client
         Client(int fd, RouterMap& router);
         ~Client();
 
+        void    execRequest();
         void    handleRequest();
         void    handleResponse();
 };

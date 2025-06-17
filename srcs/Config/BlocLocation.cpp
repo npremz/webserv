@@ -17,12 +17,12 @@ BlocLocation::BlocLocation(BlocServer* parent, std::string location_path,
     std::vector<std::string> content) : 
     _parent(parent),
     _location_path(location_path),
-    _get(true),
-    _post(true),
-    _delete(true),
-    _autoindex(false),
+    _get(parent->getGetMethod()),
+    _post(parent->getPostMethod()),
+    _delete(parent->getDeleteMethod()),
+    _autoindex(parent->getAutoindex()),
     _upload_enable(false),
-    _client_max_body_size(4096)
+    _client_max_body_size(parent->getClientMaxBodySize())
 {
     this->_return.is_set = false;
     this->_initFunctionTable();

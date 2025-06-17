@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/06/13 11:01:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/17 14:20:26 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 HttpLexer::HttpLexer() : _state(START_LINE), _req_size(0)
 {
+	_req.endstatus = 200;
 	_req.has_host = false;
 }
 
@@ -66,7 +67,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	else
 	{
 		_req.method = HTTP_UNKNOWN;
-		return (_handleStatusError(405, PARSE_ERROR));
+		return (_handleStatusError(400, PARSE_ERROR));
 	}
 
 	_req.targetraw = target;
@@ -212,6 +213,8 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 			if (!_isValidContentLengthValue(val))
 				return (_handleStatusError(400, PARSE_ERROR));
 			Logger::log(Logger::DEBUG, "Content-length detected: " + val);
+			if (_req.expectedoctets > MAX_CLIENT_SIZE)
+				return (_handleStatusError(413, PARSE_ERROR));
 		}
 		else if (to_lowercase(key) == "transfer-encoding")
 		{

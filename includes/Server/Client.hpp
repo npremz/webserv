@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/13 10:58:32 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/17 10:34:05 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include "../Server/ServerManager.hpp"
 # include "../Utils/utils.hpp"
 # include "../Requests/HttpLexer.hpp"
+# include "../Requests/Response.hpp"
 
 class ServerManager;
 

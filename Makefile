@@ -22,7 +22,7 @@ SRC             :=      main.cpp \
 						Logger/Logger.cpp \
 						CGI/CGI.cpp \
 						GET/GET.cpp \
-						Requests/HttpLexer.cpp
+						Requests/HttpLexer.cpp Requests/Response.cpp
 
 
 SRCPATH         :=      ./srcs/

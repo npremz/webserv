@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/13 11:12:18 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/17 11:29:54 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,8 @@ void    Client::handleRequest()
 
 void    Client::handleResponse()
 {
-    _response_str = "HTTP/1.1 200 OK\r\n\r\nHello";
+    Response rep(_response_ctx, _lexer.getRequest());
+    _response_str = rep.createResponseSTR();
     _prepareAndSend();
 }
 

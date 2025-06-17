@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/17 14:19:28 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/17 17:20:53 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ std::string Response::_createResponse(unsigned int code, std::string msg, std::s
     oss_body << bodyStr;
 
     oss << oss_header.str()
-        << "Content-Type: text/html\r\n"
+        << "Content-Type: " << _content_type << "\r\n"
         << "Content-length: " << oss_body.str().size() << "\r\n\r\n"
         << oss_body.str();
 
@@ -158,16 +158,143 @@ bool    Response::_isMethodSupportedByRoute()
     return false;
 }
 
+std::string Response::_testIndex(std::string URI)
+{
+    if (_location_ctx)
+    {
+        for (std::vector<std::string>::const_iterator it = _location_ctx->getIndex().begin();
+            it < _location_ctx->getIndex().end(); it ++)
+        {
+            if (access((URI + (*it)).c_str(), R_OK) == 0)
+                return (URI + (*it));
+        }
+    }
+    else
+    {
+        for (std::vector<std::string>::const_iterator it = _ctx->getIndex().begin();
+            it < _ctx->getIndex().end(); it ++)
+        {
+            if (access((URI + (*it)).c_str(), R_OK) == 0)
+                return (URI + (*it));
+        }
+    }
+    return ("");
+}
+
+void    Response::_initContentType(std::string file)
+{
+    size_t dot_pos = file.find_last_of('.');
+    std::string ext = file.substr(dot_pos);
+
+    Logger::log(Logger::DEBUG, "response ext: " + ext);
+
+    if (".html" == ext)
+        _content_type = "text/html";
+    else if (".css" == ext)
+        _content_type = "text/css";
+    else if (".js" == ext)
+        _content_type = "application/javascript";
+    else if (".jpeg" == ext || ".jpg" == ext)
+        _content_type = "image/jpeg";
+    else
+        _content_type = "application/octet-stream";
+    
+}
+
+std::string Response::_generateAutoIndex(std::string fullpath)
+{
+    std::ostringstream html;
+    html << "<html><head><title>Index of " << _req.path << "</title></head><body>";
+    html << "<h1>Index of " << _req.path << "</h1><ul>";
+
+    DIR* dir = opendir(fullpath.c_str());
+    if (!dir) 
+        return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL) {
+        html << "<li><a href=\"" << _req.path << "/" << entry->d_name << "\">"
+             << entry->d_name << "</a></li>";
+    }
+    closedir(dir);
+
+    html << "</ul></body></html>";
+    return _createResponse(200, "OK", html.str());
+}
+
+std::string Response::_handleGet()
+{
+    std::string fullPath;
+    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
+        fullPath = _location_ctx->getRootPath() + _req.path;
+    else
+        if (_ctx->getRootPath().size() > 0)
+            fullPath = _ctx->getRootPath() + _req.path;
+    Logger::log(Logger::DEBUG, "path of location: " + fullPath);
+    struct stat pathStat;
+    if (stat(fullPath.c_str(), &pathStat) == 0) {
+        if (S_ISDIR(pathStat.st_mode)) {
+            std::string indexPath = _testIndex(fullPath);
+            Logger::log(Logger::DEBUG, "path of index: " + indexPath);
+            std::ifstream indexFile(indexPath.c_str());
+
+            if (indexFile.is_open())
+            {
+                _initContentType(indexPath);
+                std::ostringstream oss;
+                oss << indexFile.rdbuf();
+                return _createResponse(200, "OK", oss.str());
+            } 
+            else if (_location_ctx)
+            {
+                if (_location_ctx->getAutoindex())
+                    return (_generateAutoIndex(fullPath));
+            }
+            else if (_ctx->getAutoindex())
+            {
+                return (_generateAutoIndex(fullPath));
+            } 
+            else
+            {
+                return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
+            }
+        } else {
+            std::ifstream file(fullPath.c_str(), std::ios::binary);
+            if (!file.is_open())
+                return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
+            _initContentType(fullPath);
+            std::ostringstream oss;
+            oss << file.rdbuf();
+            return _createResponse(200, "OK", oss.str());
+        }
+    }
+    return (_createError(404, "Not Found", "The server cannot find the requested resource"));
+}
+
+std::string Response::_handleMethod()
+{
+    switch (_req.method)
+    {
+        case HttpLexer::HTTP_GET:
+            return (_handleGet());
+            break;
+        default:
+            return ("waf");
+    }
+    return ("waf");
+}
+
 std::string Response::createResponseSTR()
 {
     
     if (_req.endstatus >= 400)
         return (_handleLexerErrors());
     if (_isLocation())
-        _location_ctx->print(2);
+        ;
     if (!_isMethodSupportedByRoute())
         return (_createError(405, "Method Not Allowed",
             "The request method is known by the server but is not supported by the target resource. "));
+    return (_handleMethod());
     return (_createResponse(200, "OK", "Hello World"));
     
 }

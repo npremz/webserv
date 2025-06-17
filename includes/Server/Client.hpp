@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/17 10:34:05 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/17 16:57:03 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ class Client
         HttpLexer       _lexer;
         int             _socket_fd;
         RouterMap       _router;
-        char            _buf[4096];
+        char            _buf[16384];
         std::string     _request;
         std::string     _response_str;
         size_t          _response_len;

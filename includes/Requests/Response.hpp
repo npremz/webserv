@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/17 17:09:52 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/18 11:50:50 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,10 @@ class Response
         HttpLexer::parsedRequest    _req;
         std::string                 _content_type;
 
-        std::string                 _createError(unsigned int code, std::string error, std::string bodyStr);
-        std::string                 _createResponse(unsigned int code, std::string msg, std::string bodyStr);
+        std::string                 _createError(unsigned int code, std::string error,
+                                        std::string bodyStr);
+        std::string                 _createResponse(unsigned int code, std::string msg,
+                                        const std::string& bodyStr);
 
         std::string                 _handleLexerErrors();
         std::string                 _handleMethod();
@@ -41,7 +43,7 @@ class Response
         std::string                 _testIndex(std::string URI);
         void                        _initContentType(std::string file);
         bool                        _isMethodSupportedByRoute();
-        bool                        _isLocation();
+        bool                        _setLocation();
 
     public:
         Response(BlocServer* ctx, HttpLexer::parsedRequest req);

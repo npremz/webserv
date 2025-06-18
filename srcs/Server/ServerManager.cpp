@@ -265,9 +265,6 @@ void    ServerManager::_run()
                     c_client->isFinished = true;
                     std::cout << e.what() << std::endl;
                 }
-                // if (r > 0) {
-                //     write(events[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello\n", 44);
-                // }
                 if (c_client->isFinished == true)
                 {
                     if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)

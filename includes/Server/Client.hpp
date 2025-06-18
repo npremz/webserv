@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/17 16:57:03 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/18 17:48:35 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,8 @@ class Client
         ServerManager*  _server;
 
         BlocServer*     _responseRouting();
+
+        bool            _isCGI();
         
         void            _addEpollout();
         void            _removeEpollout();

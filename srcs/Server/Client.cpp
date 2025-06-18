@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/17 11:29:54 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/18 18:17:20 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,18 @@ BlocServer*     Client::_responseRouting()
     return NULL;
 }
 
+bool    Client::_isCGI()
+{   
+    std::string request_path = _response_ctx->getRootPath() + _lexer.getRequest().path;
+    
+    size_t dot_pos = request_path.find_last_of('.');
+    std::string ext = request_path.substr(dot_pos);
+
+    if (".php" == ext || ".py" == ext)
+        return (true);
+    return (false);
+}
+
 void    Client::handleRequest()
 {
     long  byte_rec = 0;
@@ -63,6 +75,10 @@ void    Client::handleRequest()
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
             Logger::log(Logger::DEBUG, "Request parsed");
+            if (_isCGI())
+            {
+                break;
+            }
             handleResponse();
             Logger::log(Logger::DEBUG, "Response created");
             break;
@@ -97,28 +113,25 @@ void    Client::_removeEpollout()
 
 void    Client::_prepareAndSend()
 {
-    strcpy(_buf, _response_str.c_str());
-    _response_len  = strlen(_response_str.c_str());
+    _response_len  = _response_str.size();
     _response_sent = 0;
     _addEpollout();
 }
 
 void    Client::handleSend()
 {
-    Logger::log(Logger::DEBUG, "Sending response...");
     while (_response_sent < _response_len) {
-        ssize_t n = send(_socket_fd,
-                         _buf + _response_sent,
-                         _response_len - _response_sent,
-                         MSG_NOSIGNAL);
+        Logger::log(Logger::DEBUG, "Sending response...");
+        size_t to_send = std::min(_response_str.size() - _response_sent, (size_t)MAX_CHUNK_SIZE);
+        ssize_t n = send(_socket_fd, _response_str.data() + _response_sent, to_send, MSG_NOSIGNAL);
 
         if (n > 0) {
             _response_sent += n;
             if (_response_sent == _response_len) {
                 _removeEpollout();
+                Logger::log(Logger::DEBUG, "Response totally sent");
+                isFinished = true;
             }
-            Logger::log(Logger::DEBUG, "Response totally sent");
-            isFinished = true;
         } else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
             Logger::log(Logger::DEBUG, "Response partially sent");
             break;

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/17 17:20:53 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/18 17:47:10 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,23 +47,18 @@ std::string Response::_createError(unsigned int code, std::string error, std::st
     return (oss.str());
 }
 
-std::string Response::_createResponse(unsigned int code, std::string msg, std::string bodyStr)
+std::string Response::_createResponse(unsigned int code, std::string msg, const std::string& bodyStr)
 {
-    std::ostringstream oss;
     std::ostringstream oss_header;
-    std::ostringstream oss_body;
-
     oss_header << "HTTP/1.1 " << code << " " << msg << "\r\n";
-    oss_body << bodyStr;
+    oss_header << "Content-Type: " << _content_type << "\r\n";
+    oss_header << "Content-Length: " << bodyStr.size() << "\r\n";
+    oss_header << "\r\n"; 
 
-    oss << oss_header.str()
-        << "Content-Type: " << _content_type << "\r\n"
-        << "Content-length: " << oss_body.str().size() << "\r\n\r\n"
-        << oss_body.str();
+    std::string response = oss_header.str();
+    response.append(bodyStr.data(), bodyStr.size());
 
-    Logger::log(Logger::DEBUG, oss.str());
-
-    return (oss.str());
+    return response;
 }
 
 std::string Response::_handleLexerErrors()
@@ -84,7 +79,7 @@ std::string Response::_handleLexerErrors()
         "The server cannot or will not process the request due to something that is perceived to be a client error"));
 }
 
-bool    Response::_isLocation()
+bool    Response::_setLocation()
 {
     if (_ctx->getLocationBlocs().size() == 0)
         return (false);
@@ -188,14 +183,32 @@ void    Response::_initContentType(std::string file)
 
     Logger::log(Logger::DEBUG, "response ext: " + ext);
 
-    if (".html" == ext)
+    if (".html" == ext || ".htm" == ext)
         _content_type = "text/html";
     else if (".css" == ext)
         _content_type = "text/css";
     else if (".js" == ext)
         _content_type = "application/javascript";
+    else if (".txt" == ext)
+        _content_type = "text/plain";
+    else if (".png" == ext)
+        _content_type = "image/png";
+    else if (".gif" == ext)
+        _content_type = "image/gif";
+    else if (".ico" == ext)
+        _content_type = "image/x-icon";
     else if (".jpeg" == ext || ".jpg" == ext)
         _content_type = "image/jpeg";
+    else if (".webp" == ext)
+        _content_type = "image/webp";
+    else if (".svg" == ext)
+        _content_type = "image/webp";
+    else if (".pdf" == ext)
+        _content_type = "image/svg+xml";
+    else if (".php")
+        _content_type = "cgi/php";
+    else if (".py")
+        _content_type = "cgi/py";
     else
         _content_type = "application/octet-stream";
     
@@ -213,7 +226,12 @@ std::string Response::_generateAutoIndex(std::string fullpath)
 
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL) {
-        html << "<li><a href=\"" << _req.path << "/" << entry->d_name << "\">"
+        std::string url = _req.path;
+        if (*(url.end() - 1) != '/')
+            url += "/";
+        url += entry->d_name;
+        
+        html << "<li><a href=\"" << url << "\">"
              << entry->d_name << "</a></li>";
     }
     closedir(dir);
@@ -259,13 +277,28 @@ std::string Response::_handleGet()
                 return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
             }
         } else {
+            _initContentType(fullPath);
+
             std::ifstream file(fullPath.c_str(), std::ios::binary);
             if (!file.is_open())
-                return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
-            _initContentType(fullPath);
-            std::ostringstream oss;
-            oss << file.rdbuf();
-            return _createResponse(200, "OK", oss.str());
+                return _createError(403, "Forbidden", "The client does not have access rights to the content");
+            
+            file.seekg(0, std::ios::end);
+            std::streamsize size = file.tellg();
+            file.seekg(0, std::ios::beg);
+
+            Logger::log(Logger::DEBUG, "File size initialized.");
+
+            std::string buffer;
+            if (size > 0)
+            {
+                buffer.resize(size);
+                file.read(&buffer[0], size);
+            }
+
+            Logger::log(Logger::DEBUG, "File buffer filled.");
+
+            return _createResponse(200, "OK", buffer);
         }
     }
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
@@ -289,8 +322,7 @@ std::string Response::createResponseSTR()
     
     if (_req.endstatus >= 400)
         return (_handleLexerErrors());
-    if (_isLocation())
-        ;
+    _setLocation();
     if (!_isMethodSupportedByRoute())
         return (_createError(405, "Method Not Allowed",
             "The request method is known by the server but is not supported by the target resource. "));

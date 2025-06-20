@@ -28,6 +28,8 @@
 # include <list>
 # include <sys/types.h>
 # include <map>
+# include <signal.h>
+# include <sys/wait.h>
 
 # include "../Config/ParserConfig.hpp"
 # include "../Utils/utils.hpp"
@@ -38,28 +40,30 @@ class Client;
 class ServerManager
 {
     private:
-        ParserConfig            _config;
-        RouterMap               _router;
-        std::vector<int>        _listen_sockets;
-        int                     _epoll_fd;
-        int                     _exit_pipe[2];
-        std::list<int>          _client_fds;
-        std::map<int, Client*>   _clients;
+        ParserConfig                    _config;
+        RouterMap                       _router;
+        std::vector<int>                _listen_sockets;
+        int                             _epoll_fd;
+        int                             _exit_pipe[2];
+        std::list<int>                  _client_fds;
+        std::map<int, Client*>          _clients;
+        std::map<Client*, int>    _cgi_map;
 
-        void    _initRouter();
-        void    _initListenSockets();
-        void    _initExitPipe();
-        void    _initEpoll();
-        void    _linkEpollToListensFD();
-        void    _linkEpollToExitPipe();
-        void    _run();
-        void    _addClient(int fd);
-        void    _removeClient(int fd);
-        void    _closeAllClients();
-        void    _logRunningInfos();
-        void    _cleanup();
+        void                _initRouter();
+        void                _initListenSockets();
+        void                _initExitPipe();
+        void                _initEpoll();
+        void                _linkEpollToListensFD();
+        void                _linkEpollToExitPipe();
+        void                _run();
+        void                _addClient(int fd);
+        void                _removeClient(int fd);
+        Client*             _isCGIClient(int fd);
+        void                _closeAllClients();
+        void                _logRunningInfos();
+        void                _cleanup();
         
-        int     _isListenSocket(int event_fd); // -1 if not found
+        int         _isListenSocket(int event_fd); // -1 if not found
 
     public:
         ServerManager();
@@ -73,6 +77,9 @@ class ServerManager
         void                    initConfig(std::string config_src);
         void                    run();
         void                    stop();
+
+        void                    addCGIlink(Client* client, int cgi_fd);
+        void                    removeCGILink(int cgi_fd);
 
         int               getEpollFd() const;
 

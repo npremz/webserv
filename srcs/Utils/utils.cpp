@@ -34,7 +34,8 @@ std::vector<std::string>    ws_split(const std::string& str)
     std::istringstream iss(str);
     std::string token;
     
-    while (iss >> token) {
+    while (iss >> token)
+    {
         tokens.push_back(token);
     }
     
@@ -106,7 +107,8 @@ std::string ipPortToString(const s_ip_port& ip_port)
 std::string to_lowercase(const std::string& input)
 {
     std::string output = input;
-    for (std::string::size_type i = 0; i < output.length(); ++i) {
+    for (std::string::size_type i = 0; i < output.length(); ++i)
+    {
         output[i] = static_cast<char>(std::tolower(output[i]));
     }
     return output;
@@ -117,13 +119,83 @@ int countWords(const std::string& str)
     int count = 0;
     bool inWord = false;
 
-    for (std::string::size_type i = 0; i < str.length(); ++i) {
-        if (str[i] != ' ' && !inWord) {
+    for (std::string::size_type i = 0; i < str.length(); ++i)
+    {
+        if (str[i] != ' ' && !inWord)
+        {
             inWord = true;
             ++count;
-        } else if (str[i] == ' ') {
+        } 
+        else if (str[i] == ' ')
+        {
             inWord = false;
         }
     }
     return count;
+}
+
+char* makeEnvVar(const std::string& key, const std::string& value)
+{
+    std::string var = key + "=" + value;
+    char* env = new char[var.size() + 1];
+    std::strcpy(env, var.c_str());
+    return env;
+}
+
+
+std::string buildHttpResponseFromCGI(const std::string& cgi_output)
+{
+    std::istringstream iss(cgi_output);
+    std::string line;
+    std::vector<std::string> cgi_headers;
+    std::string body;
+    bool header_done = false;
+
+    // Pour le status HTTP
+    std::string status_line = "HTTP/1.1 200 OK\r\n";
+    // Stocker le status (par défaut 200)
+    std::string status_value;
+
+    while (std::getline(iss, line)) {
+        // Enlève le \r éventuel en fin de ligne (CGI met parfois juste '\n')
+        if (!line.empty() && line[line.size() - 1] == '\r')
+            line.erase(line.size() - 1);
+
+        if (!header_done) {
+            if (line.empty()) {
+                header_done = true; // La ligne vide = fin des headers CGI
+                continue;
+            }
+            // Cherche un header Status:
+            if (line.compare(0, 7, "Status:") == 0) {
+                status_value = line.substr(7);
+                // Trim spaces
+                status_value.erase(0, status_value.find_first_not_of(" \t"));
+            } else {
+                cgi_headers.push_back(line);
+            }
+        } else {
+            // On est dans le body: recopie tout (avec retour à la ligne !)
+            body += line + "\n";
+        }
+    }
+
+    // Compose la première ligne HTTP
+    if (!status_value.empty())
+        status_line = "HTTP/1.1 " + status_value + "\r\n";
+
+    // Compose la réponse finale
+    std::string http_response;
+    http_response += status_line;
+
+    // Ajoute tous les headers CGI
+    for (size_t i = 0; i < cgi_headers.size(); ++i) {
+        http_response += cgi_headers[i] + "\r\n";
+    }
+
+    http_response += "\r\n"; // Séparateur headers/body requis par HTTP
+
+    http_response += body;
+
+    return http_response;
 }

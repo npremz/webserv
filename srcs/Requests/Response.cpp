@@ -6,16 +6,17 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/18 17:47:10 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/20 19:50:58 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Requests/Response.hpp"
 
-Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req) : 
+Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent) : 
     _ctx(ctx),
     _location_ctx(NULL),
-    _req(req)
+    _req(req),
+    _parent(parent)
 {
     (void)_ctx;
 }
@@ -82,13 +83,21 @@ std::string Response::_handleLexerErrors()
 bool    Response::_setLocation()
 {
     if (_ctx->getLocationBlocs().size() == 0)
-        return (false);
+    return (false);
     for (std::vector<BlocLocation>::const_iterator it = _ctx->getLocationBlocs().begin(); 
-        it < _ctx->getLocationBlocs().end(); it++)
+    it < _ctx->getLocationBlocs().end(); it++)
     {
-        if (it->getLocationPath() == _req.path)
+        std::string location = it->getLocationPath();
+        if (*(location.end() - 1) != '/')
+            location += "/";
+        size_t      pos = _req.path.find_last_of("/");
+        std::string path = _req.path.substr(0, pos + 1);
+
+        if (location == path)
         {
             _location_ctx = &(*it);
+            Logger::log(Logger::DEBUG, "Location found.");
+            it->print(2);
             return (true);
         }
     }
@@ -161,7 +170,7 @@ std::string Response::_testIndex(std::string URI)
             it < _location_ctx->getIndex().end(); it ++)
         {
             if (access((URI + (*it)).c_str(), R_OK) == 0)
-                return (URI + (*it));
+                return ((*it));
         }
     }
     else
@@ -170,7 +179,7 @@ std::string Response::_testIndex(std::string URI)
             it < _ctx->getIndex().end(); it ++)
         {
             if (access((URI + (*it)).c_str(), R_OK) == 0)
-                return (URI + (*it));
+                return ((*it));
         }
     }
     return ("");
@@ -205,13 +214,14 @@ void    Response::_initContentType(std::string file)
         _content_type = "image/webp";
     else if (".pdf" == ext)
         _content_type = "image/svg+xml";
-    else if (".php")
+    else if (".php" == ext)
         _content_type = "cgi/php";
-    else if (".py")
+    else if (".py" == ext)
         _content_type = "cgi/py";
     else
         _content_type = "application/octet-stream";
     
+    Logger::log(Logger::DEBUG, _content_type);
 }
 
 std::string Response::_generateAutoIndex(std::string fullpath)
@@ -240,6 +250,25 @@ std::string Response::_generateAutoIndex(std::string fullpath)
     return _createResponse(200, "OK", html.str());
 }
 
+bool Response::_handleGetCGI()
+{
+    if (!_location_ctx)
+        return (false);
+    
+    Logger::log(Logger::DEBUG, "_location_ctx for CGi checked.");
+
+    if (!((_content_type == "cgi/py" && _location_ctx->getCGIExtension() == ".py") 
+        || (_content_type == "cgi/php" && _location_ctx->getCGIExtension() == ".php")))
+        return (false);
+
+    Logger::log(Logger::DEBUG, "CGI detected with: " + _location_ctx->getCGIExtension());
+
+    CGI cgi_handler(std::string("GET"), _req, _content_type, _ctx, _location_ctx, _parent);
+    cgi_handler.exec();
+
+    return (true);
+}
+
 std::string Response::_handleGet()
 {
     std::string fullPath;
@@ -251,14 +280,18 @@ std::string Response::_handleGet()
     Logger::log(Logger::DEBUG, "path of location: " + fullPath);
     struct stat pathStat;
     if (stat(fullPath.c_str(), &pathStat) == 0) {
-        if (S_ISDIR(pathStat.st_mode)) {
+        if (S_ISDIR(pathStat.st_mode))
+        {
             std::string indexPath = _testIndex(fullPath);
             Logger::log(Logger::DEBUG, "path of index: " + indexPath);
-            std::ifstream indexFile(indexPath.c_str());
+            _req.path += indexPath;
+            std::ifstream indexFile((fullPath + indexPath).c_str());
 
             if (indexFile.is_open())
             {
                 _initContentType(indexPath);
+                if (_handleGetCGI())
+                    return ("CGI");
                 std::ostringstream oss;
                 oss << indexFile.rdbuf();
                 return _createResponse(200, "OK", oss.str());
@@ -276,8 +309,13 @@ std::string Response::_handleGet()
             {
                 return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
             }
-        } else {
+        } 
+        else 
+        {
+            Logger::log(Logger::DEBUG, "Fullpath of response: " + fullPath);
             _initContentType(fullPath);
+            if (_handleGetCGI())
+                    return ("CGI");
 
             std::ifstream file(fullPath.c_str(), std::ios::binary);
             if (!file.is_open())
@@ -329,4 +367,32 @@ std::string Response::createResponseSTR()
     return (_handleMethod());
     return (_createResponse(200, "OK", "Hello World"));
     
+}
+
+std::string Response::createCGIResponseSTR(int cgi_fd)
+{
+    std::string     response;
+    char            buf[MAX_BUF_SIZE];
+    ssize_t          read_bytes;
+
+    while ((read_bytes = read(cgi_fd, buf, MAX_BUF_SIZE)) > 0) {
+        response.append(buf, read_bytes);
+    }
+
+    _setLocation();
+
+    Logger::log(Logger::DEBUG, "CGI pipe content:");
+    std::cout << response << std::endl;
+
+    if (_location_ctx->getCGIExtension() == ".php")
+    {
+        response = buildHttpResponseFromCGI(response);
+        Logger::log(Logger::DEBUG, "php CGI formated content:");
+        std::cout << response << std::endl;
+    }
+
+    if (read_bytes < 0) {
+        Logger::log(Logger::FATAL, "Erreur de lecture sur le pipe");
+    }
+    return (response);
 }

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/18 18:17:20 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/20 19:29:25 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,12 +75,7 @@ void    Client::handleRequest()
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
             Logger::log(Logger::DEBUG, "Request parsed");
-            if (_isCGI())
-            {
-                break;
-            }
             handleResponse();
-            Logger::log(Logger::DEBUG, "Response created");
             break;
         }
         else if (c_status == HttpLexer::ERR)
@@ -88,11 +83,36 @@ void    Client::handleRequest()
     }
 }
 
-void    Client::handleResponse()
+void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
 {
-    Response rep(_response_ctx, _lexer.getRequest());
-    _response_str = rep.createResponseSTR();
+    Response rep(_response_ctx, _lexer.getRequest(), this);
+    if (isCGIResponse)
+    {
+        _response_str = rep.createCGIResponseSTR(cgi_fd);
+        close(cgi_fd);
+        _server->removeCGILink(cgi_fd);
+    }
+    else
+    {
+        _response_str = rep.createResponseSTR();
+        if (_response_str == "CGI")
+        {
+            Logger::log(Logger::DEBUG, "Main process paused response, listening to child for cgi.");
+            return ;
+        }
+    }
+    Logger::log(Logger::DEBUG, "Response created");
     _prepareAndSend();
+}
+
+void    Client::addCGIEpollIn(int cgi_fd)
+{
+    _server->addCGIlink(this, cgi_fd);
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = cgi_fd;
+    if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_ADD, cgi_fd, &ev) == -1)
+        Logger::log(Logger::ERROR, "Exec error => epoll_ctl cgi_pipe error");
 }
 
 void    Client::_addEpollout()

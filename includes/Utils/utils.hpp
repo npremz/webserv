@@ -21,6 +21,8 @@
 # include <sys/stat.h>
 # include <unistd.h>
 # include <map>
+# include <cstring>
+# include <cstdlib>
 
 class BlocServer;
 
@@ -86,5 +88,8 @@ std::string 				ipPortToString(const s_ip_port& ip_port);
 bool						isNumeric(const std::string& s);
 std::string					to_lowercase(const std::string& input);
 int							countWords(const std::string& str);
+char*                   	makeEnvVar(const std::string& key, const std::string& value);
+std::string					buildHttpResponseFromCGI(const std::string& cgi_output);
+
 
 #endif

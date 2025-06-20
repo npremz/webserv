@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/18 11:50:50 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/19 19:04:09 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 # include "../Utils/utils.hpp"
 # include "../Config/BlocServer.hpp"
 # include "../Requests/HttpLexer.hpp"
+# include "../Requests/CGI.hpp"
 # include "../Logger/Logger.hpp"
 
 class Response
@@ -30,6 +31,7 @@ class Response
         const BlocLocation*         _location_ctx;
         HttpLexer::parsedRequest    _req;
         std::string                 _content_type;
+        Client*                     _parent;
 
         std::string                 _createError(unsigned int code, std::string error,
                                         std::string bodyStr);
@@ -39,6 +41,7 @@ class Response
         std::string                 _handleLexerErrors();
         std::string                 _handleMethod();
         std::string                 _handleGet();
+        bool                        _handleGetCGI();
         std::string                 _generateAutoIndex(std::string fullpath);
         std::string                 _testIndex(std::string URI);
         void                        _initContentType(std::string file);
@@ -46,10 +49,11 @@ class Response
         bool                        _setLocation();
 
     public:
-        Response(BlocServer* ctx, HttpLexer::parsedRequest req);
+        Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent);
         ~Response();
 
         std::string createResponseSTR();
+        std::string createCGIResponseSTR(int cgi_fd);
 };
 
 #endif

@@ -22,6 +22,7 @@ BlocLocation::BlocLocation(BlocServer* parent, std::string location_path,
     _delete(parent->getDeleteMethod()),
     _autoindex(parent->getAutoindex()),
     _upload_enable(false),
+    _root_path(parent->getRootPath()),
     _client_max_body_size(parent->getClientMaxBodySize())
 {
     this->_return.is_set = false;
@@ -142,9 +143,9 @@ void    BlocLocation::_handleCGIExt(std::vector<std::string> tokens)
         Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (tokens[1] == ".php")
-        this->_cgi_pass = tokens[1];
+        this->_cgi_extension = tokens[1];
     else if (tokens[1] == ".py")
-        this->_cgi_pass = tokens[1];
+        this->_cgi_extension = tokens[1];
     else
         Logger::log(Logger::FATAL, "invalid config file. => unsupported cgi " + tokens[1]);
 }

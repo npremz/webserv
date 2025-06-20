@@ -22,11 +22,17 @@ ServerManager::~ServerManager()
 
 void    ServerManager::signalHandler(int signum)
 {
-    (void)signum;
-    std::cout << std::endl;
-    Logger::log(Logger::INFO, "Stopping Webserv...");
-    if (ServerManager::instance)
-        ServerManager::instance->stop();
+    if (signum == SIGINT)
+    {
+        std::cout << std::endl;
+        Logger::log(Logger::INFO, "Stopping Webserv...");
+        if (ServerManager::instance)
+            ServerManager::instance->stop();
+    }
+    if (signum == SIGCHLD)
+    {
+        while (waitpid(-1, 0, WNOHANG) > 0) ;
+    }
 }
 
 void    ServerManager::initConfig(std::string config_src)
@@ -167,6 +173,32 @@ void    ServerManager::_closeAllClients() {
     _client_fds.clear();
 }
 
+void    ServerManager::addCGIlink(Client* client, int cgi_fd)
+{
+    _cgi_map[client] = cgi_fd;
+}
+
+void    ServerManager::removeCGILink(int cgi_fd)
+{
+    for (std::map<Client*, int>::iterator it = _cgi_map.begin();
+        it != _cgi_map.end(); it++)
+    {
+        if (cgi_fd == it->second)
+            _cgi_map.erase(it);
+    }
+}
+
+Client*    ServerManager::_isCGIClient(int fd)
+{
+    for (std::map<Client*, int>::iterator it = _cgi_map.begin();
+        it != _cgi_map.end(); it++)
+    {
+        if (fd == it->second)
+            return (it->first);
+    }
+    return (NULL);
+}
+
 void    ServerManager::_cleanup()
 {
     for (std::vector<int>::iterator it = _listen_sockets.begin();
@@ -241,7 +273,8 @@ void    ServerManager::_run()
                 break;
             }
             int f_socket_fd;
-            if ((f_socket_fd = _isListenSocket(events[i].data.fd)) != -1) {
+            if ((f_socket_fd = _isListenSocket(events[i].data.fd)) != -1)
+            {
                 int c_socket_fd = accept(f_socket_fd, 0, 0);
                 if (fcntl(c_socket_fd, F_SETFL, O_NONBLOCK) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => fcntl c_socket error");
@@ -251,19 +284,36 @@ void    ServerManager::_run()
                 if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
                 _addClient(c_socket_fd);
-            } else {
-                Client* c_client = _clients[events[i].data.fd];
-                try 
+            }
+            else
+            {
+                Client* c_client;
+                if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
-                    if (events[i].events & EPOLLIN)
-                        c_client->handleRequest();
-                    if (events[i].events & EPOLLOUT)
-                        c_client->handleSend();
+                    try {
+                        c_client->handleResponse(true, events[i].data.fd);
+                    }
+                    catch (const std::exception &e)
+                    {
+                        c_client->isFinished = true;
+                        std::cout << e.what() << std::endl;
+                    }
                 }
-                catch (const std::exception &e)
+                else
                 {
-                    c_client->isFinished = true;
-                    std::cout << e.what() << std::endl;
+                    c_client = _clients[events[i].data.fd];
+                    try 
+                    {
+                        if (events[i].events & EPOLLIN)
+                            c_client->handleRequest();
+                        if (events[i].events & EPOLLOUT)
+                            c_client->handleSend();
+                    }
+                    catch (const std::exception &e)
+                    {
+                        c_client->isFinished = true;
+                        std::cout << e.what() << std::endl;
+                    }
                 }
                 if (c_client->isFinished == true)
                 {

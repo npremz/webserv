@@ -8,7 +8,7 @@ NAME            :=		webserv
 ########################################################################################
 
 COMP            :=      c++
-CFLAGS          :=      -Wall -Wextra -Werror -MMD -MP -pedantic -std=c++98 -g
+CFLAGS          :=      -Wall -Wextra -Werror -MMD -MP -pedantic -std=c++98 -g -fsanitize=address
 
 ########################################################################################
 #------------------------SOURCE+OBJECT+DEPENDANCE_FILE---------------------------------#
@@ -20,8 +20,7 @@ SRC             :=      main.cpp \
 						Config/ParserConfig.cpp Config/BlocServer.cpp \
 						Config/BlocLocation.cpp \
 						Logger/Logger.cpp \
-						CGI/CGI.cpp \
-						Requests/HttpLexer.cpp Requests/Response.cpp
+						Requests/HttpLexer.cpp Requests/Response.cpp Requests/CGI.cpp
 
 
 SRCPATH         :=      ./srcs/

@@ -64,7 +64,8 @@ void    Logger::log(Logger::level level, std::string msg)
     {
         Logger::addLevel(level);
         throw std::runtime_error(msg);
-    } else if (level == ERROR)
+    } 
+    else if (level == ERROR)
     {
         Logger::addLevel(level);
         throw std::runtime_error(msg);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/20 19:50:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/06/22 21:24:45 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,13 +182,18 @@ std::string Response::_testIndex(std::string URI)
                 return ((*it));
         }
     }
-    return ("");
+    return ("none");
 }
 
 void    Response::_initContentType(std::string file)
 {
+    Logger::log(Logger::DEBUG, file);
     size_t dot_pos = file.find_last_of('.');
-    std::string ext = file.substr(dot_pos);
+    std::string ext;
+    if (dot_pos != std::string::npos)
+        ext = file.substr(dot_pos);
+    else 
+        ext = "";
 
     Logger::log(Logger::DEBUG, "response ext: " + ext);
 
@@ -289,7 +294,7 @@ std::string Response::_handleGet()
 
             if (indexFile.is_open())
             {
-                _initContentType(indexPath);
+                _initContentType(_req.path);
                 if (_handleGetCGI())
                     return ("CGI");
                 std::ostringstream oss;
@@ -300,6 +305,8 @@ std::string Response::_handleGet()
             {
                 if (_location_ctx->getAutoindex())
                     return (_generateAutoIndex(fullPath));
+                else
+                    return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
             }
             else if (_ctx->getAutoindex())
             {

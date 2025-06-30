@@ -222,6 +222,11 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 				_req.ischunked = true;
 			Logger::log(Logger::DEBUG, "transfer-encoding detected: " + val);
 		}
+        else if (to_lowercase(key) == "content-type")
+		{
+				_req.contentType = val;
+			Logger::log(Logger::DEBUG, "content-type detected: " + val);
+		}
 		else
 		{
 			HeaderMap::iterator key_in_map;

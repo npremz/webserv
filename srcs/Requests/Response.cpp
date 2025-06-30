@@ -349,6 +349,42 @@ std::string Response::_handleGet()
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
+std::string Response::_handleDirPost(std::string fullPath)
+{
+    (void)fullPath;
+    Logger::log(Logger::DEBUG, "POST: Directory post.");
+    std::string contentType;
+    if (_location_ctx->getUploadEnable())
+        return (_createError(403, "Forbidden", "Upload not allowed to this directory"));
+    contentType = _req.contentType;
+    // if (contentType.find("multipart/form-data") != std::string::npos)
+    //     return (_handleMultiUpload(fullPath));
+    // else if (contentType == "application/x-www-form-urlencoded")
+    //     return (_handleFormSub(fullPath));
+    return (_createError(415, "Unsupported Media Type", "Content type not supported for directory POST"));
+}
+
+std::string Response::_handlePost()
+{
+    std::string fullPath;
+    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
+        fullPath = _location_ctx->getRootPath() + _req.path;
+    else
+        if (_ctx->getRootPath().size() > 0)
+            fullPath = _ctx->getRootPath() + _req.path;
+    Logger::log(Logger::DEBUG, "POST target path: " + fullPath);
+
+    struct stat pathStat;
+    if (stat(fullPath.c_str(), &pathStat) == 0)
+    {
+        if (S_ISDIR(pathStat.st_mode))
+            return (_handleDirPost(fullPath));
+        // return (_handleFilePost(fullPath));
+    }
+    // return (_handleNewPost(fullPath));
+    return (NULL);
+}
+
 std::string Response::_handleMethod()
 {
     switch (_req.method)

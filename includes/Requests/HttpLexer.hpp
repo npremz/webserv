@@ -24,7 +24,12 @@ class HttpLexer
 { 
 	public:
 		typedef std::map<std::string, std::string, CiLess> HeaderMap;
-
+		// POST ================== POST
+		void	setBody(const std::string &body);
+		void	parsePostData();
+		void	parseUrlEncoded();
+		void	parseUploads();
+		// POST ================== POST
 		enum HttpMethod {
 			HTTP_GET,
 			HTTP_HEAD,
@@ -72,6 +77,7 @@ class HttpLexer
 			size_t				receivedoctets;
 			unsigned int		endstatus;
 			size_t				content_lenght;
+            std::string         contentType;
 			std::string			body;
 			size_t				headerbytes;
 			bool				has_host;
@@ -95,8 +101,6 @@ class HttpLexer
 		bool 						_isNonDuplicableHeader(const std::string& key);
         bool        				_isValidHostValue(const std::string& val);
 		bool						_isValidContentLengthValue(const std::string& val);
-
-
 
 	public:
 		

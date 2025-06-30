@@ -40,11 +40,18 @@ class Response
 
         std::string                 _handleLexerErrors();
         std::string                 _handleMethod();
+        std::string                 _handlePost();
+        std::string                 _handleDirPost(std::string fullPath);
+        std::string                 _handleFilePost(std::string fullPath);
+        std::string                 _handleFormSub(std::string fullPath);
+        std::string                 _handleMultiUpload(std::string uploadDir);
+        std::string                 _handleNewPost(std::string fullPath);
         std::string                 _handleGet();
         bool                        _handleGetCGI();
         std::string                 _generateAutoIndex(std::string fullpath);
         std::string                 _testIndex(std::string URI);
         void                        _initContentType(std::string file);
+        bool                        _isUploadAllowed();
         bool                        _isMethodSupportedByRoute();
         bool                        _setLocation();
 

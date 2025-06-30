@@ -46,7 +46,6 @@ class Client
         void            _addEpollout();
         void            _removeEpollout();
         void            _prepareAndSend();
-        
         public:
         bool        isFinished;
         
@@ -58,6 +57,5 @@ class Client
         void    handleRequest();
         void    handleResponse(bool isCGIResponse = false, int cgi_fd = 0);
         void    handleSend();
-
 };
 #endif

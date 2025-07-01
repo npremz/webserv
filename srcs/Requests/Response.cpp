@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/01 14:31:55 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/01 14:56:06 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,20 +131,20 @@ bool    Response::_setLocation()
             location += "/";
         
         std::string path = _req.path;
-        Logger::log(Logger::DEBUG, "path before: " + path);
-        if (*(path.end() - 1) == '/')
-            path = path.substr(0, path.size() - 1);
-        Logger::log(Logger::DEBUG, "path after: " + path);
-        size_t      pos = path.find_last_of("/");
-        if (pos != std::string::npos)
-            path = path.substr(pos);
-        Logger::log(Logger::DEBUG, "path after 2: " + path);
-        if (*(path.end() - 1) != '/')
-            path += "/";
+        std::string fullpath = _ctx->getRootPath() + path;
 
-        Logger::log(Logger::DEBUG, "path: " + path);
-        Logger::log(Logger::DEBUG, "location: " + location);
+        if (isDirectory(fullpath))
+        {
+            if (*(path.end() - 1) != '/')
+                path += "/";
+        } 
+        else
+        {
+            std::string::size_type pos = path.find_last_of("/");
+            path = path.substr(0, pos + 1);
+        }
 
+        
         if (location == path)
         {
             _location_ctx = &(*it);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/22 21:24:45 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/01 12:01:00 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -245,6 +245,9 @@ std::string Response::_generateAutoIndex(std::string fullpath)
         if (*(url.end() - 1) != '/')
             url += "/";
         url += entry->d_name;
+
+        Logger::log(Logger::DEBUG, "url: " + url);
+
         
         html << "<li><a href=\"" << url << "\">"
              << entry->d_name << "</a></li>";
@@ -289,9 +292,9 @@ std::string Response::_handleGet()
         {
             std::string indexPath = _testIndex(fullPath);
             Logger::log(Logger::DEBUG, "path of index: " + indexPath);
-            _req.path += indexPath;
+            if (indexPath != "none")
+                _req.path += indexPath;
             std::ifstream indexFile((fullPath + indexPath).c_str());
-
             if (indexFile.is_open())
             {
                 _initContentType(_req.path);

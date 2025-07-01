@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/01 14:56:06 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/01 16:12:44 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,54 @@ Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent
 Response::~Response()
 {}
 
+std::string Response::_isCustomError(unsigned int code)
+{
+    for (std::map<int, std::string>::const_iterator it = _ctx->getErrorPages().begin();
+        it != _ctx->getErrorPages().end(); ++it)
+    {
+        if (it->first == (int)code)
+            return (it->second);
+    }
+    return ("");
+}
+
+std::string Response::_createCustomError(unsigned int code, std::string error_page,
+    std::string error_msg)
+{
+    std::ifstream file((_ctx->getRootPath() + error_page).c_str(), std::ios::binary);
+    if (!file.is_open())
+        return _createError(500, "Internal Server Error",
+            "The HTTP 500 Internal Server Error server error response status code indicates that the server encountered an unexpected condition that prevented it from fulfilling the request.");
+    
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::string buffer;
+    if (size > 0)
+    {
+        buffer.resize(size);
+        file.read(&buffer[0], size);
+    }
+
+    std::ostringstream oss_header;
+    oss_header << "HTTP/1.1 " << code << " " << error_msg << "\r\n";
+    oss_header << "Content-Type: text/html\r\n";
+    oss_header << "Content-Length: " << buffer.size() << "\r\n";
+    oss_header << "\r\n"; 
+
+    std::string response = oss_header.str();
+    response.append(buffer.data(), buffer.size());
+
+    return (response);
+}
+
 std::string Response::_createError(unsigned int code, std::string error, std::string bodyStr)
 {
+    std::string error_page = _isCustomError(code);
+    if (error_page.size() > 0)
+        return (_createCustomError(code, error_page, error));
+
     std::ostringstream oss;
     std::ostringstream oss_header;
     std::ostringstream oss_body;
@@ -133,7 +179,7 @@ bool    Response::_setLocation()
         std::string path = _req.path;
         std::string fullpath = _ctx->getRootPath() + path;
 
-        if (isDirectory(fullpath))
+        if (isDirectory(fullpath) || !isReadable(fullpath))
         {
             if (*(path.end() - 1) != '/')
                 path += "/";
@@ -144,7 +190,10 @@ bool    Response::_setLocation()
             path = path.substr(0, pos + 1);
         }
 
+        Logger::log(Logger::DEBUG, "path: " + path);
+        Logger::log(Logger::DEBUG, "location: " + location);
         
+
         if (location == path)
         {
             _location_ctx = &(*it);

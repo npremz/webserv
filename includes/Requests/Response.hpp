@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/19 19:04:09 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/01 12:39:55 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class Response
                                         std::string bodyStr);
         std::string                 _createResponse(unsigned int code, std::string msg,
                                         const std::string& bodyStr);
+        std::string                 _createRedirect(unsigned int code, const std::string& url);
 
         std::string                 _handleLexerErrors();
         std::string                 _handleMethod();

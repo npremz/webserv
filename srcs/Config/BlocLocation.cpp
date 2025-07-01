@@ -173,7 +173,7 @@ void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
     int code;
     iss >> code;
 
-    if (code < 300 || code > 307)
+    if (code < 300 || code > 307 || code == 304)
         Logger::log(Logger::FATAL, "invalid config file. => invalid code " + tokens[1]);
 
     this->_return.code = code;
@@ -184,7 +184,7 @@ void    BlocLocation::_handleRedirect(std::vector<std::string> tokens)
         std::string url = this->_parent->getRootPath() + tokens[2];
         if (!isReadable(url))
             Logger::log(Logger::FATAL, "invalid config file. => not readable: " + url);
-        this->_return.url = url;
+        this->_return.url = tokens[2];
         this->_return.is_set = true;
     }
     else

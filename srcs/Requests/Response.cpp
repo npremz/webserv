@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/01 16:12:44 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/02 11:37:18 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -482,10 +482,10 @@ std::string Response::_handleDirPost(std::string fullPath)
     if (!_location_ctx->getUploadEnable())
         return (_createError(403, "Forbidden", "Upload not allowed to this directory"));
     contentType = _req.contentType;
-    / if (contentType.find("multipart/form-data") != std::string::npos)
-         return (_handleMultiUpload(fullPath));
-    if (contentType == "application/x-www-form-urlencoded")
-         return (_handleFormSub(fullPath));
+    if (contentType.find("multipart/form-data") != std::string::npos)
+        return (_handleMultiUpload(fullPath));
+    // else if (contentType == "application/x-www-form-urlencoded")
+    //     return (_handleFormSub(fullPath));
     return (_createError(415, "Unsupported Media Type", "Content type not supported for directory POST"));
 }
 
@@ -506,7 +506,8 @@ std::string Response::_handlePost()
             return (_handleDirPost(fullPath));
         // return (_handleFilePost(fullPath));
     }
-    // return (_handleNewPost(fullPath));
+    else 
+        return (_createError(404, "Not Found", "The server cannot find the requested resource"));
     return (NULL);
 }
 

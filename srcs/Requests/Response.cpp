@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/22 21:24:45 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/01 16:12:44 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,14 +24,60 @@ Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent
 Response::~Response()
 {}
 
+std::string Response::_isCustomError(unsigned int code)
+{
+    for (std::map<int, std::string>::const_iterator it = _ctx->getErrorPages().begin();
+        it != _ctx->getErrorPages().end(); ++it)
+    {
+        if (it->first == (int)code)
+            return (it->second);
+    }
+    return ("");
+}
+
+std::string Response::_createCustomError(unsigned int code, std::string error_page,
+    std::string error_msg)
+{
+    std::ifstream file((_ctx->getRootPath() + error_page).c_str(), std::ios::binary);
+    if (!file.is_open())
+        return _createError(500, "Internal Server Error",
+            "The HTTP 500 Internal Server Error server error response status code indicates that the server encountered an unexpected condition that prevented it from fulfilling the request.");
+    
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::string buffer;
+    if (size > 0)
+    {
+        buffer.resize(size);
+        file.read(&buffer[0], size);
+    }
+
+    std::ostringstream oss_header;
+    oss_header << "HTTP/1.1 " << code << " " << error_msg << "\r\n";
+    oss_header << "Content-Type: text/html\r\n";
+    oss_header << "Content-Length: " << buffer.size() << "\r\n";
+    oss_header << "\r\n"; 
+
+    std::string response = oss_header.str();
+    response.append(buffer.data(), buffer.size());
+
+    return (response);
+}
+
 std::string Response::_createError(unsigned int code, std::string error, std::string bodyStr)
 {
+    std::string error_page = _isCustomError(code);
+    if (error_page.size() > 0)
+        return (_createCustomError(code, error_page, error));
+
     std::ostringstream oss;
     std::ostringstream oss_header;
     std::ostringstream oss_body;
 
     oss_header << "HTTP/1.1 " << code << " " << error << "\r\n";
-    oss_body << "<html><body><h1>"
+    oss_body << "<html><head><title>" << code << error << "</title></head><body><h1>"
              << code << " " << error
              << "</h1><p>"
              << bodyStr
@@ -59,7 +105,46 @@ std::string Response::_createResponse(unsigned int code, std::string msg, const 
     std::string response = oss_header.str();
     response.append(bodyStr.data(), bodyStr.size());
 
-    return response;
+    return (response);
+}
+
+std::string Response::_createRedirect(unsigned int code, const std::string& url)
+{
+    std::string status_msg;
+
+    if (code == 300)
+        status_msg = "Multiple Choices";
+    else if (code == 301)
+        status_msg = "Moved Permanently";
+    else if (code == 302)
+        status_msg = "Found";
+    else if (code == 303)
+        status_msg = "See Other";
+    else if (code == 305)
+        status_msg = "Use Proxy";
+    else if (code == 306)
+        status_msg = "(Unused)";
+    else if (code == 307)
+        status_msg = "Temporary Redirect";
+
+    std::ostringstream oss_body;
+    oss_body << "<html><head><title>" << code << status_msg << "</title></head><body><h1>"
+             << code << " " << status_msg
+             << "</h1><p>The document has moved <a href=" 
+             << url
+             << ">here</a>."
+             << "</p></body></html>"
+             << "\r\n\r\n";
+
+    std::ostringstream oss_header;
+    oss_header << "HTTP/1.1 " << code << " " << status_msg << "\r\n"
+               << "Location: " << url << "\r\n"
+               << "Content-Type: text/html\r\n"
+               << "Content-Length: " << oss_body.str().size() << "\r\n"
+               << "\r\n";
+    
+    std::string response = oss_header.str() + oss_body.str();
+    return (response);
 }
 
 std::string Response::_handleLexerErrors()
@@ -83,15 +168,31 @@ std::string Response::_handleLexerErrors()
 bool    Response::_setLocation()
 {
     if (_ctx->getLocationBlocs().size() == 0)
-    return (false);
+        return (false);
     for (std::vector<BlocLocation>::const_iterator it = _ctx->getLocationBlocs().begin(); 
     it < _ctx->getLocationBlocs().end(); it++)
     {
         std::string location = it->getLocationPath();
         if (*(location.end() - 1) != '/')
             location += "/";
-        size_t      pos = _req.path.find_last_of("/");
-        std::string path = _req.path.substr(0, pos + 1);
+        
+        std::string path = _req.path;
+        std::string fullpath = _ctx->getRootPath() + path;
+
+        if (isDirectory(fullpath) || !isReadable(fullpath))
+        {
+            if (*(path.end() - 1) != '/')
+                path += "/";
+        } 
+        else
+        {
+            std::string::size_type pos = path.find_last_of("/");
+            path = path.substr(0, pos + 1);
+        }
+
+        Logger::log(Logger::DEBUG, "path: " + path);
+        Logger::log(Logger::DEBUG, "location: " + location);
+        
 
         if (location == path)
         {
@@ -245,6 +346,9 @@ std::string Response::_generateAutoIndex(std::string fullpath)
         if (*(url.end() - 1) != '/')
             url += "/";
         url += entry->d_name;
+
+        Logger::log(Logger::DEBUG, "url: " + url);
+
         
         html << "<li><a href=\"" << url << "\">"
              << entry->d_name << "</a></li>";
@@ -282,16 +386,17 @@ std::string Response::_handleGet()
     else
         if (_ctx->getRootPath().size() > 0)
             fullPath = _ctx->getRootPath() + _req.path;
-    Logger::log(Logger::DEBUG, "path of location: " + fullPath);
+    Logger::log(Logger::DEBUG, "Path of location: " + fullPath);
     struct stat pathStat;
     if (stat(fullPath.c_str(), &pathStat) == 0) {
         if (S_ISDIR(pathStat.st_mode))
         {
+            Logger::log(Logger::DEBUG, "Path is a directory.");
             std::string indexPath = _testIndex(fullPath);
-            Logger::log(Logger::DEBUG, "path of index: " + indexPath);
-            _req.path += indexPath;
+            Logger::log(Logger::DEBUG, "Path of index: " + indexPath);
+            if (indexPath != "none")
+                _req.path += indexPath;
             std::ifstream indexFile((fullPath + indexPath).c_str());
-
             if (indexFile.is_open())
             {
                 _initContentType(_req.path);
@@ -407,9 +512,13 @@ std::string Response::createResponseSTR()
     if (_req.endstatus >= 400)
         return (_handleLexerErrors());
     _setLocation();
+    if (_location_ctx && _location_ctx->isRedirectSet())
+        return (_createRedirect(_location_ctx->getRedirectCode(),
+                    _location_ctx->getRedirectUrl()));
     if (!_isMethodSupportedByRoute())
         return (_createError(405, "Method Not Allowed",
             "The request method is known by the server but is not supported by the target resource. "));
+        
     return (_handleMethod());
     return (_createResponse(200, "OK", "Hello World"));
     

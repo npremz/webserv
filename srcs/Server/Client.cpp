@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/20 19:29:25 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/01 11:56:07 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ bool    Client::_isCGI()
 void    Client::handleRequest()
 {
     long  byte_rec = 0;
-    while ((byte_rec = recv(_socket_fd, _buf, 1024, 0)) > 0)
+    if ((byte_rec = recv(_socket_fd, _buf, 1024, 0)) > 0)
     {
         HttpLexer::Status   c_status;
 
@@ -76,11 +76,13 @@ void    Client::handleRequest()
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
             Logger::log(Logger::DEBUG, "Request parsed");
             handleResponse();
-            break;
+            return ;
         }
         else if (c_status == HttpLexer::ERR)
             Logger::log(Logger::ERROR, "Invalid Request => lexer error");
     }
+    else if (byte_rec == -1)
+        Logger::log(Logger::ERROR, "Request reading error => closing connection.");
 }
 
 void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
@@ -140,7 +142,7 @@ void    Client::_prepareAndSend()
 
 void    Client::handleSend()
 {
-    while (_response_sent < _response_len) {
+    if (_response_sent < _response_len) {
         Logger::log(Logger::DEBUG, "Sending response...");
         size_t to_send = std::min(_response_str.size() - _response_sent, (size_t)MAX_CHUNK_SIZE);
         ssize_t n = send(_socket_fd, _response_str.data() + _response_sent, to_send, MSG_NOSIGNAL);
@@ -152,13 +154,9 @@ void    Client::handleSend()
                 Logger::log(Logger::DEBUG, "Response totally sent");
                 isFinished = true;
             }
-        } else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-            Logger::log(Logger::DEBUG, "Response partially sent");
-            break;
-        } else {
-            Logger::log(Logger::DEBUG, "CATASTROPHE");
-            // A faire: clean client + fermeture.
-            break;
+        } else if (n == -1) {
+            Logger::log(Logger::ERROR, "Response sending error => closing connection.");
+            return;
         }
     }
 }

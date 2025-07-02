@@ -17,7 +17,7 @@ BlocServer::BlocServer(std::vector<std::string> bloc) :
     _post(true),
     _delete(true),
     _autoindex(false),
-    _root_path("./server_files"),
+    _root_path("."),
     _client_max_body_size(4096)
 {
     this->_initFunctionTable();
@@ -238,10 +238,12 @@ void    BlocServer::_handleErrors(std::vector<std::string> tokens)
         int code;
         std::istringstream iss(tokens[i]);
         iss >> code;
-        if (code < 300 || code > 599)
+        if (code < 400 || code > 599)
             Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[i]);
         codes.push_back(code);
     }
+    if (!isReadable(_root_path + tokens[i]))
+        Logger::log(Logger::FATAL, "invalid config file. => unreadable " + _root_path + tokens[i]);
     std::string page = tokens[i];
     
     for (size_t j = 0; j < codes.size(); ++j) {

@@ -454,18 +454,38 @@ std::string Response::_handleGet()
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
+std::string Response::_handleFormSub(std::string fullPath)
+{
+
+    Logger::log(Logger::DEBUG, "Processing form URL-encoded");
+    Logger::log(Logger::DEBUG, "Target path: " + fullPath);
+    if (_location_ctx && !_location_ctx->getCGIExtension().empty())
+    {
+        Logger::log(Logger::DEBUG, "CGI configured: " + _location_ctx->getCGIExtension());
+        Logger::log(Logger::DEBUG, "Forwarding raw body to CGI");
+        CGI cgi_handler(std::string("POST"), _req, _req.contentType, _ctx, _location_ctx, _parent);
+        cgi_handler.exec();
+        return ("CGI");
+    }
+    else
+    {
+        Logger::log(Logger::DEBUG, "No CGI configured for form processing");
+        return (_createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
+    }
+}
+
 std::string Response::_handleDirPost(std::string fullPath)
 {
     (void)fullPath;
     Logger::log(Logger::DEBUG, "POST: Directory post.");
     std::string contentType;
-    if (_location_ctx->getUploadEnable())
+    if (!_location_ctx->getUploadEnable())
         return (_createError(403, "Forbidden", "Upload not allowed to this directory"));
     contentType = _req.contentType;
-    // if (contentType.find("multipart/form-data") != std::string::npos)
-    //     return (_handleMultiUpload(fullPath));
-    // else if (contentType == "application/x-www-form-urlencoded")
-    //     return (_handleFormSub(fullPath));
+    / if (contentType.find("multipart/form-data") != std::string::npos)
+         return (_handleMultiUpload(fullPath));
+    if (contentType == "application/x-www-form-urlencoded")
+         return (_handleFormSub(fullPath));
     return (_createError(415, "Unsupported Media Type", "Content type not supported for directory POST"));
 }
 

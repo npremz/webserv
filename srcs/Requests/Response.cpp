@@ -367,7 +367,7 @@ std::string Response::_handleDirPost(std::string fullPath)
 std::string Response::_handlePost()
 {
     std::string fullPath;
-    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
+    if (!_location_ctx && _location_ctx->getRootPath().size() > 0)
         fullPath = _location_ctx->getRootPath() + _req.path;
     else
         if (_ctx->getRootPath().size() > 0)
@@ -391,6 +391,9 @@ std::string Response::_handleMethod()
     {
         case HttpLexer::HTTP_GET:
             return (_handleGet());
+            break;
+        case HttpLexer::HTTP_POST:
+            return (_handlePost());
             break;
         default:
             return ("waf");

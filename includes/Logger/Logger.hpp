@@ -29,7 +29,8 @@ class Logger
             FATAL = 0,
             INFO,
             ERROR,
-            DEBUG
+            DEBUG,
+            WARNING
         };
 
         static void log(Logger::level level, std::string msg);

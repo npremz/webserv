@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/01 11:56:07 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/04 13:45:38 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,12 +18,20 @@ Client::Client(int fd, RouterMap& router, ServerManager* server) :
     _response_len(0),
     _response_sent(0),
     _response_ctx(NULL),
+    _rep(NULL),
     _server(server),
     isFinished(false)
 {}
 
 Client::~Client()
 {}
+
+void    Client::error500(std::string error)
+{
+    Response rep(_response_ctx, _lexer.getRequest(), this);
+    _response_str = rep.error500(error);
+    _prepareAndSend();
+}
 
 BlocServer*     Client::_responseRouting()
 {
@@ -75,6 +83,7 @@ void    Client::handleRequest()
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
             Logger::log(Logger::DEBUG, "Request parsed");
+            _rep = new Response(_response_ctx, _lexer.getRequest(), this);
             handleResponse();
             return ;
         }
@@ -87,16 +96,20 @@ void    Client::handleRequest()
 
 void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
 {
-    Response rep(_response_ctx, _lexer.getRequest(), this);
     if (isCGIResponse)
     {
-        _response_str = rep.createCGIResponseSTR(cgi_fd);
+        _response_str = _rep->createCGIResponseSTR(cgi_fd);
+        if (_response_str == "Not complete.")
+        {
+            Logger::log(Logger::DEBUG, "CGI pipe reading not completed, back to epoll");
+            return;
+        }
         close(cgi_fd);
         _server->removeCGILink(cgi_fd);
     }
     else
     {
-        _response_str = rep.createResponseSTR();
+        _response_str = _rep->createResponseSTR();
         if (_response_str == "CGI")
         {
             Logger::log(Logger::DEBUG, "Main process paused response, listening to child for cgi.");
@@ -104,11 +117,14 @@ void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
         }
     }
     Logger::log(Logger::DEBUG, "Response created");
+    delete _rep;
     _prepareAndSend();
 }
 
 void    Client::addCGIEpollIn(int cgi_fd)
 {
+    if (fcntl(cgi_fd, F_SETFL, O_NONBLOCK) == -1)
+        Logger::log(Logger::ERROR, "Initialisation error => fcntl c_socket error");
     _server->addCGIlink(this, cgi_fd);
     struct epoll_event ev;
     ev.events = EPOLLIN;
@@ -122,7 +138,8 @@ void    Client::_addEpollout()
     struct epoll_event ev;
     ev.events = EPOLLIN | EPOLLOUT;
     ev.data.fd = _socket_fd;
-    epoll_ctl(_server->getEpollFd(), EPOLL_CTL_MOD, _socket_fd, &ev);
+    if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_MOD, _socket_fd, &ev) == -1)
+        Logger::log(Logger::ERROR, "Exec error => epoll_ctl addEpollout");
 }
 
 void    Client::_removeEpollout()
@@ -130,7 +147,8 @@ void    Client::_removeEpollout()
     struct epoll_event ev;
     ev.events = EPOLLIN;
     ev.data.fd = _socket_fd;
-    epoll_ctl(_server->getEpollFd(), EPOLL_CTL_MOD, _socket_fd, &ev); 
+    if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_MOD, _socket_fd, &ev) == -1)
+        Logger::log(Logger::ERROR, "Exec error => epoll_ctl removeEpollout");
 }
 
 void    Client::_prepareAndSend()

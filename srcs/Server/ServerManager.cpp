@@ -297,6 +297,13 @@ void    ServerManager::_run()
                     {
                         c_client->isFinished = true;
                         std::cout << e.what() << std::endl;
+                        try {
+                            c_client->error500(e.what());
+                        }
+                        catch (const std::exception &e)
+                        {
+                            std::cout << e.what() << ". Couldn't send error 500 to client." << std::endl;
+                        }
                     }
                 }
                 else
@@ -313,6 +320,13 @@ void    ServerManager::_run()
                     {
                         c_client->isFinished = true;
                         std::cout << e.what() << std::endl;
+                        try {
+                            c_client->error500(e.what());
+                        }
+                        catch (const std::exception &e)
+                        {
+                            std::cout << e.what() << ". Couldn't send error 500 to client." << std::endl;
+                        }
                     }
                 }
                 if (c_client->isFinished == true)

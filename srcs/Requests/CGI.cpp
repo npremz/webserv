@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/20 19:05:47 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/02 17:37:16 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,8 @@ void CGI::_initArgv()
     _file_name = _location_ctx->getRootPath() + _req.path;
 
     _argv.push_back(const_cast<char *>(_location_ctx->getCGIPass().c_str()));
-    _argv.push_back(const_cast<char *>(_file_name.c_str()));
+    if (_method == "GET")
+        _argv.push_back(const_cast<char *>(_file_name.c_str()));
     _argv.push_back(NULL);
 
     // Logger::log(Logger::DEBUG, "CGI argv:");
@@ -101,11 +102,11 @@ void CGI::_initArgv()
 void    CGI::exec()
 {
     if (pipe(_cgi_pipe) == -1)
-        Logger::log(Logger::FATAL, "Pipe error.");
+        Logger::log(Logger::ERROR, "Pipe error.");
 
     pid_t pid;
     if ((pid = fork()) == -1)
-        Logger::log(Logger::FATAL, "Fork error.");
+        Logger::log(Logger::ERROR, "Fork error.");
 
     if (pid == 0)
     {

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/06/19 19:03:48 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/04 13:43:06 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 
 
 class ServerManager;
+class Response;
 
 class Client
 {
@@ -37,6 +38,7 @@ class Client
         size_t          _response_len;
         size_t          _response_sent;
         BlocServer*     _response_ctx;
+        Response*       _rep;
         ServerManager*  _server;
 
         BlocServer*     _responseRouting();
@@ -57,5 +59,6 @@ class Client
         void    handleRequest();
         void    handleResponse(bool isCGIResponse = false, int cgi_fd = 0);
         void    handleSend();
+        void    error500(std::string error);
 };
 #endif

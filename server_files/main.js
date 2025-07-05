@@ -168,7 +168,7 @@ if (testPostCgi) testPostCgi.onclick = async () => {
     const msg = document.getElementById('msgPostCgi');
     msg.textContent = '...';
     try {
-        const res = await fetch('/scripts/test.py', { method: 'POST', body: new URLSearchParams({ foo: 'bar' }) });
+        const res = await fetch('/uploads/', { method: 'POST', body: new URLSearchParams({ foo: 'bar' }) });
         const text = await res.text();
         msg.textContent = 'Status: ' + res.status + (res.ok ? ' (OK)' : '');
         msg.className = res.ok ? 'text-green-600' : 'text-red-600';

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/01 15:57:28 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/04 13:39:33 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class Response
         HttpLexer::parsedRequest    _req;
         std::string                 _content_type;
         Client*                     _parent;
+        std::string                 _response_cgi;
 
         std::string                 _createError(unsigned int code, std::string error,
                                         std::string bodyStr);
@@ -65,6 +66,7 @@ class Response
 
         std::string createResponseSTR();
         std::string createCGIResponseSTR(int cgi_fd);
+        std::string error500(std::string error);
 };
 
 #endif

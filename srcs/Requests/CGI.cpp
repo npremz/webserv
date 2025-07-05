@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/02 11:33:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/02 17:37:16 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,11 +102,11 @@ void CGI::_initArgv()
 void    CGI::exec()
 {
     if (pipe(_cgi_pipe) == -1)
-        Logger::log(Logger::FATAL, "Pipe error.");
+        Logger::log(Logger::ERROR, "Pipe error.");
 
     pid_t pid;
     if ((pid = fork()) == -1)
-        Logger::log(Logger::FATAL, "Fork error.");
+        Logger::log(Logger::ERROR, "Fork error.");
 
     if (pid == 0)
     {

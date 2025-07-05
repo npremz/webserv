@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/02 11:37:18 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/04 13:45:48 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ std::string Response::_createError(unsigned int code, std::string error, std::st
     std::ostringstream oss_body;
 
     oss_header << "HTTP/1.1 " << code << " " << error << "\r\n";
-    oss_body << "<html><head><title>" << code << error << "</title></head><body><h1>"
+    oss_body << "<html><head><title>" << code << " " << error << "</title></head><body><h1>"
              << code << " " << error
              << "</h1><p>"
              << bodyStr
@@ -106,6 +106,11 @@ std::string Response::_createResponse(unsigned int code, std::string msg, const 
     response.append(bodyStr.data(), bodyStr.size());
 
     return (response);
+}
+
+std::string Response::error500(std::string error)
+{
+    return (_createError(500, "Internal server error.", error));
 }
 
 std::string Response::_createRedirect(unsigned int code, const std::string& url)
@@ -189,10 +194,6 @@ bool    Response::_setLocation()
             std::string::size_type pos = path.find_last_of("/");
             path = path.substr(0, pos + 1);
         }
-
-        Logger::log(Logger::DEBUG, "path: " + path);
-        Logger::log(Logger::DEBUG, "location: " + location);
-        
 
         if (location == path)
         {
@@ -454,14 +455,12 @@ std::string Response::_handleGet()
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
-std::string Response::_handleFormSub(std::string fullPath)
+std::string Response::_handleMultiUpload(std::string uploadDir)
 {
-
-    Logger::log(Logger::DEBUG, "Processing form URL-encoded");
-    Logger::log(Logger::DEBUG, "Target path: " + fullPath);
+    Logger::log(Logger::DEBUG, "Processing MultiUpload");
+    Logger::log(Logger::DEBUG, "Target path: " + uploadDir);
     if (_location_ctx && !_location_ctx->getCGIExtension().empty())
     {
-        Logger::log(Logger::DEBUG, "CGI configured: " + _location_ctx->getCGIExtension());
         Logger::log(Logger::DEBUG, "Forwarding raw body to CGI");
         CGI cgi_handler(std::string("POST"), _req, _req.contentType, _ctx, _location_ctx, _parent);
         cgi_handler.exec();
@@ -469,7 +468,25 @@ std::string Response::_handleFormSub(std::string fullPath)
     }
     else
     {
-        Logger::log(Logger::DEBUG, "No CGI configured for form processing");
+        Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
+        return (_createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
+    }
+}
+
+std::string Response::_handleFormSub(std::string fullPath)
+{
+    Logger::log(Logger::DEBUG, "Processing form URL-encoded");
+    Logger::log(Logger::DEBUG, "Target path: " + fullPath);
+    if (_location_ctx && !_location_ctx->getCGIExtension().empty())
+    {
+        Logger::log(Logger::DEBUG, "Forwarding raw body to CGI");
+        CGI cgi_handler(std::string("POST"), _req, _req.contentType, _ctx, _location_ctx, _parent);
+        cgi_handler.exec();
+        return ("CGI");
+    }
+    else
+    {
+        Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
         return (_createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
     }
 }
@@ -484,8 +501,8 @@ std::string Response::_handleDirPost(std::string fullPath)
     contentType = _req.contentType;
     if (contentType.find("multipart/form-data") != std::string::npos)
         return (_handleMultiUpload(fullPath));
-    // else if (contentType == "application/x-www-form-urlencoded")
-    //     return (_handleFormSub(fullPath));
+    else if (contentType.find("application/x-www-form-urlencoded") != std::string::npos)
+        return (_handleFormSub(fullPath));
     return (_createError(415, "Unsupported Media Type", "Content type not supported for directory POST"));
 }
 
@@ -506,9 +523,7 @@ std::string Response::_handlePost()
             return (_handleDirPost(fullPath));
         // return (_handleFilePost(fullPath));
     }
-    else 
-        return (_createError(404, "Not Found", "The server cannot find the requested resource"));
-    return (NULL);
+    return (_createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
 std::string Response::_handleMethod()
@@ -547,28 +562,27 @@ std::string Response::createResponseSTR()
 
 std::string Response::createCGIResponseSTR(int cgi_fd)
 {
-    std::string     response;
-    char            buf[MAX_BUF_SIZE];
+    char            buf[MAX_CHUNK_SIZE];
     ssize_t          read_bytes;
 
-    while ((read_bytes = read(cgi_fd, buf, MAX_BUF_SIZE)) > 0) {
-        response.append(buf, read_bytes);
-    }
-
-    _setLocation();
-
-    Logger::log(Logger::DEBUG, "CGI pipe content:");
-    std::cout << response << std::endl;
-
-    if (_location_ctx->getCGIExtension() == ".php")
-    {
-        response = buildHttpResponseFromCGI(response);
-        Logger::log(Logger::DEBUG, "php CGI formated content:");
-        std::cout << response << std::endl;
+    if ((read_bytes = read(cgi_fd, buf, MAX_CHUNK_SIZE)) > 0) {
+        _response_cgi.append(buf, read_bytes);
+        return ("Not complete.");
     }
 
     if (read_bytes < 0) {
-        Logger::log(Logger::FATAL, "Erreur de lecture sur le pipe");
+        Logger::log(Logger::WARNING, "CGI pipe read returned -1.");
     }
-    return (response);
+    
+    Logger::log(Logger::DEBUG, "CGI pipe content:");
+    std::cout << _response_cgi << std::endl;
+
+    if (_location_ctx->getCGIExtension() == ".php")
+    {
+        _response_cgi = buildHttpResponseFromCGI(_response_cgi);
+        Logger::log(Logger::DEBUG, "php CGI formated content:");
+        std::cout << _response_cgi << std::endl;
+    }
+
+    return (_response_cgi);
 }

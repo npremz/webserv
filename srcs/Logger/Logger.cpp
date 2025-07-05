@@ -45,6 +45,9 @@ void    Logger::addLevel(Logger::level level)
         case Logger::DEBUG:
             std::cout << C_LIGHT_GRAY << "[DEBUG] ";
             break ;
+        case Logger::WARNING:
+            std::cout << C_BEIGE << "[WARNING] ";
+            break ;
     }
 }
 

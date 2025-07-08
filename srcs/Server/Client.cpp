@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/04 13:45:38 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/06 21:29:57 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,38 @@ bool    Client::_isCGI()
     return (false);
 }
 
+void    Client::writeRequestBodyToCGI(int cgi_fd)
+{
+    ssize_t bytes_written = 0;
+    size_t write_size = (_bytes_to_cgi_stdin + MAX_CHUNK_SIZE > _lexer.getRequest().expectedoctets)
+        ? _lexer.getRequest().expectedoctets - _bytes_to_cgi_stdin
+        : MAX_CHUNK_SIZE;
+
+    std::ostringstream oss;
+    oss << _lexer.getRequest().expectedoctets;
+
+    Logger::log(Logger::DEBUG, "Size left to send of body: " + oss.str());
+
+    if ((bytes_written = write(cgi_fd, _lexer.getRequest().body.data() + _bytes_to_cgi_stdin, write_size)) > 0)
+    {    
+        _bytes_to_cgi_stdin += bytes_written;
+        if (_bytes_to_cgi_stdin == _lexer.getRequest().expectedoctets)
+        {
+            if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_DEL, cgi_fd, NULL) == -1)
+                Logger::log(Logger::ERROR, "Error closing cgi writing fd after writing request body to CGI STDIN.");
+            close(cgi_fd);
+            Logger::log(Logger::DEBUG, "Request body written to CGI STDIN.");
+        }
+    }
+    else if (bytes_written == -1)
+    {
+        if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_DEL, cgi_fd, NULL) == -1)
+            Logger::log(Logger::ERROR, "Error closing cgi writing fd after error writing request body to CGI STDIN.");
+        close(cgi_fd);
+        Logger::log(Logger::ERROR, "Error writing request body to CGI STDIN.");
+    }
+}
+
 void    Client::handleRequest()
 {
     long  byte_rec = 0;
@@ -121,10 +153,22 @@ void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
     _prepareAndSend();
 }
 
+void    Client::addCGIEpollOut(int cgi_fd)
+{
+    if (fcntl(cgi_fd, F_SETFL, O_NONBLOCK) == -1)
+        Logger::log(Logger::ERROR, "Initialisation error => fcntl cgi_pipe error");
+    _server->addCGIlink(this, cgi_fd);
+    struct epoll_event ev;
+    ev.events = EPOLLOUT;
+    ev.data.fd = cgi_fd;
+    if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_ADD, cgi_fd, &ev) == -1)
+        Logger::log(Logger::ERROR, "Exec error => epoll_ctl cgi_pipe error");
+}
+
 void    Client::addCGIEpollIn(int cgi_fd)
 {
     if (fcntl(cgi_fd, F_SETFL, O_NONBLOCK) == -1)
-        Logger::log(Logger::ERROR, "Initialisation error => fcntl c_socket error");
+        Logger::log(Logger::ERROR, "Initialisation error => fcntl cgi_pipe error");
     _server->addCGIlink(this, cgi_fd);
     struct epoll_event ev;
     ev.events = EPOLLIN;

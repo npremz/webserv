@@ -175,7 +175,7 @@ void    ServerManager::_closeAllClients() {
 
 void    ServerManager::addCGIlink(Client* client, int cgi_fd)
 {
-    _cgi_map[client] = cgi_fd;
+    _cgi_map.insert(std::make_pair(client, cgi_fd));
 }
 
 void    ServerManager::removeCGILink(int cgi_fd)
@@ -190,7 +190,7 @@ void    ServerManager::removeCGILink(int cgi_fd)
 
 Client*    ServerManager::_isCGIClient(int fd)
 {
-    for (std::map<Client*, int>::iterator it = _cgi_map.begin();
+    for (std::multimap<Client*, int>::iterator it = _cgi_map.begin();
         it != _cgi_map.end(); it++)
     {
         if (fd == it->second)
@@ -291,7 +291,10 @@ void    ServerManager::_run()
                 if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
                     try {
-                        c_client->handleResponse(true, events[i].data.fd);
+                        //if (events[i].events & EPOLLIN)
+                            c_client->handleResponse(true, events[i].data.fd);
+                        // if (events[i].events & EPOLLOUT)
+                        //     c_client->writeRequestBodyToCGI(events[i].data.fd);
                     }
                     catch (const std::exception &e)
                     {

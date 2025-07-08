@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/04 13:43:06 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/06 20:05:56 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ class Client
         BlocServer*     _response_ctx;
         Response*       _rep;
         ServerManager*  _server;
+        size_t         _bytes_to_cgi_stdin;
 
         BlocServer*     _responseRouting();
 
@@ -55,6 +56,8 @@ class Client
         ~Client();
         
         void    addCGIEpollIn(int cgi_fd);
+        void    addCGIEpollOut(int cgi_fd);
+        void    writeRequestBodyToCGI(int cgi_fd);
         
         void    handleRequest();
         void    handleResponse(bool isCGIResponse = false, int cgi_fd = 0);

@@ -47,7 +47,7 @@ class ServerManager
         int                             _exit_pipe[2];
         std::list<int>                  _client_fds;
         std::map<int, Client*>          _clients;
-        std::map<Client*, int>    _cgi_map;
+        std::multimap<Client*, int>     _cgi_map;
 
         void                _initRouter();
         void                _initListenSockets();

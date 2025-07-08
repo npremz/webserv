@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/02 17:37:16 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/06 21:22:54 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,6 +110,8 @@ void    CGI::exec()
 
     if (pid == 0)
     {
+        if (_method == "POST")
+            dup2(_cgi_pipe[0], STDIN_FILENO);
         close(_cgi_pipe[0]);
         dup2(_cgi_pipe[1], STDOUT_FILENO);
         dup2(_cgi_pipe[1], STDERR_FILENO);
@@ -120,6 +122,9 @@ void    CGI::exec()
         exit(1);
     }
     Logger::log(Logger::DEBUG, "Main process passed fork.");
-    close(_cgi_pipe[1]);
+    if (_method == "POST")
+        _client->addCGIEpollOut(_cgi_pipe[1]);
+    if (_method != "POST")
+        close(_cgi_pipe[1]);
     _client->addCGIEpollIn(_cgi_pipe[0]);
 }

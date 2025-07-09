@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/06/17 14:20:26 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/08 18:53:08 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@ HttpLexer::HttpLexer() : _state(START_LINE), _req_size(0)
 {
 	_req.endstatus = 200;
 	_req.has_host = false;
+	_req.ischunked = false;
+	_req.expectedoctets = 0;
 }
 
 HttpLexer::~HttpLexer()
@@ -252,12 +254,12 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 
 HttpLexer::ParseState HttpLexer::_bodyParseCL()
 {
-	if (_buf.size() < _req.content_lenght)
+	if (_buf.size() < _req.expectedoctets)
 		return (PAUSE);
-	else if (_buf.size() >= _req.content_lenght)
+	else if (_buf.size() >= _req.expectedoctets)
 	{
-		_req.body.append(_buf, 0, _req.content_lenght);
-		_buf.erase(0, _req.content_lenght);
+		_req.body.append(_buf, 0, _req.expectedoctets);
+		_buf.erase(0, _req.expectedoctets);
 		return (GOOD);
 	}
 	return (PARSE_ERROR);
@@ -298,7 +300,6 @@ HttpLexer::ParseState HttpLexer::_parseBody()
 		return (_bodyParseChunked());
 	else
 		return (_bodyParseCL());
-
 }
 
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
@@ -332,6 +333,8 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			{
 				if (!_req.has_host)
 					_state = ERROR;
+				else if (_req.expectedoctets > 0)
+					_state = BODY;
 				else
 					_state = DONE;
         		Logger::log(Logger::DEBUG, "Header parsing done");
@@ -342,6 +345,7 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			parsing_state = _parseBody();
 			if (parsing_state == GOOD)
 			{
+				Logger::log(Logger::DEBUG, "Body parsed: " + _req.body);
 				_state = DONE;
         		Logger::log(Logger::DEBUG, "Body parsing done");
 			}

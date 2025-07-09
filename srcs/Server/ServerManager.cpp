@@ -45,15 +45,6 @@ void    ServerManager::initConfig(std::string config_src)
 void    ServerManager::_initRouter()
 {
     _router = _config.initRouter();
-    // for (RouterMap::iterator it = _router.begin();
-    // it != _router.end(); ++it)
-    // {
-    //     std::cout << (it->first).ip << " " << (it->first).port << std::endl;
-    //     for (std::vector<BlocServer>::iterator s_it = (it->second).begin(); s_it != (it->second).end(); ++s_it)
-    //     {
-    //         s_it->print(2);
-    //     }
-    // }
 }
 
 bool    isDouble(const unsigned int val, std::vector<unsigned int> tab)
@@ -159,10 +150,10 @@ void    ServerManager::_removeClient(int fd) {
 
 void    ServerManager::_closeAllClients() {
     for (std::map<int, Client*>::iterator it = _clients.begin();
-        it != _clients.end(); ++it)
+        it != _clients.end();)
     {
         delete it->second;
-        _clients.erase(it);
+        _clients.erase(it++);
     }
     for (std::list<int>::iterator it = _client_fds.begin();
          it != _client_fds.end(); ++it)
@@ -180,11 +171,13 @@ void    ServerManager::addCGIlink(Client* client, int cgi_fd)
 
 void    ServerManager::removeCGILink(int cgi_fd)
 {
-    for (std::map<Client*, int>::iterator it = _cgi_map.begin();
-        it != _cgi_map.end(); it++)
+    for (std::multimap<Client*, int>::iterator it = _cgi_map.begin();
+        it != _cgi_map.end(); )
     {
         if (cgi_fd == it->second)
-            _cgi_map.erase(it);
+            _cgi_map.erase(it++);
+        else
+            it++;
     }
 }
 
@@ -291,10 +284,21 @@ void    ServerManager::_run()
                 if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
                     try {
-                        //if (events[i].events & EPOLLIN)
-                            c_client->handleResponse(true, events[i].data.fd);
+                        // Logger::log(Logger::DEBUG, "Epoll event via CGI detected.");
+                        // if (events[i].events & EPOLLIN)
+                        //     Logger::log(Logger::DEBUG, "Epollin.");
+                        // if (events[i].events & EPOLLHUP)
+                        //     Logger::log(Logger::DEBUG, "Epollhup.");
                         // if (events[i].events & EPOLLOUT)
-                        //     c_client->writeRequestBodyToCGI(events[i].data.fd);
+                        //     Logger::log(Logger::DEBUG, "Epollout.");
+                        if (events[i].events & EPOLLIN || events[i].events & EPOLLHUP)
+                        {
+                            c_client->handleResponse(true, events[i].data.fd);
+                        }
+                        if (events[i].events & EPOLLOUT)
+                        {
+                            c_client->writeRequestBodyToCGI(events[i].data.fd);
+                        }
                     }
                     catch (const std::exception &e)
                     {

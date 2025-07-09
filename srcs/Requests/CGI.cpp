@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/06 21:22:54 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/09 16:44:25 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,17 @@ void    CGI::_initEnvTab()
     _env_tab.push_back(makeEnvVar("DOCUMENT_ROOT", _location_ctx->getRootPath() + _location_ctx->getLocationPath()));
     _env_tab.push_back(makeEnvVar("REDIRECT_STATUS", "200"));
     _env_tab.push_back(makeEnvVar("REMOTE_ADDR", "127.0.0.1"));
+    _env_tab.push_back(makeEnvVar("UPLOAD_ENABLE", _location_ctx->getUploadEnable()));
+    _env_tab.push_back(makeEnvVar("UPLOAD_PATH", _location_ctx->getUploadPath()));
+    
+    if (_req.contentType.size() > 0)
+        _env_tab.push_back(makeEnvVar("CONTENT_TYPE", _req.contentType));
+    if (_req.expectedoctets > 0)
+    {
+        std::ostringstream oss;
+        oss << _req.expectedoctets;
+        _env_tab.push_back(makeEnvVar("CONTENT_LENGTH", oss.str()));
+    }
     
     size_t      slash_pos = _req.path.find_last_of("/");
     std::string target_file = _req.path.substr(slash_pos + 1);
@@ -53,23 +64,16 @@ void    CGI::_initEnvTab()
     for (HttpLexer::HeaderMap::iterator it = _req.headers.begin();
         it != _req.headers.end(); it++)
     {
-        if (it->first == "content-type")
-            _env_tab.push_back(makeEnvVar("CONTENT_TYPE", it->second));
-        else if (it->first == "content-length")
-            _env_tab.push_back(makeEnvVar("CONTENT_LENGTH", it->second));
-        else
-        {
-            std::string env = "HTTP_";
-            std::string header_name = it->first;
-            for (size_t i = 0; i < header_name.size(); ++i) {
-                char c = header_name[i];
-                if (c == '-')
-                    env += '_';
-                else
-                    env += std::toupper(c);
-            }
-            _env_tab.push_back(makeEnvVar(env, it->second));
+        std::string env = "HTTP_";
+        std::string header_name = it->first;
+        for (size_t i = 0; i < header_name.size(); ++i) {
+            char c = header_name[i];
+            if (c == '-')
+                env += '_';
+            else
+                env += std::toupper(c);
         }
+        _env_tab.push_back(makeEnvVar(env, it->second));
     }
 
     _env_tab.push_back(NULL);
@@ -86,7 +90,13 @@ void CGI::_initArgv()
 {
     _file_name = _location_ctx->getRootPath() + _req.path;
 
-    _argv.push_back(const_cast<char *>(_location_ctx->getCGIPass().c_str()));
+    if (_method == "POST" && !isDirectory(_file_name))
+    {
+        _argv.push_back(const_cast<char *>(_location_ctx->getCGIPass().c_str()));
+        _argv.push_back(const_cast<char *>(_file_name.c_str()));
+    }
+    else
+        _argv.push_back(const_cast<char *>(_location_ctx->getCGIPass().c_str()));
     if (_method == "GET")
         _argv.push_back(const_cast<char *>(_file_name.c_str()));
     _argv.push_back(NULL);
@@ -101,8 +111,11 @@ void CGI::_initArgv()
 
 void    CGI::exec()
 {
-    if (pipe(_cgi_pipe) == -1)
-        Logger::log(Logger::ERROR, "Pipe error.");
+    if (pipe(_cgi_pipe_output) == -1)
+        Logger::log(Logger::ERROR, "Output pipe error.");
+
+    if (_method == "POST" && pipe(_cgi_pipe_input) == -1)
+        Logger::log(Logger::ERROR, "Input pipe error.");
 
     pid_t pid;
     if ((pid = fork()) == -1)
@@ -111,11 +124,15 @@ void    CGI::exec()
     if (pid == 0)
     {
         if (_method == "POST")
-            dup2(_cgi_pipe[0], STDIN_FILENO);
-        close(_cgi_pipe[0]);
-        dup2(_cgi_pipe[1], STDOUT_FILENO);
-        dup2(_cgi_pipe[1], STDERR_FILENO);
-        close(_cgi_pipe[1]);
+        {
+            dup2(_cgi_pipe_input[0], STDIN_FILENO);
+            close(_cgi_pipe_input[0]);
+            close(_cgi_pipe_input[1]);
+        }
+        close(_cgi_pipe_output[0]);
+        dup2(_cgi_pipe_output[1], STDOUT_FILENO);
+        dup2(_cgi_pipe_output[1], STDERR_FILENO);
+        close(_cgi_pipe_output[1]);
         _initArgv();
         _initEnvTab();
         execve(_location_ctx->getCGIPass().c_str(), _argv.data(), _env_tab.data());
@@ -123,8 +140,10 @@ void    CGI::exec()
     }
     Logger::log(Logger::DEBUG, "Main process passed fork.");
     if (_method == "POST")
-        _client->addCGIEpollOut(_cgi_pipe[1]);
-    if (_method != "POST")
-        close(_cgi_pipe[1]);
-    _client->addCGIEpollIn(_cgi_pipe[0]);
+    {
+        _client->addCGIEpollOut(_cgi_pipe_input[1]);
+        close(_cgi_pipe_input[0]);
+    }
+    close(_cgi_pipe_output[1]);
+    _client->addCGIEpollIn(_cgi_pipe_output[0]);
 }

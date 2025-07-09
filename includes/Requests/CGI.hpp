@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 17:12:58 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/02 17:37:21 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/09 14:43:25 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,8 @@ class CGI
         BlocServer*                 _ctx;
         const BlocLocation*         _location_ctx;
         Client*                     _client;
-        int                         _cgi_pipe[2];
+        int                         _cgi_pipe_output[2];
+        int                         _cgi_pipe_input[2];
         std::string                 _content_type;
 
         void                    _initEnvTab();

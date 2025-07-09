@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/06 21:15:01 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/09 16:07:58 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -455,7 +455,7 @@ std::string Response::_handleGet()
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
-std::string Response::_handleMultiUpload(std::string uploadDir)
+std::string Response::_handleUpload(std::string uploadDir)
 {
     Logger::log(Logger::DEBUG, "Processing MultiUpload");
     Logger::log(Logger::DEBUG, "Target path: " + uploadDir);
@@ -473,36 +473,15 @@ std::string Response::_handleMultiUpload(std::string uploadDir)
     }
 }
 
-std::string Response::_handleFormSub(std::string fullPath)
-{
-    Logger::log(Logger::DEBUG, "Processing form URL-encoded");
-    Logger::log(Logger::DEBUG, "Target path: " + fullPath);
-    if (_location_ctx && !_location_ctx->getCGIExtension().empty())
-    {
-        Logger::log(Logger::DEBUG, "Forwarding raw body to CGI");
-        CGI cgi_handler(std::string("POST"), _req, _req.contentType, _ctx, _location_ctx, _parent);
-        cgi_handler.exec();
-        return ("CGI");
-    }
-    else
-    {
-        Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
-        return (_createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
-    }
-}
-
-std::string Response::_handleDirPost(std::string fullPath)
+std::string Response::_handlePostContentType(std::string fullPath)
 {
     (void)fullPath;
     Logger::log(Logger::DEBUG, "POST: Directory post.");
     std::string contentType;
-    if (!_location_ctx->getUploadEnable())
-        return (_createError(403, "Forbidden", "Upload not allowed to this directory"));
     contentType = _req.contentType;
-    if (contentType.find("multipart/form-data") != std::string::npos)
-        return (_handleMultiUpload(fullPath));
-    else if (contentType.find("application/x-www-form-urlencoded") != std::string::npos)
-        return (_handleFormSub(fullPath));
+    if (contentType.find("multipart/form-data") != std::string::npos
+        || contentType.find("application/x-www-form-urlencoded") != std::string::npos)
+        return (_handleUpload(fullPath));
     return (_createError(415, "Unsupported Media Type", "Content type not supported for directory POST"));
 }
 
@@ -516,12 +495,12 @@ std::string Response::_handlePost()
             fullPath = _ctx->getRootPath() + _req.path;
     Logger::log(Logger::DEBUG, "POST target path: " + fullPath);
 
-    struct stat pathStat;
-    if (stat(fullPath.c_str(), &pathStat) == 0)
+    if (access(fullPath.c_str(), F_OK) == 0)
     {
-        if (S_ISDIR(pathStat.st_mode))
-            return (_handleDirPost(fullPath));
-        // return (_handleFilePost(fullPath));
+        if (access(fullPath.c_str(), R_OK | X_OK) == 0)
+            return (_handlePostContentType(fullPath));
+        else
+            return (_createError(403, "Forbidden", "Request failed due to insufficient permissions"));
     }
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
 }

@@ -44,7 +44,7 @@ class BlocLocation
         bool                                _post;
         bool                                _delete;
         bool                                _autoindex;
-        bool                                _upload_enable;
+        std::string                         _upload_enable;
         std::string                         _upload_path;
         std::string                         _cgi_extension;
         std::string                         _cgi_pass;
@@ -85,7 +85,7 @@ class BlocLocation
         bool                            getPostMethod() const;
         bool                            getDeleteMethod() const;
         bool                            getAutoindex() const;
-        bool                            getUploadEnable() const;
+        const std::string&              getUploadEnable() const;
         const std::string&              getUploadPath() const;
         const std::string&              getCGIExtension() const;
         const std::string&              getCGIPass() const;

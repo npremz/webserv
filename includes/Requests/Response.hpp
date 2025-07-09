@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/04 13:39:33 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/09 15:13:03 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,10 +46,10 @@ class Response
         std::string                 _handleLexerErrors();
         std::string                 _handleMethod();
         std::string                 _handlePost();
-        std::string                 _handleDirPost(std::string fullPath);
+        std::string                 _handlePostContentType(std::string fullPath);
         std::string                 _handleFilePost(std::string fullPath);
         std::string                 _handleFormSub(std::string fullPath);
-        std::string                 _handleMultiUpload(std::string uploadDir);
+        std::string                 _handleUpload(std::string uploadDir);
         std::string                 _handleNewPost(std::string fullPath);
         std::string                 _handleGet();
         bool                        _handleGetCGI();

@@ -21,7 +21,7 @@ BlocLocation::BlocLocation(BlocServer* parent, std::string location_path,
     _post(parent->getPostMethod()),
     _delete(parent->getDeleteMethod()),
     _autoindex(parent->getAutoindex()),
-    _upload_enable(false),
+    _upload_enable("off"),
     _root_path(parent->getRootPath()),
     _client_max_body_size(parent->getClientMaxBodySize())
 {
@@ -119,9 +119,9 @@ void    BlocLocation::_handleUploadEnable(std::vector<std::string> tokens)
         Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
     if (tokens[1] == "on")
-        this->_upload_enable = true;
+        this->_upload_enable = "on";
     else if (tokens[1] == "off")
-        this->_upload_enable = false;
+        this->_upload_enable = "off";
     else
         Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
 }
@@ -288,7 +288,7 @@ void BlocLocation::print(int indent) const
     printIndent(indent+1); std::cout << "allowed methods: "
         << (_get ? "GET " : "") << (_post ? "POST " :"") << (_delete ? "DELETE " : "") << std::endl;
     printIndent(indent+1); std::cout << "autoindex: " << (_autoindex ? "on" : "off") << std::endl;
-    printIndent(indent+1); std::cout << "upload_enable: " << (_upload_enable ? "on" : "off") << std::endl;
+    printIndent(indent+1); std::cout << "upload_enable: " << _upload_enable << std::endl;
     printIndent(indent+1); std::cout << "upload_path: " << _upload_path << std::endl;
     printIndent(indent+1); std::cout << "cgi_extension: " << _cgi_extension << std::endl;
     printIndent(indent+1); std::cout << "cgi_pass: " << _cgi_pass << std::endl;
@@ -339,7 +339,7 @@ bool BlocLocation::getAutoindex() const
     return _autoindex;
 }
 
-bool BlocLocation::getUploadEnable() const 
+const std::string& BlocLocation::getUploadEnable() const 
 {
     return _upload_enable;
 }

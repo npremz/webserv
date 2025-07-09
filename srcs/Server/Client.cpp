@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/06 21:29:57 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/08 18:47:57 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,14 @@ Client::Client(int fd, RouterMap& router, ServerManager* server) :
     _response_ctx(NULL),
     _rep(NULL),
     _server(server),
+    _bytes_to_cgi_stdin(0),
     isFinished(false)
 {}
 
 Client::~Client()
-{}
+{
+    delete _rep;
+}
 
 void    Client::error500(std::string error)
 {
@@ -75,11 +78,6 @@ void    Client::writeRequestBodyToCGI(int cgi_fd)
     size_t write_size = (_bytes_to_cgi_stdin + MAX_CHUNK_SIZE > _lexer.getRequest().expectedoctets)
         ? _lexer.getRequest().expectedoctets - _bytes_to_cgi_stdin
         : MAX_CHUNK_SIZE;
-
-    std::ostringstream oss;
-    oss << _lexer.getRequest().expectedoctets;
-
-    Logger::log(Logger::DEBUG, "Size left to send of body: " + oss.str());
 
     if ((bytes_written = write(cgi_fd, _lexer.getRequest().body.data() + _bytes_to_cgi_stdin, write_size)) > 0)
     {    
@@ -136,6 +134,8 @@ void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
             Logger::log(Logger::DEBUG, "CGI pipe reading not completed, back to epoll");
             return;
         }
+        if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_DEL, cgi_fd, NULL) == -1)
+            Logger::log(Logger::ERROR, "Error while deleting cgi pipe from epoll.");
         close(cgi_fd);
         _server->removeCGILink(cgi_fd);
     }
@@ -149,7 +149,6 @@ void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
         }
     }
     Logger::log(Logger::DEBUG, "Response created");
-    delete _rep;
     _prepareAndSend();
 }
 
@@ -204,6 +203,7 @@ void    Client::_prepareAndSend()
 
 void    Client::handleSend()
 {
+    Logger::log(Logger::DEBUG, "response content: ");
     if (_response_sent < _response_len) {
         Logger::log(Logger::DEBUG, "Sending response...");
         size_t to_send = std::min(_response_str.size() - _response_sent, (size_t)MAX_CHUNK_SIZE);

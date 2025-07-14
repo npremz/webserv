@@ -1,68 +1,132 @@
 <!DOCTYPE html>
-<html lang="fr">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Webserv</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+    <script src="main.js" defer></script>   
+    <title>Tester Webserv</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Montserrat:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
 </head>
-
 <body>
-    <div class="container fade-in">
-        <h1 class="main-title">Testeur Webserv</h1>
-        <!-- Upload Form -->
-        <section class="section">
-            <h2 class="section-title">Uploader un fichier (POST /)</h2>
-            <form id="uploadForm" class="form" enctype="multipart/form-data">
-                <label for="file-upload" class="file-label">Choisir un fichier</label>
-                <input type="file" id="file-upload" name="file" class="input-file" required />
-                <span id="selectedFile" class="selected-file"></span>
-                <button type="submit" class="btn btn-primary">Envoyer</button>
-                <div id="uploadMsg" class="msg"></div>
-            </form>
-        </section>
-        <!-- Liste des fichiers -->
-        <section class="section">
-            <h2 class="section-title">Fichiers dans /images (GET /images)</h2>
-            <button id="refreshBtn" class="btn btn-secondary">Rafraîchir</button>
-            <ul id="fileList" class="file-list"></ul>
-            <div id="fileMsg" class="msg"></div>
-        </section>
-        <!-- CGI Test -->
-        <section class="section">
-            <h2 class="section-title">Tester un CGI (PHP ou Python)</h2>
-            <form id="cgiForm" class="form">
-                <label class="label">Chemin du script (ex: <code>/scripts/test.py</code> ou
-                    <code>/index.php</code>)</label>
-                <input type="text" name="script" placeholder="/scripts/test.py" required class="input-text" />
-                <label class="label">Paramètres (clé=valeur, séparés par &)</label>
-                <input type="text" name="params" placeholder="foo=bar&baz=qux" class="input-text" />
-                <button type="submit" class="btn btn-success">Exécuter CGI</button>
-                <div id="cgiMsg" class="msg"></div>
-            </form>
-            <pre id="cgiResult" class="cgi-result"></pre>
-        </section>
-        <!-- Section supplémentaire pour les tests avancés -->
-        <section class="section">
-            <h2 class="section-title">Tests avancés</h2>
-            <ul class="test-list">
-                <li><b>Test d'erreur personnalisée</b> : <button id="test404" class="btn btn-danger">404</button> <span
-                        id="msg404"></span></li>
-                <li><b>Test de redirection</b> : <button id="testRedirect" class="btn btn-warning">/old-path</button>
-                    <span id="msgRedirect"></span>
-                </li>
-                <li><b>Test d'autoindex</b> : <button id="testAutoindex" class="btn btn-info">/images</button> <span
-                        id="msgAutoindex"></span></li>
-                <li><b>Test POST sur une route CGI</b> : <button id="testPostCgi" class="btn btn-success">POST
-                        /scripts/filezer.py</button> <span id="msgPostCgi"></span></li>
-                <li><b>Test limite taille upload</b> : <button id="testBigUpload" class="btn btn-purple">Fichier &gt;
-                        4Mo</button> <span id="msgBigUpload"></span></li>
-            </ul>
-        </section>
-    </div>
-    <script src="main.js"></script>
-</body>
+    <div class="container">
+        <header class="header">
+            <h1>Webserv</h1>
+            <p>by kderhet, gcools and npremont</p>
+        </header>
+        <main class="main">
+            <section class="section">
+                <h2>Ability to get images (GET specific file)</h2>
+                <div class="image-bloc">
+                    <div>
+                        <h3>.jpg / .jpeg</h3>
+                        <a href="./images/images.jpeg">
+                            <img class="image-bloc__img" src="./images/images.jpeg">
+                        </a>
+                        <a class="image-bloc__download" href="./images/images.jpeg" download>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 512 512"><path fill="#fff" d="M491 299h-43l-58 42h79v128H43V341h79l-58-42H21q-8 0-14.5 6.5T0 320v149q0 18 12.5 30.5T43 512h426q18 0 30.5-12.5T512 469V320q0-8-6.5-14.5T491 299zM256 0q-21 0-21 21v297l-94-77q-7-6-16-5t-14 7q-6 7-5 16t7 14l143 111l141-111q15-15 2-30q-16-14-30-2l-92 77V21q0-21-21-21zm171 405q0 9-6.5 15.5T405 427q-8 0-14.5-6.5T384 405q0-8 6.5-14.5T405 384q9 0 15.5 6.5T427 405zm-64 0q0 9-6.5 15.5T341 427q-8 0-14.5-6.5T320 405q0-8 6.5-14.5T341 384q9 0 15.5 6.5T363 405z"/></svg>
+                        </a>
+                    </div>  
+                    <div>
+                        <h3>.png</h3>
+                        <a href="./images/Bombini_Gusini.png">
+                            <img class="image-bloc__img" src="./images/Bombini_Gusini.png">
+                        </a>
+                        <a class="image-bloc__download" href="./images/Bombini_Gusini.png" download>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 512 512"><path fill="#fff" d="M491 299h-43l-58 42h79v128H43V341h79l-58-42H21q-8 0-14.5 6.5T0 320v149q0 18 12.5 30.5T43 512h426q18 0 30.5-12.5T512 469V320q0-8-6.5-14.5T491 299zM256 0q-21 0-21 21v297l-94-77q-7-6-16-5t-14 7q-6 7-5 16t7 14l143 111l141-111q15-15 2-30q-16-14-30-2l-92 77V21q0-21-21-21zm171 405q0 9-6.5 15.5T405 427q-8 0-14.5-6.5T384 405q0-8 6.5-14.5T405 384q9 0 15.5 6.5T427 405zm-64 0q0 9-6.5 15.5T341 427q-8 0-14.5-6.5T320 405q0-8 6.5-14.5T341 384q9 0 15.5 6.5T363 405z"/></svg>
+                        </a>
+                    </div>
+                    <div>
+                        <h3>.gif</h3>
+                        <a href="./images/tung-tung.gif">
+                            <img class="image-bloc__img" src="./images/tung-tung.gif">
+                        </a>
+                        <a class="image-bloc__download" href="./images/tung-tung.gif" download>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 512 512"><path fill="#fff" d="M491 299h-43l-58 42h79v128H43V341h79l-58-42H21q-8 0-14.5 6.5T0 320v149q0 18 12.5 30.5T43 512h426q18 0 30.5-12.5T512 469V320q0-8-6.5-14.5T491 299zM256 0q-21 0-21 21v297l-94-77q-7-6-16-5t-14 7q-6 7-5 16t7 14l143 111l141-111q15-15 2-30q-16-14-30-2l-92 77V21q0-21-21-21zm171 405q0 9-6.5 15.5T405 427q-8 0-14.5-6.5T384 405q0-8 6.5-14.5T405 384q9 0 15.5 6.5T427 405zm-64 0q0 9-6.5 15.5T341 427q-8 0-14.5-6.5T320 405q0-8 6.5-14.5T341 384q9 0 15.5 6.5T363 405z"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </section>
 
+            <section class="section">
+                <div class="section-heading">
+                    <h2>Autoindex (GET /images)</h2>
+                    <button id="refreshAutoindex" class="btn">Refresh</button>
+                    <svg id="refreshAutoindexSpinner" class="hidden" width="24" height="24" stroke="#000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_V8m1{transform-origin:center;animation:spinner_zKoa 2s linear infinite}.spinner_V8m1 circle{stroke-linecap:round;animation:spinner_YpZS 1.5s ease-in-out infinite}@keyframes spinner_zKoa{100%{transform:rotate(360deg)}}@keyframes spinner_YpZS{0%{stroke-dasharray:0 150;stroke-dashoffset:0}47.5%{stroke-dasharray:42 150;stroke-dashoffset:-16}95%,100%{stroke-dasharray:42 150;stroke-dashoffset:-59}}</style><g class="spinner_V8m1"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#ff7e70" stroke-width="3"></circle></g></svg>
+                </div>
+                <div id="autoindexContainer" class="code-container code-container--autoindex"></div>
+            </section>
+
+            <section class="section">
+                <div class="section-heading">
+                    <h2>CGI GET</h2>
+                </div>
+                <div class="section-test-get" data-path="/php/index.php">
+                    <div class="section-heading">
+                        <h3>PHP (GET /php/index.php)</h3>
+                        <button class="btn">Refresh</button>
+                        <svg class="hidden" width="24" height="24" stroke="#000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_V8m1{transform-origin:center;animation:spinner_zKoa 2s linear infinite}.spinner_V8m1 circle{stroke-linecap:round;animation:spinner_YpZS 1.5s ease-in-out infinite}@keyframes spinner_zKoa{100%{transform:rotate(360deg)}}@keyframes spinner_YpZS{0%{stroke-dasharray:0 150;stroke-dashoffset:0}47.5%{stroke-dasharray:42 150;stroke-dashoffset:-16}95%,100%{stroke-dasharray:42 150;stroke-dashoffset:-59}}</style><g class="spinner_V8m1"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#ff7e70" stroke-width="3"></circle></g></svg>
+                    </div>
+                    <div class="code-container code-container--autoindex"></div>
+                </div>
+                <div class="section-test-get" data-path="/python/index.py">
+                    <div class="section-heading">
+                        <h3>Python (GET /python/index.py)</h3>
+                        <button class="btn">Refresh</button>
+                        <svg class="hidden" width="24" height="24" stroke="#000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_V8m1{transform-origin:center;animation:spinner_zKoa 2s linear infinite}.spinner_V8m1 circle{stroke-linecap:round;animation:spinner_YpZS 1.5s ease-in-out infinite}@keyframes spinner_zKoa{100%{transform:rotate(360deg)}}@keyframes spinner_YpZS{0%{stroke-dasharray:0 150;stroke-dashoffset:0}47.5%{stroke-dasharray:42 150;stroke-dashoffset:-16}95%,100%{stroke-dasharray:42 150;stroke-dashoffset:-59}}</style><g class="spinner_V8m1"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#ff7e70" stroke-width="3"></circle></g></svg>
+                    </div>
+                    <div class="code-container code-container--autoindex"></div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-heading">
+                    <h2>Errors handling</h2>
+                </div>
+                <div class="section-test-get" data-path="/waf">
+                    <div class="section-heading">
+                        <h3>404 Not Found (GET /waf)</h3>
+                        <button class="btn">Refresh</button>
+                        <svg class="hidden" width="24" height="24" stroke="#000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_V8m1{transform-origin:center;animation:spinner_zKoa 2s linear infinite}.spinner_V8m1 circle{stroke-linecap:round;animation:spinner_YpZS 1.5s ease-in-out infinite}@keyframes spinner_zKoa{100%{transform:rotate(360deg)}}@keyframes spinner_YpZS{0%{stroke-dasharray:0 150;stroke-dashoffset:0}47.5%{stroke-dasharray:42 150;stroke-dashoffset:-16}95%,100%{stroke-dasharray:42 150;stroke-dashoffset:-59}}</style><g class="spinner_V8m1"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#ff7e70" stroke-width="3"></circle></g></svg>
+                    </div>
+                    <div class="code-container code-container--autoindex"></div>
+                </div>
+                <div class="section-test-get" data-path="/bin/notAllowed.html">
+                    <div class="section-heading">
+                        <h3>403 Forbidden (GET /bin/notAllowed.html)</h3>
+                        <button class="btn">Refresh</button>
+                        <svg class="hidden" width="24" height="24" stroke="#000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_V8m1{transform-origin:center;animation:spinner_zKoa 2s linear infinite}.spinner_V8m1 circle{stroke-linecap:round;animation:spinner_YpZS 1.5s ease-in-out infinite}@keyframes spinner_zKoa{100%{transform:rotate(360deg)}}@keyframes spinner_YpZS{0%{stroke-dasharray:0 150;stroke-dashoffset:0}47.5%{stroke-dasharray:42 150;stroke-dashoffset:-16}95%,100%{stroke-dasharray:42 150;stroke-dashoffset:-59}}</style><g class="spinner_V8m1"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#ff7e70" stroke-width="3"></circle></g></svg>
+                    </div>
+                    <div class="code-container code-container--autoindex"></div>
+                </div>
+                <div class="section-test-get" data-path="/cgi-bin/users.txt">
+                    <div class="section-heading">
+                        <h3>405 Method Not Allowed (GET /cgi-bin/users.txt)</h3>
+                        <button class="btn">Refresh</button>
+                        <svg class="hidden" width="24" height="24" stroke="#000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_V8m1{transform-origin:center;animation:spinner_zKoa 2s linear infinite}.spinner_V8m1 circle{stroke-linecap:round;animation:spinner_YpZS 1.5s ease-in-out infinite}@keyframes spinner_zKoa{100%{transform:rotate(360deg)}}@keyframes spinner_YpZS{0%{stroke-dasharray:0 150;stroke-dashoffset:0}47.5%{stroke-dasharray:42 150;stroke-dashoffset:-16}95%,100%{stroke-dasharray:42 150;stroke-dashoffset:-59}}</style><g class="spinner_V8m1"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#ff7e70" stroke-width="3"></circle></g></svg>
+                    </div>
+                    <div class="code-container code-container--autoindex"></div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Custom GET</h2>
+                <div class="input-container">
+                    <input id="getInput" type="text" placeholder="/path?variable=value">
+                    <button id="sendGetBtn" class="btn">Send</button>
+                    <svg id="getSpinner" class="hidden" width="24" height="24" stroke="#000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_V8m1{transform-origin:center;animation:spinner_zKoa 2s linear infinite}.spinner_V8m1 circle{stroke-linecap:round;animation:spinner_YpZS 1.5s ease-in-out infinite}@keyframes spinner_zKoa{100%{transform:rotate(360deg)}}@keyframes spinner_YpZS{0%{stroke-dasharray:0 150;stroke-dashoffset:0}47.5%{stroke-dasharray:42 150;stroke-dashoffset:-16}95%,100%{stroke-dasharray:42 150;stroke-dashoffset:-59}}</style><g class="spinner_V8m1"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#ff7e70" stroke-width="3"></circle></g></svg>
+                </div>
+                <div id="getContainer" class="code-container code-container--autoindex"><pre>Waiting for request</pre></div>
+            </section>
+
+            <section class="section">
+                <h2>A simple account creation tool with POST</h2>
+                <a class="btn btn-link" href="/login/login.html">Go to login page</a>
+            </section>
+
+        </main>
+    </div>
+</body>
 </html>

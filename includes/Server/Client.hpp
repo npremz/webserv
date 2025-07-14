@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/06 20:05:56 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/12 15:57:03 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ class Client
         void            _addEpollout();
         void            _removeEpollout();
         void            _prepareAndSend();
-        public:
+    public:
         bool        isFinished;
         
         Client(int fd, RouterMap& router, ServerManager* server);
@@ -63,5 +63,7 @@ class Client
         void    handleResponse(bool isCGIResponse = false, int cgi_fd = 0);
         void    handleSend();
         void    error500(std::string error);
+
+        int     getSockerFd() const; 
 };
 #endif

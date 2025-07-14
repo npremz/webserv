@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/09 16:07:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/12 15:14:37 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -488,7 +488,7 @@ std::string Response::_handlePostContentType(std::string fullPath)
 std::string Response::_handlePost()
 {
     std::string fullPath;
-    if (!_location_ctx && _location_ctx->getRootPath().size() > 0)
+    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
         fullPath = _location_ctx->getRootPath() + _req.path;
     else
         if (_ctx->getRootPath().size() > 0)

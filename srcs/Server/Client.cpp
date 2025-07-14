@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/08 18:47:57 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/12 18:54:06 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,7 @@ void    Client::writeRequestBodyToCGI(int cgi_fd)
             if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_DEL, cgi_fd, NULL) == -1)
                 Logger::log(Logger::ERROR, "Error closing cgi writing fd after writing request body to CGI STDIN.");
             close(cgi_fd);
+            _server->removeCGILink(cgi_fd);
             Logger::log(Logger::DEBUG, "Request body written to CGI STDIN.");
         }
     }
@@ -203,7 +204,6 @@ void    Client::_prepareAndSend()
 
 void    Client::handleSend()
 {
-    Logger::log(Logger::DEBUG, "response content: ");
     if (_response_sent < _response_len) {
         Logger::log(Logger::DEBUG, "Sending response...");
         size_t to_send = std::min(_response_str.size() - _response_sent, (size_t)MAX_CHUNK_SIZE);
@@ -221,4 +221,9 @@ void    Client::handleSend()
             return;
         }
     }
+}
+
+int Client::getSockerFd() const
+{
+    return (this->_socket_fd);
 }

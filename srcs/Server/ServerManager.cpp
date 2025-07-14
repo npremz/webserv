@@ -284,13 +284,6 @@ void    ServerManager::_run()
                 if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
                     try {
-                        // Logger::log(Logger::DEBUG, "Epoll event via CGI detected.");
-                        // if (events[i].events & EPOLLIN)
-                        //     Logger::log(Logger::DEBUG, "Epollin.");
-                        // if (events[i].events & EPOLLHUP)
-                        //     Logger::log(Logger::DEBUG, "Epollhup.");
-                        // if (events[i].events & EPOLLOUT)
-                        //     Logger::log(Logger::DEBUG, "Epollout.");
                         if (events[i].events & EPOLLIN || events[i].events & EPOLLHUP)
                         {
                             c_client->handleResponse(true, events[i].data.fd);

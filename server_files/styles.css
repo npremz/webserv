@@ -1,0 +1,278 @@
+html {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    tab-size: 4;
+    font-family: inherit;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #e5e7eb;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd {
+    font-weight: unset;
+    margin: 0;
+}
+
+ul,
+ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin: 0;
+}
+
+button,
+select {
+    text-transform: none;
+}
+
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+    -webkit-appearance: button;
+    background-color: transparent;
+    background-image: none;
+}
+
+:focus {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+    display: block;
+    vertical-align: middle;
+    max-width: 100%;
+}
+
+.hidden{
+    display: none;
+}
+
+.btn{
+    padding: 0.5rem 1rem 0.4rem;
+    background-color: #ff7e70;
+    color: white;
+    cursor: pointer;
+    border-radius: 10px;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+    text-decoration: none;
+    line-height: 1.5;
+}
+
+.btn-link{
+    width: fit-content;
+}
+
+.btn:hover{
+    background-color: #d65d50;
+    transition: 0.2s;
+}
+
+body{
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-style: normal;
+    background-color: #ff7e70;
+    letter-spacing: 0.3px;
+}
+
+.container{
+    max-width: 850px;
+    margin: 2rem auto;
+}
+
+.code-container{
+    background-color: #d3d3d3;
+    padding: 1rem;
+    border-radius: 10px;
+    font-family: "Courier Prime", monospace;
+    font-weight: 400;
+    font-style: normal;
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
+.code-container--autoindex{
+    display: flex;
+    flex-direction: column;
+}
+
+.input-container{
+    width: 100%;
+    display: flex;
+}
+
+.input-container input{
+    width: 70%;
+    padding: 1rem;
+    border-radius: 10px 0 0 10px;
+}
+
+.input-container button{
+    width: 20%;
+    border-radius: 0 10px 10px 0;
+}
+
+.input-container svg{
+    margin-left: 1rem;
+}
+
+.header{
+    background-color: #fff0f1;
+    padding: 1rem 2rem;
+    border-radius: 15px;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+}
+
+h1{
+    font-size: 2rem;
+}
+
+h3{
+    font-size: 0.8rem;
+}
+
+pre{
+    margin: 0;
+}
+
+
+.main{
+
+}
+
+.section{
+    margin-bottom: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #fff0f1;
+    margin: 2rem 0;
+    padding: 2rem 2rem;
+    border-radius: 15px;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+}
+
+.section-test-get .code-container{
+    margin-top: 1rem;
+}
+
+.section-heading{
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.image-bloc {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    
+}
+
+.image-bloc div{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.image-bloc__img{
+    aspect-ratio: 1 / 1;
+    max-height: 200px;
+    border-radius: 15px;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+}
+
+.image-bloc a{
+    cursor: pointer;
+}
+
+.image-bloc a:hover{
+    transform: scale(1.02);
+    transition: 0.2s;
+}
+
+.image-bloc__download{
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background-color: #ff7e70;
+    border-radius: 5px;
+}
+
+.form{
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form label{
+    margin-left: 1rem;
+}
+
+.form input{
+    width: 100%;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border-radius: 10px;
+}
+
+.form__fields{
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.form__field{
+    width: 100%;
+}
+
+.form__buttons{
+    display: flex;
+    gap: 1rem;
+}
+
+.form__buttons .btn{
+    display: block;
+    font-size: 1rem;
+    text-align: center;
+}

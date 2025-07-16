@@ -166,6 +166,10 @@ h1{
     font-size: 2rem;
 }
 
+h2{
+    font-weight: bold;
+}
+
 h3{
     font-size: 0.8rem;
 }
@@ -180,6 +184,7 @@ pre{
 }
 
 .section{
+    position: relative;
     margin-bottom: 3rem;
     display: flex;
     flex-direction: column;
@@ -189,6 +194,14 @@ pre{
     padding: 2rem 2rem;
     border-radius: 15px;
     box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+    transition: 0.3s;
+}
+
+.section--hidden{
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    display: none;
 }
 
 .section-test-get .code-container{
@@ -199,6 +212,26 @@ pre{
     display: flex;
     gap: 1rem;
     align-items: center;
+}
+
+.section__cross{
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    cursor: pointer;
+}
+
+.section--multi h3{
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+.section--multi ul{
+    margin-left: 1rem;
+}
+
+.section--multi li:before{
+    content: "> ";
 }
 
 .image-bloc {
@@ -275,4 +308,32 @@ pre{
     display: block;
     font-size: 1rem;
     text-align: center;
+}
+
+.form__files{
+    display: none;
+}
+
+.form__label-files{
+    margin-left: 0 !important;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 10px;
+    width: 100%;
+    display: block;
+    cursor: pointer;
+}
+
+.form__field--uploads{
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    line-height: 1.15;
+}
+
+.form__field--uploads svg{
+    position: absolute;
+    bottom: 0.8125rem;
+    right: 1rem;
 }

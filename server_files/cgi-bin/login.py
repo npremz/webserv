@@ -1,10 +1,14 @@
-#!/usr/bin/python3
-
 import sys
 import os
 from urllib.parse import parse_qs
 
 USERS_FILE = "./server_files/cgi-bin/users.txt"
+
+def parse_post_data(post_body):
+    data = parse_qs(post_body)
+    login = data.get('login', [''])[0]
+    password = data.get('password', [''])[0]
+    return login, password
 
 def create_http_response(body, status_code=200, content_type="text/plain"):
     reason = {
@@ -44,24 +48,19 @@ def create_http_error(status_code, message=""):
     body = f"{status_code} {reason}\n{message}" if message else f"{status_code} {reason}\n"
     return create_http_response(body, status_code=status_code, content_type="text/plain")
 
-def parse_post_data(post_body):
-    data = parse_qs(post_body)
-    login = data.get('login', [''])[0]
-    password = data.get('password', [''])[0]
-    return login, password
-
-def add_user_file(login, password):
+def authentification(login, password):
     try:
         with open(USERS_FILE, "r") as file:
             for line in file:
-                l, _ = line.strip().split(":", 1)
+                l, p = line.strip().split(":")
                 if l == login:
-                    return False
+                    if p == password:
+                        return "logged"
+                    else:
+                        return "wrong pass"
     except FileNotFoundError:
-        pass
-    with open(USERS_FILE, "a") as file:
-        file.write(f"{login}:{password}\n")
-    return True
+        return "server failed"
+    return "no user"
 
 def main():
     try:
@@ -71,12 +70,17 @@ def main():
         if not login or not password:
             response = create_http_error(400, "Missing login or password in request.")
         else:
-            if add_user_file(login, password):
-                response = create_http_response(201, "User created.")
+            log_status = authentification(login, password)
+            if log_status == "logged":
+                response = create_http_response("Logged successfully.")
+            elif log_status == "wrong pass":
+                response = create_http_error(401, "Invalid password.")
+            elif log_status == "no user":
+                response = create_http_error(404, "User not found.")
             else:
-                response = create_http_error(409, "User already created.")
+                response = create_http_error(500, "Cannot consult existing users.")
     except Exception as e:
-        response = create_http_error(500, str(e))
+        response = create_http_error(500, e.__str__())
     print(response)
 
 if __name__ == '__main__':

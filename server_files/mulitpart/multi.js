@@ -1,23 +1,34 @@
-let loginForm = document.querySelector("#login-form");
+let uploadForm = document.getElementById("upload-form");
+let formFiles = document.querySelector(".form__files");
+let fileBox = document.querySelector(".file-box");
+
 let responseSection = document.getElementById('response');
 let responseBloc = document.getElementById('responseBloc');
 let responseCross = responseSection.querySelector('.section__cross');
-let loginSection = document.querySelector(".section--login");
 
-responseCross.addEventListener("click", () => {
-    responseSection.classList.add('section--hidden')
-})
+formFiles.addEventListener('change', function(event) {
+    var files = event.target.files;
+    fileBox.innerHTML = ""; // On vide l'affichage précédent
 
-loginForm.addEventListener("submit", (e) => {
+    if (!files.length) {
+        fileBox.textContent = "Aucun fichier sélectionné";
+    } else {
+        var ul = document.createElement('ul');
+        for (var i = 0; i < files.length; i++) {
+            var li = document.createElement('li');
+            li.textContent = files[i].name; // Affiche le nom du fichier
+            ul.appendChild(li);
+        }
+        fileBox.appendChild(ul);
+    }
+});
+
+uploadForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
     var form = e.target;
-    var params = [
-      "login=" + encodeURIComponent(form.login.value),
-      "password=" + encodeURIComponent(form.password.value)
-    ].join("&");
+    var data = new FormData(form)
 
-    form.password.value = "";
     
     responseBloc.innerText= "";
     responseSection.classList.remove('section--hidden')
@@ -27,7 +38,7 @@ loginForm.addEventListener("submit", (e) => {
         headers: {
             "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: params
+        body: data
     })
     .then(response => {
         if (!response.ok) {

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/12 15:14:37 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/16 15:01:34 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -341,20 +341,27 @@ std::string Response::_generateAutoIndex(std::string fullpath)
     if (!dir) 
         return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
 
+    std::vector<std::string> entries;
     struct dirent* entry;
+    
     while ((entry = readdir(dir)) != NULL) {
+        entries.push_back(entry->d_name);
+    }
+    closedir(dir);
+
+    std::sort(entries.begin(), entries.end());
+
+    for (std::vector<std::string>::iterator it = entries.begin(); it != entries.end(); ++it) {
         std::string url = _req.path;
         if (*(url.end() - 1) != '/')
             url += "/";
-        url += entry->d_name;
+        url += *it;
 
         Logger::log(Logger::DEBUG, "url: " + url);
 
-        
         html << "<li><a href=\"" << url << "\">"
-             << entry->d_name << "</a></li>";
+             << *it << "</a></li>";
     }
-    closedir(dir);
 
     html << "</ul></body></html>";
     return _createResponse(200, "OK", html.str());

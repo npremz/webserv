@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/09 15:13:03 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/16 15:01:30 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <istream>
 # include <iostream>
 # include <string>
+# include <algorithm>
 # include <dirent.h>
 
 # include "../Utils/utils.hpp"

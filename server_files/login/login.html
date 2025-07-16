@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Tester Webserv -- Login</title>
     <link rel="stylesheet" href="../styles.css">
+    <script src="login.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -11,9 +12,9 @@
             <h1>Webserv</h1>
             <p>by kderhet, gcools and npremont</p>
         </header>
-        <section class="section">
+        <section class="section section--login">
             <h1>Login</h1>
-            <form class="form form--login" method="post" action="/cgi-bin/filezer.py">
+            <form id="login-form" class="form form--login" method="post">
                 <div class="form__fields">
                     <div class="form__field">
                         <label for="login">Username</label>
@@ -30,8 +31,14 @@
                 </div>
             </form>
         </section>
-        <section>
 
+        <section id="response" class="section section--hidden">
+            <svg class="section__cross" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 20L4 4.00003M20 4L4.00002 20" stroke="#ff7e70" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div id="responseBloc">
+
+            </div>
         </section>
     </div>
 </body>

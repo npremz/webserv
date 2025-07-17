@@ -6,7 +6,7 @@
 /*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/17 16:11:46 by kederhet         ###   ########.fr       */
+/*   Updated: 2025/07/17 16:33:04 by kederhet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	std::string 			target;
 	std::string 			httpv;
 	std::string 			ver;
+	std::string				bin;
 	
 	end = _buf.find("\r\n");
 	if (end == std::string::npos)
@@ -46,8 +47,8 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	pos = end;
 
 	std::istringstream iss(_buf.substr(0, pos));
-	iss >> method >> target >> httpv;
-	if (method.empty() || target.empty() || httpv.empty())
+	iss >> method >> target >> httpv >> bin;
+	if (method.empty() || target.empty() || httpv.empty() || !bin.empty())
 		return (_handleStatusError(400, PARSE_ERROR));
 	if (method == "GET")
 		_req.method = HTTP_GET;

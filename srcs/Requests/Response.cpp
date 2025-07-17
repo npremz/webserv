@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/17 14:19:00 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/17 16:26:34 by kederhet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@ Response::~Response()
 
 std::string Response::_isCustomError(unsigned int code)
 {
+    if (!_ctx)
+        return ("");
     for (std::map<int, std::string>::const_iterator it = _ctx->getErrorPages().begin();
         it != _ctx->getErrorPages().end(); ++it)
     {

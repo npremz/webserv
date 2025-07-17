@@ -6,7 +6,7 @@
 /*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/17 16:33:04 by kederhet         ###   ########.fr       */
+/*   Updated: 2025/07/17 16:56:01 by kederhet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	for (std::string::iterator it = _req.path.begin(); it != _req.path.end(); )
 	{
 		if (*it == '/' && ((it + 1) != _req.path.end() && (*(it + 1) == '/')))
-			_req.path.erase(it++);
+			_req.path.erase(it);
 		else
 			it++;
 	}

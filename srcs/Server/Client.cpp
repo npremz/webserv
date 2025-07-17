@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/12 18:54:06 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/16 19:12:16 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ Client::Client(int fd, RouterMap& router, ServerManager* server) :
     _rep(NULL),
     _server(server),
     _bytes_to_cgi_stdin(0),
+    _isSendingError(false),
     isFinished(false)
 {}
 
@@ -29,10 +30,13 @@ Client::~Client()
     delete _rep;
 }
 
-void    Client::error500(std::string error)
+void    Client::sendError(std::string error)
 {
+
+    _isSendingError = true;
+    _response_ctx = _responseRouting();
     Response rep(_response_ctx, _lexer.getRequest(), this);
-    _response_str = rep.error500(error);
+    _response_str = rep.sendError(error);
     _prepareAndSend();
 }
 
@@ -180,7 +184,10 @@ void    Client::addCGIEpollIn(int cgi_fd)
 void    Client::_addEpollout()
 {
     struct epoll_event ev;
-    ev.events = EPOLLIN | EPOLLOUT;
+    if (_isSendingError)
+        ev.events= EPOLLOUT;
+    else
+        ev.events = EPOLLIN | EPOLLOUT;
     ev.data.fd = _socket_fd;
     if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_MOD, _socket_fd, &ev) == -1)
         Logger::log(Logger::ERROR, "Exec error => epoll_ctl addEpollout");
@@ -212,7 +219,8 @@ void    Client::handleSend()
         if (n > 0) {
             _response_sent += n;
             if (_response_sent == _response_len) {
-                _removeEpollout();
+                if (!_isSendingError)
+                    _removeEpollout();
                 Logger::log(Logger::DEBUG, "Response totally sent");
                 isFinished = true;
             }

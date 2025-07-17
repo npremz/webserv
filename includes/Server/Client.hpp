@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/12 15:57:03 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/16 18:57:40 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,8 @@ class Client
         BlocServer*     _response_ctx;
         Response*       _rep;
         ServerManager*  _server;
-        size_t         _bytes_to_cgi_stdin;
+        size_t          _bytes_to_cgi_stdin;
+        bool            _isSendingError;
 
         BlocServer*     _responseRouting();
 
@@ -62,7 +63,7 @@ class Client
         void    handleRequest();
         void    handleResponse(bool isCGIResponse = false, int cgi_fd = 0);
         void    handleSend();
-        void    error500(std::string error);
+        void    sendError(std::string error);
 
         int     getSockerFd() const; 
 };

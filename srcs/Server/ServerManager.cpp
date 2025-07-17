@@ -295,14 +295,13 @@ void    ServerManager::_run()
                     }
                     catch (const std::exception &e)
                     {
-                        c_client->isFinished = true;
                         std::cout << e.what() << std::endl;
                         try {
-                            c_client->error500(e.what());
+                            c_client->sendError(e.what());
                         }
                         catch (const std::exception &e)
                         {
-                            std::cout << e.what() << ". Couldn't send error 500 to client." << std::endl;
+                            std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
                 }
@@ -318,14 +317,13 @@ void    ServerManager::_run()
                     }
                     catch (const std::exception &e)
                     {
-                        c_client->isFinished = true;
                         std::cout << e.what() << std::endl;
                         try {
-                            c_client->error500(e.what());
+                            c_client->sendError(e.what());
                         }
                         catch (const std::exception &e)
                         {
-                            std::cout << e.what() << ". Couldn't send error 500 to client." << std::endl;
+                            std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
                 }

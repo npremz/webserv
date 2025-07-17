@@ -311,7 +311,16 @@ void    ServerManager::_run()
                     try 
                     {
                         if (events[i].events & EPOLLIN)
-                            c_client->handleRequest();
+                        {
+                            if (c_client->state == Client::DRAINING_BODY)
+                            {
+                                c_client->drainBody();
+                            }
+                            else
+                            {
+                                c_client->handleRequest();
+                            }
+                        }
                         if (events[i].events & EPOLLOUT)
                             c_client->handleSend();
                     }
@@ -327,7 +336,7 @@ void    ServerManager::_run()
                         }
                     }
                 }
-                if (c_client->isFinished == true)
+                if (c_client->state == Client::FINISHED)
                 {
                     if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
                         Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl del c_socket error");

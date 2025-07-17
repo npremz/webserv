@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/16 19:12:16 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/17 12:38:49 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,7 @@ Client::Client(int fd, RouterMap& router, ServerManager* server) :
     _rep(NULL),
     _server(server),
     _bytes_to_cgi_stdin(0),
-    _isSendingError(false),
-    isFinished(false)
+    state(IDLE)
 {}
 
 Client::~Client()
@@ -33,11 +32,31 @@ Client::~Client()
 void    Client::sendError(std::string error)
 {
 
-    _isSendingError = true;
+    state = SENDING_ERROR;
     _response_ctx = _responseRouting();
     Response rep(_response_ctx, _lexer.getRequest(), this);
     _response_str = rep.sendError(error);
     _prepareAndSend();
+}
+
+void    Client::drainBody()
+{
+    char buf[4096];
+    while (_body_drained < _expected_body_size) {
+        ssize_t n = recv(_socket_fd, buf, sizeof(buf), 0);
+        if (n > 0) {
+            _body_drained += n;
+        } else if (n == 0) {
+            break;
+        } else if (n == -1){
+            break;
+        } else {
+            break;
+        }
+    }
+    if (_body_drained >= _expected_body_size) {
+        state = FINISHED;
+    }
 }
 
 BlocServer*     Client::_responseRouting()
@@ -184,8 +203,8 @@ void    Client::addCGIEpollIn(int cgi_fd)
 void    Client::_addEpollout()
 {
     struct epoll_event ev;
-    if (_isSendingError)
-        ev.events= EPOLLOUT;
+    if (state == SENDING_ERROR)
+        ev.events = EPOLLOUT;
     else
         ev.events = EPOLLIN | EPOLLOUT;
     ev.data.fd = _socket_fd;
@@ -219,10 +238,16 @@ void    Client::handleSend()
         if (n > 0) {
             _response_sent += n;
             if (_response_sent == _response_len) {
-                if (!_isSendingError)
-                    _removeEpollout();
+                _removeEpollout();
                 Logger::log(Logger::DEBUG, "Response totally sent");
-                isFinished = true;
+                if (state == SENDING_ERROR && _lexer.getRequest().expectedoctets > 0)
+                {
+                    state = DRAINING_BODY;
+                    _body_drained = _lexer.getRequest().receivedoctets;
+                    _expected_body_size = _lexer.getRequest().expectedoctets;
+                }
+                else
+                    state = FINISHED;
             }
         } else if (n == -1) {
             Logger::log(Logger::ERROR, "Response sending error => closing connection.");

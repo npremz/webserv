@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/08 18:53:08 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/17 12:25:45 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ HttpLexer::HttpLexer() : _state(START_LINE), _req_size(0)
 	_req.has_host = false;
 	_req.ischunked = false;
 	_req.expectedoctets = 0;
+	_req.receivedoctets = 0;
 }
 
 HttpLexer::~HttpLexer()
@@ -254,6 +255,7 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 
 HttpLexer::ParseState HttpLexer::_bodyParseCL()
 {
+	_req.receivedoctets = _buf.size();
 	if (_buf.size() < _req.expectedoctets)
 		return (PAUSE);
 	else if (_buf.size() >= _req.expectedoctets)
@@ -287,6 +289,7 @@ HttpLexer::ParseState HttpLexer::_bodyParseChunked()
 			_buf.erase(0, pos + 4);
 			return (GOOD);
 		}
+		_req.receivedoctets = _buf.size();
 		if (_buf.size() < ((pos + 2) + chunk_size + 2))
 			return (PAUSE);
 		_req.body.append(_buf, pos + 2, chunk_size);

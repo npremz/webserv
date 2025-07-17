@@ -33,11 +33,8 @@ uploadForm.addEventListener("submit", (e) => {
     responseBloc.innerText= "";
     responseSection.classList.remove('section--hidden')
 
-    fetch('/cgi-bin/login.py', {
+    fetch('/cgi-bin/multipart.py', {
         method: 'POST',
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
         body: data
     })
     .then(response => {
@@ -49,8 +46,7 @@ uploadForm.addEventListener("submit", (e) => {
         return response.text();
     })
     .then(text => {
-        responseBloc.innerText = "Connection status: " + text;
-        loginSection.classList.add('section--hidden');
+        responseBloc.innerText = "Upload status: " + text;
     })
     .catch(error => {
         responseBloc.innerText = error;

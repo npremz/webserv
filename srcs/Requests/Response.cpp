@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/16 15:01:34 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/16 18:59:03 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,10 @@ std::string Response::_createError(unsigned int code, std::string error, std::st
 
     oss << oss_header.str()
         << "Content-Type: text/html\r\n"
-        << "Content-length: " << oss_body.str().size() << "\r\n\r\n"
+        << "Content-length: " << oss_body.str().size() << "\r\n";
+    if (code == 500)
+        oss << "Connection: close\r\n";
+    oss << "\r\n"
         << oss_body.str();
 
     Logger::log(Logger::DEBUG, oss.str());
@@ -108,9 +111,10 @@ std::string Response::_createResponse(unsigned int code, std::string msg, const 
     return (response);
 }
 
-std::string Response::error500(std::string error)
+std::string Response::sendError(std::string error)
 {
-    return (_createError(500, "Internal server error.", error));
+    
+    return (_createError(_req.endstatus, "ERROR", error));
 }
 
 std::string Response::_createRedirect(unsigned int code, const std::string& url)

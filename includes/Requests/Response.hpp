@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/16 15:01:30 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/16 18:57:40 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ class Response
 
         std::string createResponseSTR();
         std::string createCGIResponseSTR(int cgi_fd);
-        std::string error500(std::string error);
+        std::string sendError(std::string error);
 };
 
 #endif

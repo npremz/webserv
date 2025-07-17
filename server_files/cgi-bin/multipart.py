@@ -2,9 +2,6 @@
 
 import sys
 import os
-from urllib.parse import parse_qs
-
-USERS_FILE = "./server_files/cgi-bin/users.txt"
 
 def create_http_response(body, status_code=200, content_type="text/plain"):
     reason = {

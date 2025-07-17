@@ -131,7 +131,7 @@ void    BlocLocation::_handleUploadPath(std::vector<std::string> tokens)
     if (tokens.size() != 2)
         Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
 
-    if (access((_root_path + _location_path + tokens[1]).c_str(), F_OK) && !isDirectory(_root_path + _location_path + tokens[1]))
+    if (access((_root_path + _location_path + tokens[1]).c_str(), F_OK) == 0 && !isDirectory(_root_path + _location_path + tokens[1]))
         Logger::log(Logger::FATAL, "invalid config file. => invalid path \"" + tokens[1] + "\"");
 
     this->_upload_path = tokens[1];

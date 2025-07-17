@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/16 18:59:03 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/17 14:19:00 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -468,7 +468,6 @@ std::string Response::_handleGet()
 
 std::string Response::_handleUpload(std::string uploadDir)
 {
-    Logger::log(Logger::DEBUG, "Processing MultiUpload");
     Logger::log(Logger::DEBUG, "Target path: " + uploadDir);
     if (_location_ctx && !_location_ctx->getCGIExtension().empty())
     {
@@ -516,6 +515,41 @@ std::string Response::_handlePost()
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
+std::string Response::_handleDelete()
+{
+    std::string fullpath;
+    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
+        fullpath = _location_ctx->getRootPath() + _req.path;
+    else
+        if (_ctx->getRootPath().size() > 0)
+            fullpath = _ctx->getRootPath() + _req.path;
+
+    Logger::log(Logger::DEBUG, "DELETE target path: " + fullpath);
+
+    if (access(fullpath.c_str(), F_OK) == 0)
+    {
+        if (access(fullpath.c_str(), R_OK | X_OK) == 0)
+        {
+            if (_location_ctx && !_location_ctx->getCGIExtension().empty())
+            {
+                Logger::log(Logger::DEBUG, "Sending delete request to cgi.");
+                CGI cgi_handler(std::string("DELETE"), _req, _req.contentType, _ctx, _location_ctx, _parent);
+                cgi_handler.exec();
+                return ("CGI");
+            }
+            else
+            {
+                Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
+                return (_createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
+            }
+        }
+        else
+            return (_createError(403, "Forbidden", "Request failed due to insufficient permissions"));
+    }
+    return (_createError(404, "Not Found", "The server cannot find the requested resource"));
+    
+}
+
 std::string Response::_handleMethod()
 {
     switch (_req.method)
@@ -526,6 +560,8 @@ std::string Response::_handleMethod()
         case HttpLexer::HTTP_POST:
             return (_handlePost());
             break;
+        case HttpLexer::HTTP_DELETE:
+            return (_handleDelete());
         default:
             return ("waf");
     }

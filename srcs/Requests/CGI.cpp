@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/09 16:44:25 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/17 14:33:29 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,9 @@ CGI::CGI(std::string method, HttpLexer::parsedRequest req,
     _location_ctx(location_ctx),
     _client(parent),
     _content_type(content_type)
-{}
+{
+    (void)_ctx;
+}
 
 CGI::~CGI()
 {}
@@ -90,7 +92,7 @@ void CGI::_initArgv()
 {
     _file_name = _location_ctx->getRootPath() + _req.path;
 
-    if (_method == "POST" && !isDirectory(_file_name))
+    if ((_method == "POST" || _method == "DELETE") && !isDirectory(_file_name))
     {
         _argv.push_back(const_cast<char *>(_location_ctx->getCGIPass().c_str()));
         _argv.push_back(const_cast<char *>(_file_name.c_str()));

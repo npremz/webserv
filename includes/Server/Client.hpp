@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/16 18:57:40 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/17 12:31:28 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,12 +22,14 @@
 # include "../Requests/Response.hpp"
 # include "../Requests/CGI.hpp"
 
-
 class ServerManager;
 class Response;
 
 class Client
 {
+    public: 
+        enum RequestState { IDLE = 0, SENDING_ERROR, DRAINING_BODY, FINISHED };
+
     private:
         HttpLexer       _lexer;
         int             _socket_fd;
@@ -41,7 +43,8 @@ class Client
         Response*       _rep;
         ServerManager*  _server;
         size_t          _bytes_to_cgi_stdin;
-        bool            _isSendingError;
+        size_t          _body_drained;
+        size_t          _expected_body_size;
 
         BlocServer*     _responseRouting();
 
@@ -51,7 +54,7 @@ class Client
         void            _removeEpollout();
         void            _prepareAndSend();
     public:
-        bool        isFinished;
+        RequestState    state;
         
         Client(int fd, RouterMap& router, ServerManager* server);
         ~Client();
@@ -64,6 +67,7 @@ class Client
         void    handleResponse(bool isCGIResponse = false, int cgi_fd = 0);
         void    handleSend();
         void    sendError(std::string error);
+        void    drainBody();
 
         int     getSockerFd() const; 
 };

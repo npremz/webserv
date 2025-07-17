@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/17 12:25:45 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/17 16:11:46 by kederhet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,13 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	{
 		_req.path = target.substr(0, pos);
 		_req.query = target.substr(pos + 1);
+	}
+	for (std::string::iterator it = _req.path.begin(); it != _req.path.end(); )
+	{
+		if (*it == '/' && ((it + 1) != _req.path.end() && (*(it + 1) == '/')))
+			_req.path.erase(it++);
+		else
+			it++;
 	}
 	if (httpv.length() != 8)
 		return (_handleStatusError(400, PARSE_ERROR));

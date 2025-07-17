@@ -30,7 +30,7 @@ refreshAutoIndexBtn.addEventListener("click", () => {
 })
 
 sendGetBtn.addEventListener("click", () => {
-    simpleGet(getInput.value, getSpinner, getContainer);
+    simpleGet("/" + getInput.value, getSpinner, getContainer);
 })
 
 function getAutoindex(path, spinner, dist) {

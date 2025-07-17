@@ -100,6 +100,12 @@ object {
     width: fit-content;
 }
 
+.btn-back{
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+}
+
 .btn:hover{
     background-color: #d65d50;
     transition: 0.2s;
@@ -156,6 +162,7 @@ body{
 }
 
 .header{
+    position: relative;
     background-color: #fff0f1;
     padding: 1rem 2rem;
     border-radius: 15px;

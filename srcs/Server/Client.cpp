@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/18 17:34:49 by armetix          ###   ########.fr       */
+/*   Updated: 2025/07/18 18:36:40 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ Client::Client(int fd, RouterMap& router, ServerManager* server) :
     _rep(NULL),
     _server(server),
     _bytes_to_cgi_stdin(0),
+    last_activity(time(NULL)),
     state(IDLE)
 {}
 
@@ -31,8 +32,9 @@ Client::~Client()
 
 void    Client::sendError(std::string error)
 {
-
     state = SENDING_ERROR;
+    if (error == "Server timeout")
+        _lexer.setEndStatus(408);
     _response_ctx = _responseRouting();
     Response rep(_response_ctx, _lexer.getRequest(), this);
     _response_str = rep.sendError(error);

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/17 12:31:28 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/18 18:22:47 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define CLIENT_HPP
 
 # include <sys/socket.h>
+# include <ctime>
 
 # include "../Config/BlocServer.hpp"
 # include "../Server/ServerManager.hpp"
@@ -45,15 +46,16 @@ class Client
         size_t          _bytes_to_cgi_stdin;
         size_t          _body_drained;
         size_t          _expected_body_size;
-
+        
         BlocServer*     _responseRouting();
-
+        
         bool            _isCGI();
         
         void            _addEpollout();
         void            _removeEpollout();
         void            _prepareAndSend();
     public:
+        time_t          last_activity;
         RequestState    state;
         
         Client(int fd, RouterMap& router, ServerManager* server);

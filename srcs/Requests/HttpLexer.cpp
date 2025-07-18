@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/18 18:25:08 by armetix          ###   ########.fr       */
+/*   Updated: 2025/07/18 18:38:41 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "../../includes/Requests/HttpLexer.hpp"
 
@@ -151,7 +152,7 @@ bool        HttpLexer::_isValidHostValue(const std::string& val)
 	s_ip_port ip_port;
 	ip_port.ip = ip;
 
-	std::string port_str = val.substr(dual_dots_pos + 1);\
+	std::string port_str = val.substr(dual_dots_pos + 1);
 	if (!isNumeric(port_str))
 		return (false);
 	std::istringstream  iss(port_str);

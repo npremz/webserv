@@ -2,7 +2,7 @@ import sys
 import os
 from urllib.parse import parse_qs
 
-USERS_FILE = "./server_files/cgi-bin/users.txt"
+USERS_FILE = "users.txt"
 
 def parse_post_data(post_body):
     data = parse_qs(post_body)

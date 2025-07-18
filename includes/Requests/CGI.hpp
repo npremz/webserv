@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 17:12:58 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/09 14:43:25 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/18 17:44:34 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <vector>
 # include <iostream>
 # include <stdio.h>
+# include <unistd.h>
 
 # include "HttpLexer.hpp"
 # include "../Config/BlocServer.hpp"

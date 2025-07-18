@@ -88,7 +88,7 @@ def parse_multipart_fields(post_body, boundary):
         fields.append((name, filename, content))
     return fields
 
-def save_uploaded_files(fields_list, prefix, upload_dir="./server_files/uploads", start_index=0):
+def save_uploaded_files(fields_list, prefix, upload_dir="uploads", start_index=0):
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
     files_saved = []

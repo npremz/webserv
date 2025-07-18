@@ -62,6 +62,7 @@ class ServerManager
         void                _closeAllClients();
         void                _logRunningInfos();
         void                _cleanup();
+        void                _sweepTimeout();
         
         int         _isListenSocket(int event_fd); // -1 if not found
 

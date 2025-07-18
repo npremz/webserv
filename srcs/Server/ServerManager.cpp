@@ -242,13 +242,37 @@ void    ServerManager::_logRunningInfos()
     Logger::log(Logger::INFO, "Ctrl + C to clean stop the server.");
 }
 
+void    ServerManager::_sweepTimeout()
+{
+    time_t actual_time = time(NULL);
+    for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end();)
+    {
+        if (actual_time - it->second->last_activity > 10)
+        {
+            try {
+                it->second->last_activity = actual_time;
+                if (it->second->state != Client::FINISHED)
+                {
+                    it->second->sendError("Server timeout");
+                }
+            }
+            catch (const std::exception &e)
+            {
+                std::cout << e.what() << ". Couldn't send error to client." << std::endl;
+            }
+        }
+        else
+            ++it;
+    }
+}
+
 void    ServerManager::_run()
 {
     isRunning = true;
     while (isRunning)
     {
         struct epoll_event  events[128];
-        int n = epoll_wait(_epoll_fd, events, 128, -1);
+        int n = epoll_wait(_epoll_fd, events, 128, 1000);
         if (n == -1) {
             if (errno == EINTR) {
                 if (!isRunning)
@@ -283,6 +307,7 @@ void    ServerManager::_run()
                 Client* c_client;
                 if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
+                    c_client->last_activity = time(NULL);
                     try {
                         if (events[i].events & EPOLLIN || events[i].events & EPOLLHUP)
                         {
@@ -305,10 +330,12 @@ void    ServerManager::_run()
                             std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
+                    c_client->last_activity = time(NULL);
                 }
                 else
                 {
                     c_client = _clients[events[i].data.fd];
+                    c_client->last_activity = time(NULL);
                     try 
                     {
                         if (events[i].events & EPOLLIN)
@@ -337,6 +364,7 @@ void    ServerManager::_run()
                             std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
+                    c_client->last_activity = time(NULL);
                 }
                 if (c_client->state == Client::FINISHED)
                 {
@@ -347,6 +375,7 @@ void    ServerManager::_run()
                 }
             }
         }
+        _sweepTimeout();
     }
     _cleanup();
 }

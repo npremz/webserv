@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/18 12:55:07 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/18 18:53:21 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,8 +115,28 @@ std::string Response::_createResponse(unsigned int code, std::string msg, const 
 
 std::string Response::sendError(std::string error)
 {
-    
-    return (_createError(_req.endstatus, "ERROR", error));
+    std::string msg;
+    switch (_req.endstatus)
+    {
+        case 400: msg = "Bad Request"; break;
+        case 401: msg = "Unauthorized"; break;
+        case 403: msg = "Forbidden"; break;
+        case 404: msg = "Not Found"; break;
+        case 405: msg = "Method Not Allowed"; break;
+        case 408: msg = "Request Timeout"; break;
+        case 413: msg = "Payload Too Large"; break;
+        case 500: msg = "Internal Server Error"; break;
+        case 501: msg = "Not Implemented"; break;
+        case 502: msg = "Bad Gateway"; break;
+        case 503: msg = "Service Unavailable"; break;
+        default:
+        {
+            std::ostringstream oss;
+            oss << "Unknown HTTP Error (" << _req.endstatus << ")";
+            msg = oss.str();
+        }
+    }
+    return (_createError(_req.endstatus, msg, error));
 }
 
 std::string Response::_createRedirect(unsigned int code, const std::string& url)

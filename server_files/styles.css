@@ -344,3 +344,12 @@ pre{
     bottom: 0.8125rem;
     right: 1rem;
 }
+
+.file{
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 10px;
+}

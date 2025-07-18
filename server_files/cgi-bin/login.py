@@ -21,6 +21,7 @@ def create_http_response(body, status_code=200, content_type="text/plain"):
         401: "Unauthorized",
         403: "Forbidden",
         404: "Not Found",
+        405: "Method Not Allowed",
         415: "Unsupported Media Type",
         500: "Internal Server Error",
         502: "Bad Gateway",
@@ -42,6 +43,7 @@ def create_http_error(status_code, message=""):
         401: "Unauthorized",
         403: "Forbidden",
         404: "Not Found",
+        405: "Method Not Allowed",
         415: "Unsupported Media Type",
         500: "Internal Server Error",
         502: "Bad Gateway",
@@ -66,6 +68,10 @@ def authentification(login, password):
 
 def main():
     try:
+        if os.environ.get('REQUEST_METHOD') != "POST":
+            response = create_http_error(405)
+            print(response)
+            return
         if "application/x-www-form-urlencoded" not in os.environ.get('CONTENT_TYPE'):
             response = create_http_error(415)
             print(response)

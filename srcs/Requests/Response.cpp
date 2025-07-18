@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/17 16:26:34 by kederhet         ###   ########.fr       */
+/*   Updated: 2025/07/18 12:55:07 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -572,13 +572,18 @@ std::string Response::_handleMethod()
 
 std::string Response::createResponseSTR()
 {
-    
     if (_req.endstatus >= 400)
         return (_handleLexerErrors());
     _setLocation();
     if (_location_ctx && _location_ctx->isRedirectSet())
         return (_createRedirect(_location_ctx->getRedirectCode(),
-                    _location_ctx->getRedirectUrl()));
+            _location_ctx->getRedirectUrl()));
+    if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
+        return (_createError(413, "Content Too Large",
+            "The request entity was larger than limits defined by server"));
+    else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
+        return (_createError(413, "Content Too Large",
+            "The request entity was larger than limits defined by server"));
     if (!_isMethodSupportedByRoute())
         return (_createError(405, "Method Not Allowed",
             "The request method is known by the server but is not supported by the target resource. "));

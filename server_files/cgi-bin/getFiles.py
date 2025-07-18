@@ -2,8 +2,9 @@
 
 import sys
 import os
+import json
 
-def create_http_response(body, status_code=200, content_type="text/plain"):
+def create_http_response(body, status_code=200, content_type="application/json"):
     reason = {
         200: "OK",
         201: "Created",
@@ -14,6 +15,7 @@ def create_http_response(body, status_code=200, content_type="text/plain"):
         401: "Unauthorized",
         403: "Forbidden",
         404: "Not Found",
+        405: "Method Not Allowed",
         415: "Unsupported Media Type",
         500: "Internal Server Error",
         502: "Bad Gateway",
@@ -35,19 +37,40 @@ def create_http_error(status_code, message=""):
         401: "Unauthorized",
         403: "Forbidden",
         404: "Not Found",
+        405: "Method Not Allowed",
         415: "Unsupported Media Type",
         500: "Internal Server Error",
         502: "Bad Gateway",
         503: "Service Unavailable"
     }.get(status_code, "Error")
-    body = f"{status_code} {reason}\n{message}" if message else f"{status_code} {reason}\n"
-    return create_http_response(body, status_code=status_code, content_type="text/plain")
+    body = json.dumps({
+        "error": {
+            "code": status_code,
+            "message": reason + (": " + message if message else "")
+        }
+    })
+    return create_http_response(body, status_code=status_code, content_type="application/json")
 
+def list_uploads():
+    uploads_dir = "./server_files/cgi-bin/uploads"
+    if not os.path.isdir(uploads_dir):
+        return []
+    files = [f for f in os.listdir(uploads_dir) if not f.startswith('.') and os.path.isfile(os.path.join(uploads_dir, f))]
+    return files
 
 def main():
     try:
-        # code
-        response = create_http_response("")
+        if os.environ.get('REQUEST_METHOD') != "GET":
+            response = create_http_error(405)
+            print(response)
+            return
+        files = list_uploads()
+        result = {
+            "count": len(files),
+            "files": files
+        }
+        body = json.dumps(result)
+        response = create_http_response(body)
     except Exception as e:
         response = create_http_error(500, e.__str__())
     print(response)

@@ -14,6 +14,7 @@ def create_http_response(body, status_code=200, content_type="text/plain"):
         401: "Unauthorized",
         403: "Forbidden",
         404: "Not Found",
+        405: "Method Not Allowed",
         415: "Unsupported Media Type",
         500: "Internal Server Error",
         502: "Bad Gateway",
@@ -35,6 +36,7 @@ def create_http_error(status_code, message=""):
         401: "Unauthorized",
         403: "Forbidden",
         404: "Not Found",
+        405: "Method Not Allowed",
         415: "Unsupported Media Type",
         500: "Internal Server Error",
         502: "Bad Gateway",
@@ -57,7 +59,7 @@ def extract_boundary(content_type):
     return None
 
 def parse_multipart_fields(post_body, boundary):
-    fields = {}
+    fields = []
     boundary_marker = b'--' + boundary.encode()
     parts = post_body.split(boundary_marker)
     for part in parts:
@@ -76,25 +78,23 @@ def parse_multipart_fields(post_body, boundary):
                 break
         if not disposition_line:
             continue
-
         import re
-        filename_match = re.search(rb'filename="([^"]+)"', disposition_line)
         name_match = re.search(rb'name="([^"]+)"', disposition_line)
-        filename = filename_match.group(1).decode() if filename_match else None
+        filename_match = re.search(rb'filename="([^"]+)"', disposition_line)
         name = name_match.group(1).decode() if name_match else None
-
+        filename = filename_match.group(1).decode() if filename_match else None
         if content.endswith(b'\r\n'):
             content = content[:-2]
-        fields[name] = (filename, content)
+        fields.append((name, filename, content))
     return fields
 
-def save_uploaded_files(fields, prefix, upload_dir="./server_files/uploads"):
+def save_uploaded_files(fields_list, prefix, upload_dir="./server_files/uploads", start_index=0):
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
     files_saved = []
-    for name in fields:
-        filename, content = fields[name]
-        if filename is not None:
+    for i in range(start_index, len(fields_list)):
+        name, filename, content = fields_list[i]
+        if filename:  # Ce champ est un fichier
             safe_filename = os.path.basename(filename)
             new_filename = f"{prefix}_{safe_filename}"
             filepath = os.path.join(upload_dir, new_filename)
@@ -105,6 +105,10 @@ def save_uploaded_files(fields, prefix, upload_dir="./server_files/uploads"):
 
 def main():
     try:
+        if os.environ.get('REQUEST_METHOD') != "POST":
+            response = create_http_error(405)
+            print(response)
+            return
         if "multipart/form-data" not in os.environ.get('CONTENT_TYPE'):
             response = create_http_error(415)
             print(response)
@@ -124,16 +128,22 @@ def main():
 
         post_body = sys.stdin.buffer.read(content_length)
         boundary = extract_boundary(os.environ.get('CONTENT_TYPE'))
-        fields = parse_multipart_fields(post_body, boundary)
-        prefix_info = fields.get("prefix")
-        if not prefix_info or not prefix_info[1].strip():
+        fields_list = parse_multipart_fields(post_body, boundary)
+        
+        prefix_value = None
+        prefix_pos = None
+        for i, (name, filename, content) in enumerate(fields_list):
+            if name == "prefix":
+                prefix_value = content.decode(errors='replace').strip()
+                prefix_pos = i
+                break
+        if prefix_value is None or prefix_value == "":
             response = create_http_error(400, "Prefix value missing.")
             print(response)
             return
         
-        prefix_value = prefix_info[1].decode(errors='replace').strip()
-        saved = save_uploaded_files(fields, prefix_value, upload_path)
-        response = create_http_response(f"Saved files: {saved}", 200)
+        files_saved = save_uploaded_files(fields_list, prefix_value, upload_path, start_index=prefix_pos+1)
+        response = create_http_response(f"Saved files: {files_saved}", 200)
     except Exception as e:
         response = create_http_error(500, str(e))
     print(response)

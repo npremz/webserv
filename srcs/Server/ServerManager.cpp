@@ -247,9 +247,10 @@ void    ServerManager::_sweepTimeout()
     time_t actual_time = time(NULL);
     for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end();)
     {
-        if (actual_time - it->second->last_activity > 20)
+        if (actual_time - it->second->last_activity > 10)
         {
             try {
+                it->second->last_activity = actual_time;
                 if (it->second->state != Client::FINISHED)
                 {
                     it->second->sendError("Server timeout");
@@ -260,6 +261,8 @@ void    ServerManager::_sweepTimeout()
                 std::cout << e.what() << ". Couldn't send error to client." << std::endl;
             }
         }
+        else
+            ++it;
     }
 }
 

@@ -83,7 +83,7 @@ void    ServerManager::_initListenSockets()
 
         if (bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa)) == -1)
             Logger::log(Logger::FATAL, "Initialisation error => bind error " + std::string(strerror(errno)));
-        if (listen(socket_fd, 10) == -1)
+        if (listen(socket_fd, 128) == -1)
             Logger::log(Logger::FATAL, "Initialisation error => listen error");
         
         _listen_sockets.push_back(socket_fd);
@@ -247,8 +247,8 @@ void    ServerManager::_run()
     isRunning = true;
     while (isRunning)
     {
-        struct epoll_event  events[16];
-        int n = epoll_wait(_epoll_fd, events, 16, -1);
+        struct epoll_event  events[128];
+        int n = epoll_wait(_epoll_fd, events, 128, -1);
         if (n == -1) {
             if (errno == EINTR) {
                 if (!isRunning)

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/17 16:56:01 by kederhet         ###   ########.fr       */
+/*   Updated: 2025/07/18 15:47:31 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -343,7 +343,10 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			if (parsing_state == GOOD)
 			{
 				if (!_req.has_host)
+				{
+					_req.endstatus = 400;
 					_state = ERROR;
+				}
 				else if (_req.expectedoctets > 0)
 					_state = BODY;
 				else

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/17 16:26:30 by kederhet         ###   ########.fr       */
+/*   Updated: 2025/07/18 17:34:49 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -250,6 +250,9 @@ void    Client::handleSend()
                     state = FINISHED;
             }
         } else if (n == -1) {
+            _lexer.setEndStatus(500);
+            _removeEpollout();
+            state = FINISHED;
             Logger::log(Logger::ERROR, "Response sending error => closing connection.");
             return;
         }

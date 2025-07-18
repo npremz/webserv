@@ -6,7 +6,7 @@
 /*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/18 15:47:31 by armetix          ###   ########.fr       */
+/*   Updated: 2025/07/18 17:18:41 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -272,7 +272,7 @@ HttpLexer::ParseState HttpLexer::_bodyParseCL()
 		_buf.erase(0, _req.expectedoctets);
 		return (GOOD);
 	}
-	return (PARSE_ERROR);
+	return (_handleStatusError(400, PARSE_ERROR));
 }
 
 HttpLexer::ParseState HttpLexer::_bodyParseChunked()
@@ -378,4 +378,9 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 const HttpLexer::parsedRequest& HttpLexer::getRequest() const
 {
 	return (_req);
+}
+
+void HttpLexer::setEndStatus(size_t status)
+{
+	_req.endstatus = status;
 }

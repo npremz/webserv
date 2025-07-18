@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/08 17:59:50 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/18 18:06:52 by armetix          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,7 @@ class HttpLexer
 			std::string			path;
 			std::string 		query;
 			std::string 		httpver;
+			std::string			errorMsg;
 			HeaderMap			headers;
 			bool				ischunked;
 			size_t				expectedoctets;
@@ -89,7 +90,7 @@ class HttpLexer
 		parsedRequest				_req;
 		size_t						_req_size;
 		
-		ParseState					_handleStatusError(unsigned int endstatus, ParseState state);
+		ParseState					_handleStatusError(unsigned int endstatus, std::string errorStr, ParseState state);
 		ParseState					_parseStartLine();
 		ParseState					_parseHeaders();
 		ParseState					_parseBody();
@@ -107,6 +108,7 @@ class HttpLexer
 		~HttpLexer();
 		
 		Status				feed(const char *data, size_t len);
+		void				setEndStatus(size_t status); 
 		const parsedRequest &getRequest() const;
 
 };

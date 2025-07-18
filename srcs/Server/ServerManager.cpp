@@ -297,7 +297,8 @@ void    ServerManager::_run()
                     {
                         std::cout << e.what() << std::endl;
                         try {
-                            c_client->sendError(e.what());
+                            if (c_client->state != Client::FINISHED)
+                                c_client->sendError(e.what());
                         }
                         catch (const std::exception &e)
                         {
@@ -328,7 +329,8 @@ void    ServerManager::_run()
                     {
                         std::cout << e.what() << std::endl;
                         try {
-                            c_client->sendError(e.what());
+                            if (c_client->state != Client::FINISHED)
+                                c_client->sendError(e.what());
                         }
                         catch (const std::exception &e)
                         {

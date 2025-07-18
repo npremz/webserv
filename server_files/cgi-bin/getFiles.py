@@ -52,7 +52,7 @@ def create_http_error(status_code, message=""):
     return create_http_response(body, status_code=status_code, content_type="application/json")
 
 def list_uploads():
-    uploads_dir = "./server_files/cgi-bin/uploads"
+    uploads_dir = "uploads"
     if not os.path.isdir(uploads_dir):
         return []
     files = [f for f in os.listdir(uploads_dir) if not f.startswith('.') and os.path.isfile(os.path.join(uploads_dir, f))]

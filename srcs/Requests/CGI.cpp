@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/17 14:33:29 by npremont         ###   ########.fr       */
+/*   Updated: 2025/07/18 17:57:41 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ void    CGI::_initEnvTab()
 
 void CGI::_initArgv()
 {
-    _file_name = _location_ctx->getRootPath() + _req.path;
+    _file_name = _req.path.substr(_req.path.find_last_of("/") + 1);
 
     if ((_method == "POST" || _method == "DELETE") && !isDirectory(_file_name))
     {
@@ -137,6 +137,12 @@ void    CGI::exec()
         close(_cgi_pipe_output[1]);
         _initArgv();
         _initEnvTab();
+
+        size_t      slash_pos = _req.path.find_last_of("/");
+        std::string cgi_path = _req.path.substr(0, slash_pos);
+        if (chdir((_location_ctx->getRootPath() + cgi_path).c_str()) != 0)
+            exit(1);
+
         execve(_location_ctx->getCGIPass().c_str(), _argv.data(), _env_tab.data());
         exit(1);
     }

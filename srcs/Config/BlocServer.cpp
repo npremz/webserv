@@ -18,7 +18,7 @@ BlocServer::BlocServer(std::vector<std::string> bloc) :
     _delete(true),
     _autoindex(false),
     _root_path("."),
-    _client_max_body_size(4096)
+    _client_max_body_size(MAX_CLIENT_SIZE)
 {
     this->_initFunctionTable();
     this->_parseBloc(bloc);

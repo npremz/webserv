@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/18 18:53:21 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/01 18:59:15 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,7 +210,7 @@ bool    Response::_setLocation()
         std::string path = _req.path;
         std::string fullpath = _ctx->getRootPath() + path;
 
-        if (isDirectory(fullpath) || !isReadable(fullpath))
+        if (isDirectory(fullpath))
         {
             if (*(path.end() - 1) != '/')
                 path += "/";
@@ -550,23 +550,42 @@ std::string Response::_handleDelete()
 
     if (access(fullpath.c_str(), F_OK) == 0)
     {
-        if (access(fullpath.c_str(), R_OK | X_OK) == 0)
+        if (_location_ctx && !_location_ctx->getCGIExtension().empty()
+                && ((fullpath.size() >= 3 && (fullpath.substr(fullpath.size() - 3) == ".py" 
+                        && _location_ctx->getCGIExtension() == ".py"))
+                    || ((fullpath.size() >= 4 && fullpath.substr(fullpath.size() - 4) == ".php")
+                        && _location_ctx->getCGIExtension() == ".php")))
         {
-            if (_location_ctx && !_location_ctx->getCGIExtension().empty())
-            {
-                Logger::log(Logger::DEBUG, "Sending delete request to cgi.");
-                CGI cgi_handler(std::string("DELETE"), _req, _req.contentType, _ctx, _location_ctx, _parent);
-                cgi_handler.exec();
-                return ("CGI");
-            }
-            else
-            {
-                Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
-                return (_createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
-            }
+            if (access(fullpath.c_str(), R_OK | X_OK) != 0)
+                _createError(403, "Forbidden", "Request failed due to insufficient permissions");
+            
+            Logger::log(Logger::DEBUG, "Sending delete request to cgi.");
+            CGI cgi_handler(std::string("DELETE"), _req, _req.contentType, _ctx, _location_ctx, _parent);
+            cgi_handler.exec();
+            return ("CGI");
         }
         else
-            return (_createError(403, "Forbidden", "Request failed due to insufficient permissions"));
+        {
+            Logger::log(Logger::DEBUG, "native DELETE");
+
+            std::string directory_path;
+            std::string::size_type pos = fullpath.find_last_of("/");
+
+            directory_path = fullpath.substr(0, pos);
+            Logger::log(Logger::DEBUG, "Delete directory target: " + directory_path);
+
+            if (access(directory_path.c_str(), W_OK | X_OK) != 0)
+                _createError(403, "Forbidden", "Request failed due to insufficient permissions");
+
+            int delete_res = std::remove(fullpath.c_str()); 
+            if (delete_res == 0)
+            {
+                Logger::log(Logger::DEBUG, "Deleted " + fullpath);
+                return (_createResponse(200, "OK", ""));
+            }
+            else
+                return (_createError(500, "Internal Server Error", ""));
+        }
     }
     return (_createError(404, "Not Found", "The server cannot find the requested resource"));
     

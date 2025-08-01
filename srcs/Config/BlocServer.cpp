@@ -14,8 +14,8 @@
 
 BlocServer::BlocServer(std::vector<std::string> bloc) : 
     _get(true),
-    _post(true),
-    _delete(true),
+    _post(false),
+    _delete(false),
     _autoindex(false),
     _root_path("."),
     _client_max_body_size(MAX_CLIENT_SIZE)

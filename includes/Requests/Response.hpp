@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/17 14:07:32 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/01 18:16:48 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <string>
 # include <algorithm>
 # include <dirent.h>
+# include <cstdio>
 
 # include "../Utils/utils.hpp"
 # include "../Config/BlocServer.hpp"

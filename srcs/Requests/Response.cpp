@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/01 18:59:15 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/03 14:12:18 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,6 +288,23 @@ bool    Response::_isMethodSupportedByRoute()
             return (false);
     }
     return false;
+}
+
+bool    Response::_isPathLegal()
+{
+    std::string request_root;
+
+    if (_location_ctx)
+        request_root = _location_ctx->getRootPath();
+    else
+        request_root = _ctx->getRootPath();
+
+    Logger::log(Logger::DEBUG, "request root: " + request_root);
+    Logger::log(Logger::DEBUG, "request path: " + _req.path);
+
+    if (normalize_path(request_root, _req.path).empty())
+        return (false);
+    return (true);
 }
 
 std::string Response::_testIndex(std::string URI)
@@ -614,15 +631,17 @@ std::string Response::createResponseSTR()
     if (_req.endstatus >= 400)
         return (_handleLexerErrors());
     _setLocation();
+    if (!_isPathLegal())
+        return (_createError(403, "Forbidden", "Illegal request path."));
     if (_location_ctx && _location_ctx->isRedirectSet())
         return (_createRedirect(_location_ctx->getRedirectCode(),
             _location_ctx->getRedirectUrl()));
     if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
         return (_createError(413, "Content Too Large",
-            "The request entity was larger than limits defined by server"));
+            "The request entity was larger than limits defined by server."));
     else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
         return (_createError(413, "Content Too Large",
-            "The request entity was larger than limits defined by server"));
+            "The request entity was larger than limits defined by server."));
     if (!_isMethodSupportedByRoute())
         return (_createError(405, "Method Not Allowed",
             "The request method is known by the server but is not supported by the target resource. "));

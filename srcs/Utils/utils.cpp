@@ -151,51 +151,90 @@ std::string buildHttpResponseFromCGI(const std::string& cgi_output)
     std::string body;
     bool header_done = false;
 
-    // Pour le status HTTP
     std::string status_line = "HTTP/1.1 200 OK\r\n";
-    // Stocker le status (par défaut 200)
     std::string status_value;
 
     while (std::getline(iss, line)) {
-        // Enlève le \r éventuel en fin de ligne (CGI met parfois juste '\n')
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
 
         if (!header_done) {
             if (line.empty()) {
-                header_done = true; // La ligne vide = fin des headers CGI
+                header_done = true;
                 continue;
             }
-            // Cherche un header Status:
             if (line.compare(0, 7, "Status:") == 0) {
                 status_value = line.substr(7);
-                // Trim spaces
                 status_value.erase(0, status_value.find_first_not_of(" \t"));
             } else {
                 cgi_headers.push_back(line);
             }
         } else {
-            // On est dans le body: recopie tout (avec retour à la ligne !)
             body += line + "\n";
         }
     }
 
-    // Compose la première ligne HTTP
     if (!status_value.empty())
         status_line = "HTTP/1.1 " + status_value + "\r\n";
 
-    // Compose la réponse finale
     std::string http_response;
     http_response += status_line;
 
-    // Ajoute tous les headers CGI
     for (size_t i = 0; i < cgi_headers.size(); ++i) {
         http_response += cgi_headers[i] + "\r\n";
     }
 
-    http_response += "\r\n"; // Séparateur headers/body requis par HTTP
+    http_response += "\r\n";
 
     http_response += body;
 
     return http_response;
+}
+
+std::vector<std::string> split_path(const std::string& path) {
+    std::vector<std::string> tokens;
+    std::stringstream ss(path);
+    std::string item;
+    while (std::getline(ss, item, '/')) {
+        tokens.push_back(item);
+    }
+    return tokens;
+}
+
+std::string normalize_path(const std::string& document_root, const std::string& request_path) {
+    std::string full_path = document_root;
+    if (!request_path.empty() && request_path[0] == '/')
+        full_path += request_path;
+    else {
+        return "";
+    }
+
+    std::vector<std::string> tokens = split_path(full_path);
+    std::vector<std::string> stack;
+
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        if (tokens[i].empty() || tokens[i] == ".") {
+            continue;
+        } else if (tokens[i] == "..") {
+            if (!stack.empty()) {
+                stack.pop_back();
+            }
+        } else {
+            stack.push_back(tokens[i]);
+        }
+    }
+    std::string normalized;
+    for (size_t i = document_root.size(); i && normalized[normalized.size()-1] == '/'; normalized.erase(normalized.size()-1)) ;
+    for (size_t i = 0; i < stack.size(); ++i) {
+        normalized += "/";
+        normalized += stack[i];
+    }
+
+    Logger::log(Logger::DEBUG, "normalized path: " + normalized);
+
+    if (normalized.compare(0, document_root.size(), document_root) != 0) {
+        return "";
+    }
+
+    return normalized;
 }

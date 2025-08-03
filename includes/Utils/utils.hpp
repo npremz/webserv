@@ -24,6 +24,8 @@
 # include <cstring>
 # include <cstdlib>
 
+# include "../Logger/Logger.hpp"
+
 class BlocServer;
 
 struct CiLess
@@ -90,6 +92,7 @@ std::string					to_lowercase(const std::string& input);
 int							countWords(const std::string& str);
 char*                   	makeEnvVar(const std::string& key, const std::string& value);
 std::string					buildHttpResponseFromCGI(const std::string& cgi_output);
+std::string					normalize_path(const std::string& document_root, const std::string& request_path);
 
 
 #endif

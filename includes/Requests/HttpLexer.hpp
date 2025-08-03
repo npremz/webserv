@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: armetix <armetix@student.42.fr>            +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/07/18 18:06:52 by armetix          ###   ########.fr       */
+/*   Updated: 2025/08/03 13:44:17 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,14 +96,15 @@ class HttpLexer
 		ParseState					_parseBody();
 		ParseState					_bodyParseChunked();
 		ParseState					_bodyParseCL();
-
+		
 		std::vector<std::string>	_splitHeader(std::string _buf);
 		bool 						_isNonDuplicableHeader(const std::string& key);
         bool        				_isValidHostValue(const std::string& val);
 		bool						_isValidContentLengthValue(const std::string& val);
-
-	public:
 		
+	public:
+		std::string 				server_root;
+
 		HttpLexer();
 		~HttpLexer();
 		

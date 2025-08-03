@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/01 18:16:48 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/03 14:11:49 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,7 @@ class Response
         bool                        _isUploadAllowed();
         bool                        _isMethodSupportedByRoute();
         bool                        _setLocation();
+        bool                        _isPathLegal();
 
     public:
         Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent);

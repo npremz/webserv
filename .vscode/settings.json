@@ -52,6 +52,11 @@
         "list": "cpp",
         "ctime": "cpp",
         "iomanip": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "charconv": "cpp",
+        "format": "cpp",
+        "span": "cpp",
+        "text_encoding": "cpp",
+        "variant": "cpp"
     }
 }

@@ -96,8 +96,17 @@ void    ParserConfig::parse(std::string file_src)
                 Logger::log(Logger::FATAL, "invalid config file. => unmatched '{' in server block");
             ++it;
 
-            BlocServer serv(bloc);
-            this->_servers_ctx.push_back(serv);
+            try
+            {
+                Logger::log(Logger::INFO, "Detected BlocServer, attempting to load it...");
+                BlocServer serv(bloc);
+                this->_servers_ctx.push_back(serv);
+                Logger::log(Logger::INFO, "BlocServer loaded.");
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "Failed to load BlocServer: " <<  e.what() << std::endl;
+            }
         }
         else if (*it == "{" || *it == "}")
             Logger::log(Logger::FATAL, "invalid config file. => misplaced '{' or '}' at root scope");

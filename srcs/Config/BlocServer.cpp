@@ -57,13 +57,13 @@ int    BlocServer::_isLocation(std::vector<std::string> tokens)
 void    BlocServer::_handleListen(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[0]);
 
     size_t dual_dots_pos = tokens[1].find(':');
     if (dual_dots_pos == std::string::npos)
     {
         if (!isNumeric(tokens[1]))
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
         std::istringstream  iss(tokens[1]);
         unsigned int        port;
         if (iss >> port && port < 65535)
@@ -72,7 +72,7 @@ void    BlocServer::_handleListen(std::vector<std::string> tokens)
             this->_ip_tab.push_back(ip_port);
         }
         else
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
     }
     else
     {
@@ -80,14 +80,14 @@ void    BlocServer::_handleListen(std::vector<std::string> tokens)
         
         unsigned int ip = ipStringToInt(ip_str);
         if (ip == 4294967295)
-            Logger::log(Logger::FATAL, "invalid config file. => near " + ip_str);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + ip_str);
 
         s_ip_port ip_port;
         ip_port.ip = ip;
 
         std::string port_str = tokens[1].substr(dual_dots_pos + 1);\
         if (!isNumeric(port_str))
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
         std::istringstream  iss(port_str);
         unsigned int        port;
         if (iss >> port && port < 65536)
@@ -96,20 +96,20 @@ void    BlocServer::_handleListen(std::vector<std::string> tokens)
             this->_ip_tab.push_back(ip_port);
         }
         else
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
     }
 }
 
 void    BlocServer::_handleServerName(std::vector<std::string> tokens)
 {
     if (tokens.size() < 2)
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[0]);
 
     for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
     {
         size_t dot = (*it).find('.');
         if (dot == std::string::npos)
-            Logger::log(Logger::FATAL, "invalid config file. => near " + *it);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + *it);
         this->_server_names.push_back(*it);
     }
 }
@@ -117,7 +117,7 @@ void    BlocServer::_handleServerName(std::vector<std::string> tokens)
 void    BlocServer::_handleIndex(std::vector<std::string> tokens)
 {
     if (tokens.size() < 2)
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[0]);
 
     for (std::vector<std::string>::iterator it = tokens.begin() + 1; it < tokens.end(); ++it)
     {
@@ -136,33 +136,33 @@ void    BlocServer::_handleMethods(std::vector<std::string> tokens)
         if (*it == "GET")
         {
             if (this->_get == true)
-                Logger::log(Logger::FATAL, "invalid config file. => " + *it);
+                Logger::log(Logger::ERROR, "invalid config file. => " + *it);
             this->_get = true;
         }
         else if (*it == "POST")
         {
             if (this->_post == true)
-                Logger::log(Logger::FATAL, "invalid config file. => " + *it);
+                Logger::log(Logger::ERROR, "invalid config file. => " + *it);
             this->_post = true;
         }
         else if (*it == "DELETE")
         {
             if (this->_delete == true)
-                Logger::log(Logger::FATAL, "invalid config file. => " + *it);
+                Logger::log(Logger::ERROR, "invalid config file. => " + *it);
             this->_delete = true;
         }
         else
-            Logger::log(Logger::FATAL, "invalid config file. => unknown method");
+            Logger::log(Logger::ERROR, "invalid config file. => unknown method");
     }
 }
 
 void    BlocServer::_handleRoot(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[0]);
 
     if (!isDirectory(tokens[1]) || !isReadable(tokens[1]))
-        Logger::log(Logger::FATAL, "invalid config file. => invalid path \"" + tokens[1] + "\"");
+        Logger::log(Logger::ERROR, "invalid config file. => invalid path \"" + tokens[1] + "\"");
 
     this->_root_path = tokens[1];
 }
@@ -170,20 +170,20 @@ void    BlocServer::_handleRoot(std::vector<std::string> tokens)
 void    BlocServer::_handleAutoIndex(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[0]);
 
     if (tokens[1] == "on")
         this->_autoindex = true;
     else if (tokens[1] == "off")
         this->_autoindex = false;
     else
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
 }
 
 void    BlocServer::_handleClientMaxBodySize(std::vector<std::string> tokens)
 {
     if (tokens.size() != 2)
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[0]);
 
     unsigned int val;
     char         c;
@@ -192,17 +192,17 @@ void    BlocServer::_handleClientMaxBodySize(std::vector<std::string> tokens)
     if (last >= '0' && last <= '9')
     {
         if (!isNumeric(tokens[1].substr(0, tokens[1].size() - 1)))
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
         std::istringstream iss(tokens[1]);
         if (iss >> val)
         {
             this->_client_max_body_size = val;
             if (this->_client_max_body_size > MAX_CLIENT_SIZE)
-                Logger::log(Logger::FATAL, "invalid config file. => too big " + tokens[1]);
+                Logger::log(Logger::ERROR, "invalid config file. => too big " + tokens[1]);
         }
         else
         {
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
         }
     } 
     else 
@@ -216,34 +216,34 @@ void    BlocServer::_handleClientMaxBodySize(std::vector<std::string> tokens)
             else if (c == 'M' || c == 'm')
                 this->_client_max_body_size = val * (1024 * 1024);
             else
-                Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+                Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
             if (this->_client_max_body_size > MAX_CLIENT_SIZE)
-                Logger::log(Logger::FATAL, "invalid config file. => too big " + tokens[1]);
+                Logger::log(Logger::ERROR, "invalid config file. => too big " + tokens[1]);
         }
         else
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[1]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[1]);
     }
 }
 
 void    BlocServer::_handleErrors(std::vector<std::string> tokens)
 {
     if (tokens.size() < 3)
-        Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[0]);
+        Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[0]);
 
     std::vector<int> codes;
     size_t i = 1;
     for (; i < tokens.size() - 1; ++i) {
         if (!isNumeric(tokens[i]))
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[i]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[i]);
         int code;
         std::istringstream iss(tokens[i]);
         iss >> code;
         if (code < 400 || code > 599)
-            Logger::log(Logger::FATAL, "invalid config file. => near " + tokens[i]);
+            Logger::log(Logger::ERROR, "invalid config file. => near " + tokens[i]);
         codes.push_back(code);
     }
     if (!isReadable(_root_path + tokens[i]))
-        Logger::log(Logger::FATAL, "invalid config file. => unreadable " + _root_path + tokens[i]);
+        Logger::log(Logger::ERROR, "invalid config file. => unreadable " + _root_path + tokens[i]);
     std::string page = tokens[i];
     
     for (size_t j = 0; j < codes.size(); ++j) {
@@ -264,7 +264,7 @@ void    BlocServer::_tokensRedirect(std::vector<std::string> tokens)
     }
     else
     {
-        Logger::log(Logger::FATAL, "invalid config file. => \"" + tokens[0] + "\" unknown parameter");
+        Logger::log(Logger::ERROR, "invalid config file. => \"" + tokens[0] + "\" unknown parameter");
     }
 }
 
@@ -285,7 +285,7 @@ void    BlocServer::_parseBloc(std::vector<std::string> bloc)
                 ++it;
             }
             if (it == bloc.end())
-                Logger::log(Logger::FATAL, "invalid config file. => expected '}'");
+                Logger::log(Logger::ERROR, "invalid config file. => expected '}'");
             BlocLocation location(this, location_path, location_content);
             this->_location_blocs.push_back(location);
         }
@@ -300,7 +300,7 @@ void    BlocServer::_parseBloc(std::vector<std::string> bloc)
             }
             this->_tokensRedirect(tokens);
             if (it == bloc.end())
-                Logger::log(Logger::FATAL, "invalid config file. => expected ';' or '}'");
+                Logger::log(Logger::ERROR, "invalid config file. => expected ';' or '}'");
         }
     }
 }

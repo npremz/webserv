@@ -14,41 +14,58 @@
 
 void    Logger::addLevel(Logger::level level)
 {
-    // 1. Obtenir l'heure actuelle
     time_t rawtime;
     struct tm * timeinfo;
-    char buffer[9]; // HH:MM:SS + '\0'
+    char buffer[9];
 
     time(&rawtime);
     timeinfo = localtime(&rawtime);
-
-    // 2. Formatter dans HH:MM:SS
+    
     sprintf(buffer, "%02d:%02d:%02d", 
-            timeinfo->tm_hour,
-            timeinfo->tm_min,
-            timeinfo->tm_sec);
-
-    // 3. Affichage du timecode avant le level
+        timeinfo->tm_hour,
+        timeinfo->tm_min,
+        timeinfo->tm_sec);
+        
+    switch (level)
+    {
+        case Logger::FATAL:
+            std::cout << C_RED;
+            break ;
+        case Logger::INFO:
+            std::cout << C_CYAN;
+            break ;
+        case Logger::ERROR:
+            std::cout << C_YELLOW;
+            break ;
+        case Logger::DEBUG:
+            std::cout << C_LIGHT_GRAY;
+            break ;
+        case Logger::WARNING:
+            std::cout << C_BEIGE;
+            break ;
+    }
+    
     std::cout << "[" << buffer << "] ";
 
     switch (level)
     {
         case Logger::FATAL:
-            std::cout << C_RED << "[FATAL] ";
+            std::cout << "[FATAL] ";
             break ;
         case Logger::INFO:
-            std::cout << C_CYAN << "[INFO] ";
+            std::cout << "[INFO] ";
             break ;
         case Logger::ERROR:
-            std::cout << C_YELLOW << "[ERROR] ";
+            std::cout << "[ERROR] ";
             break ;
         case Logger::DEBUG:
-            std::cout << C_LIGHT_GRAY << "[DEBUG] ";
+            std::cout << "[DEBUG] ";
             break ;
         case Logger::WARNING:
-            std::cout << C_BEIGE << "[WARNING] ";
+            std::cout << "[WARNING] ";
             break ;
     }
+
 }
 
 void    Logger::printLog(Logger::level level, std::string msg)

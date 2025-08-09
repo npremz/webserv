@@ -181,7 +181,6 @@ std::string Response::_createRedirect(unsigned int code, const std::string& url)
 std::string Response::_handleLexerErrors()
 {
     Logger::log(Logger::DEBUG, "req endstatus after lexer >= 400");
-    std::cout << _req.endstatus;
     switch (_req.endstatus)
     {
         case 400:
@@ -225,7 +224,8 @@ bool    Response::_setLocation()
         {
             _location_ctx = &(*it);
             Logger::log(Logger::DEBUG, "Location found.");
-            it->print(2);
+            if (DEBUG_MODE)
+                it->print(2);
             return (true);
         }
     }
@@ -666,13 +666,11 @@ std::string Response::createCGIResponseSTR(int cgi_fd)
     }
     
     Logger::log(Logger::DEBUG, "CGI pipe content:");
-    std::cout << _response_cgi << std::endl;
 
     if (_location_ctx->getCGIExtension() == ".php")
     {
         _response_cgi = buildHttpResponseFromCGI(_response_cgi);
         Logger::log(Logger::DEBUG, "php CGI formated content:");
-        std::cout << _response_cgi << std::endl;
     }
 
     return (_response_cgi);

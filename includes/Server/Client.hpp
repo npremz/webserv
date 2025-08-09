@@ -32,8 +32,9 @@ class Client
         enum RequestState { IDLE = 0, SENDING_ERROR, DRAINING_BODY, FINISHED };
 
     private:
-        HttpLexer       _lexer;
+        HttpLexer*      _lexer;
         int             _socket_fd;
+        u_int32_t       _ip;
         RouterMap       _router;
         char            _buf[16384];
         std::string     _request;
@@ -58,7 +59,7 @@ class Client
         time_t          last_activity;
         RequestState    state;
         
-        Client(int fd, RouterMap& router, ServerManager* server);
+        Client(int fd, u_int32_t ip, RouterMap& router, ServerManager* server);
         ~Client();
         
         void    addCGIEpollIn(int cgi_fd);

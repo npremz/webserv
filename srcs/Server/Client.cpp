@@ -12,8 +12,9 @@
 
 #include "../../includes/Server/Client.hpp"
 
-Client::Client(int fd, RouterMap& router, ServerManager* server) :
+Client::Client(int fd, u_int32_t ip, RouterMap& router, ServerManager* server) :
     _socket_fd(fd),
+    _ip(ip),
     _router(router),
     _response_len(0),
     _response_sent(0),
@@ -23,20 +24,25 @@ Client::Client(int fd, RouterMap& router, ServerManager* server) :
     _bytes_to_cgi_stdin(0),
     last_activity(time(NULL)),
     state(IDLE)
-{}
+{
+    Logger::log(Logger::INFO, "Accepted client from " + ipIntToString(_ip));
+    _lexer = new HttpLexer(_ip);
+}
 
 Client::~Client()
 {
+    Logger::log(Logger::INFO, "Closing connection with client from " + ipIntToString(_ip));
     delete _rep;
+    delete _lexer;
 }
 
 void    Client::sendError(std::string error)
 {
     state = SENDING_ERROR;
     if (error == "Server timeout")
-        _lexer.setEndStatus(408);
+        _lexer->setEndStatus(408);
     _response_ctx = _responseRouting();
-    Response rep(_response_ctx, _lexer.getRequest(), this);
+    Response rep(_response_ctx, _lexer->getRequest(), this);
     _response_str = rep.sendError(error);
     _prepareAndSend();
 }
@@ -63,10 +69,11 @@ void    Client::drainBody()
 
 BlocServer*     Client::_responseRouting()
 {
-    const HttpLexer::parsedRequest& req = _lexer.getRequest();
+    BlocServer* ctx_to_return = NULL;
+    const HttpLexer::parsedRequest& req = _lexer->getRequest();
     for (RouterMap::iterator it = _router.begin(); it != _router.end(); it++)
     {
-        if (req.host.port == it->first.port)
+        if (req.ip_port.port == it->first.port)
         {
             for (std::vector<BlocServer>::iterator ctx_it = it->second.begin();
                 ctx_it != it->second.end(); ++ctx_it)
@@ -74,10 +81,40 @@ BlocServer*     Client::_responseRouting()
                 for (std::vector<s_ip_port>::const_iterator ip_it = ctx_it->getIpTab().begin();
                     ip_it != ctx_it->getIpTab().end(); ++ip_it)
                 {
-                    if (ip_it->ip == 0)
+                    Logger::log(Logger::DEBUG, "Request ip: " + ipPortToString(req.ip_port));
+                    Logger::log(Logger::DEBUG, "BlocServer ip: " + ipPortToString(*ip_it));
+                    if (req.ip_port.ip == ip_it->ip)
+                    {
+                        if (ctx_to_return == NULL)
+                            ctx_to_return = &(*ctx_it);
+                        for (std::vector<std::string>::const_iterator host_it = (*ctx_it).getServerNames().begin();
+                            host_it != (*ctx_it).getServerNames().end(); host_it++)
+                        {
+                            if ((*host_it) == req.host)
+                                return &(*ctx_it);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (ctx_to_return != NULL)
+        return (ctx_to_return);
+    for (RouterMap::iterator it = _router.begin(); it != _router.end(); it++)
+    {
+        if (req.ip_port.port == it->first.port)
+        {
+            for (std::vector<BlocServer>::iterator ctx_it = it->second.begin();
+                ctx_it != it->second.end(); ++ctx_it)
+            {
+                for (std::vector<s_ip_port>::const_iterator ip_it = ctx_it->getIpTab().begin();
+                    ip_it != ctx_it->getIpTab().end(); ++ip_it)
+                {
+                    if (0 == ip_it->ip)
+                    {
+                        Logger::log(Logger::DEBUG, "Ip port routed: " + ipPortToString(*ip_it));
                         return &(*ctx_it);
-                    if (req.host.ip == ip_it->ip)
-                        return &(*ctx_it);
+                    }
                 }
             }
         }
@@ -87,7 +124,7 @@ BlocServer*     Client::_responseRouting()
 
 bool    Client::_isCGI()
 {   
-    std::string request_path = _response_ctx->getRootPath() + _lexer.getRequest().path;
+    std::string request_path = _response_ctx->getRootPath() + _lexer->getRequest().path;
     
     size_t dot_pos = request_path.find_last_of('.');
     std::string ext = request_path.substr(dot_pos);
@@ -100,14 +137,14 @@ bool    Client::_isCGI()
 void    Client::writeRequestBodyToCGI(int cgi_fd)
 {
     ssize_t bytes_written = 0;
-    size_t write_size = (_bytes_to_cgi_stdin + MAX_CHUNK_SIZE > _lexer.getRequest().expectedoctets)
-        ? _lexer.getRequest().expectedoctets - _bytes_to_cgi_stdin
+    size_t write_size = (_bytes_to_cgi_stdin + MAX_CHUNK_SIZE > _lexer->getRequest().expectedoctets)
+        ? _lexer->getRequest().expectedoctets - _bytes_to_cgi_stdin
         : MAX_CHUNK_SIZE;
 
-    if ((bytes_written = write(cgi_fd, _lexer.getRequest().body.data() + _bytes_to_cgi_stdin, write_size)) > 0)
+    if ((bytes_written = write(cgi_fd, _lexer->getRequest().body.data() + _bytes_to_cgi_stdin, write_size)) > 0)
     {    
         _bytes_to_cgi_stdin += bytes_written;
-        if (_bytes_to_cgi_stdin == _lexer.getRequest().expectedoctets)
+        if (_bytes_to_cgi_stdin == _lexer->getRequest().expectedoctets)
         {
             if (epoll_ctl(_server->getEpollFd(), EPOLL_CTL_DEL, cgi_fd, NULL) == -1)
                 Logger::log(Logger::ERROR, "Error closing cgi writing fd after writing request body to CGI STDIN.");
@@ -132,14 +169,14 @@ void    Client::handleRequest()
     {
         HttpLexer::Status   c_status;
 
-        c_status = _lexer.feed(_buf, byte_rec);
+        c_status = _lexer->feed(_buf, byte_rec);
         if (c_status == HttpLexer::COMPLETE)
         {
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
             Logger::log(Logger::DEBUG, "Request parsed");
-            _rep = new Response(_response_ctx, _lexer.getRequest(), this);
+            _rep = new Response(_response_ctx, _lexer->getRequest(), this);
             handleResponse();
             return ;
         }
@@ -242,17 +279,17 @@ void    Client::handleSend()
             if (_response_sent == _response_len) {
                 _removeEpollout();
                 Logger::log(Logger::DEBUG, "Response totally sent");
-                if (state == SENDING_ERROR && _lexer.getRequest().expectedoctets > 0)
+                if (state == SENDING_ERROR && _lexer->getRequest().expectedoctets > 0)
                 {
                     state = DRAINING_BODY;
-                    _body_drained = _lexer.getRequest().receivedoctets;
-                    _expected_body_size = _lexer.getRequest().expectedoctets;
+                    _body_drained = _lexer->getRequest().receivedoctets;
+                    _expected_body_size = _lexer->getRequest().expectedoctets;
                 }
                 else
                     state = FINISHED;
             }
         } else if (n == -1) {
-            _lexer.setEndStatus(500);
+            _lexer->setEndStatus(500);
             _removeEpollout();
             state = FINISHED;
             Logger::log(Logger::ERROR, "Response sending error => closing connection.");

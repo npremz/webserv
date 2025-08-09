@@ -58,7 +58,7 @@ void    CGI::_initEnvTab()
     _env_tab.push_back(makeEnvVar("REQUEST_URI", target_file));
     
     
-    std::string host_string = ipPortToString(_req.host);
+    std::string host_string = ipPortToString(_req.ip_port);
     size_t pos = host_string.find(":");
     _env_tab.push_back(makeEnvVar("SERVER_PORT", host_string.substr(pos + 1)));
 

@@ -30,6 +30,6 @@
 # define MAX_CLIENT_SIZE 67108864
 # define MAX_CHUNK_SIZE 8192
 
-# define DEBUG_MODE 1
+# define DEBUG_MODE 0
 
 #endif

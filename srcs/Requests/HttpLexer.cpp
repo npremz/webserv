@@ -13,13 +13,14 @@
 
 #include "../../includes/Requests/HttpLexer.hpp"
 
-HttpLexer::HttpLexer() : _state(START_LINE), _req_size(0)
+HttpLexer::HttpLexer(u_int32_t ip) : _state(START_LINE), _req_size(0)
 {
 	_req.endstatus = 200;
 	_req.has_host = false;
 	_req.ischunked = false;
 	_req.expectedoctets = 0;
 	_req.receivedoctets = 0;
+	_req.ip_port.ip = ip;
 }
 
 HttpLexer::~HttpLexer()
@@ -49,6 +50,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	pos = end;
 
 	std::istringstream iss(_buf.substr(0, pos));
+	Logger::log(Logger::INFO, iss.str());
 	iss >> method >> target >> httpv >> bin;
 	if (method.empty() || target.empty() || httpv.empty() || !bin.empty())
 	{
@@ -143,14 +145,9 @@ bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
 bool        HttpLexer::_isValidHostValue(const std::string& val)
 {
 	size_t		dual_dots_pos = val.find(':');
-	std::string ip_str = val.substr(0, dual_dots_pos);
-        
-	unsigned int ip = ipStringToInt(ip_str);
-	if (ip == 4294967295)
+	if (dual_dots_pos == std::string::npos)
 		return (false);
-
-	s_ip_port ip_port;
-	ip_port.ip = ip;
+	_req.host = val.substr(0, dual_dots_pos); 
 
 	std::string port_str = val.substr(dual_dots_pos + 1);
 	if (!isNumeric(port_str))
@@ -158,10 +155,7 @@ bool        HttpLexer::_isValidHostValue(const std::string& val)
 	std::istringstream  iss(port_str);
 	unsigned int        port;
 	if (iss >> port && port < 65536)
-	{
-		ip_port.port = port;
-		_req.host = ip_port;
-	}
+		_req.ip_port.port = port;
 	else
 		return (false);
 	return (true);
@@ -224,7 +218,8 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 			if (!_isValidHostValue(val))
 				return (_handleStatusError(400, "Invalid Host header.", PARSE_ERROR));
 			_req.has_host = true;
-			Logger::log(Logger::DEBUG, "Host detected: " + ipPortToString(_req.host));
+			Logger::log(Logger::DEBUG, "Host detected: " + _req.host);
+			Logger::log(Logger::DEBUG, "Request ip: " + ipPortToString(_req.ip_port));
 		}
 		else if (to_lowercase(key) == "content-length")
 		{

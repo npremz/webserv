@@ -24,12 +24,7 @@ class HttpLexer
 { 
 	public:
 		typedef std::map<std::string, std::string, CiLess> HeaderMap;
-		// POST ================== POST
-		void	setBody(const std::string &body);
-		void	parsePostData();
-		void	parseUrlEncoded();
-		void	parseUploads();
-		// POST ================== POST
+
 		enum HttpMethod {
 			HTTP_GET,
 			HTTP_HEAD,
@@ -81,7 +76,8 @@ class HttpLexer
 			std::string			body;
 			size_t				headerbytes;
 			bool				has_host;
-			s_ip_port			host;
+			std::string			host;
+			s_ip_port			ip_port;
 		};
 
 	private:
@@ -105,7 +101,7 @@ class HttpLexer
 	public:
 		std::string 				server_root;
 
-		HttpLexer();
+		HttpLexer(u_int32_t ip);
 		~HttpLexer();
 		
 		Status				feed(const char *data, size_t len);

@@ -137,8 +137,8 @@ int     ServerManager::_isListenSocket(int event_fd)
     return (-1);
 }
 
-void    ServerManager::_addClient(int fd) {
-    _clients[fd] = new Client(fd, _router, this);
+void    ServerManager::_addClient(int fd, u_int32_t ip) {
+    _clients[fd] = new Client(fd, ip, _router, this);
     _client_fds.push_back(fd);
 }
 
@@ -214,7 +214,6 @@ void    ServerManager::_cleanup()
 std::string print_listen_address(int socket_fd) {
     struct sockaddr_in sin;
     socklen_t len = sizeof(sin);
-    memset(&sin, 0, sizeof(sin));
 
     if (getsockname(socket_fd, (struct sockaddr *)&sin, &len) == -1) {
         perror("getsockname");
@@ -292,7 +291,10 @@ void    ServerManager::_run()
             int f_socket_fd;
             if ((f_socket_fd = _isListenSocket(events[i].data.fd)) != -1)
             {
-                int c_socket_fd = accept(f_socket_fd, 0, 0);
+                struct sockaddr_in cli;
+                socklen_t len = sizeof(cli);
+
+                int c_socket_fd = accept(f_socket_fd, reinterpret_cast<struct sockaddr*>(&cli), &len);
                 if (fcntl(c_socket_fd, F_SETFL, O_NONBLOCK) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => fcntl c_socket error");
                 epoll_event ev;
@@ -300,7 +302,7 @@ void    ServerManager::_run()
                 ev.data.fd = c_socket_fd;
                 if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev) == -1)
                     Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
-                _addClient(c_socket_fd);
+                _addClient(c_socket_fd, ntohl(cli.sin_addr.s_addr));
             }
             else
             {

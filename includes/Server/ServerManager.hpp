@@ -56,7 +56,7 @@ class ServerManager
         void                _linkEpollToListensFD();
         void                _linkEpollToExitPipe();
         void                _run();
-        void                _addClient(int fd);
+        void                _addClient(int fd, u_int32_t ip);
         void                _removeClient(int fd);
         Client*             _isCGIClient(int fd);
         void                _closeAllClients();

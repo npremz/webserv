@@ -185,6 +185,8 @@ void    Client::handleRequest()
     }
     else if (byte_rec == -1)
         Logger::log(Logger::ERROR, "Request reading error => closing connection.");
+    else
+        return;
 }
 
 void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
@@ -269,14 +271,17 @@ void    Client::_prepareAndSend()
 
 void    Client::handleSend()
 {
-    if (_response_sent < _response_len) {
+    if (_response_sent < _response_len)
+    {
         Logger::log(Logger::DEBUG, "Sending response...");
         size_t to_send = std::min(_response_str.size() - _response_sent, (size_t)MAX_CHUNK_SIZE);
         ssize_t n = send(_socket_fd, _response_str.data() + _response_sent, to_send, MSG_NOSIGNAL);
 
-        if (n > 0) {
+        if (n > 0)
+        {
             _response_sent += n;
-            if (_response_sent == _response_len) {
+            if (_response_sent == _response_len)
+            {
                 _removeEpollout();
                 Logger::log(Logger::DEBUG, "Response totally sent");
                 if (state == SENDING_ERROR && _lexer->getRequest().expectedoctets > 0)
@@ -288,12 +293,13 @@ void    Client::handleSend()
                 else
                     state = FINISHED;
             }
-        } else if (n == -1) {
+        }
+        else if (n == -1)
+        {
             _lexer->setEndStatus(500);
             _removeEpollout();
             state = FINISHED;
             Logger::log(Logger::ERROR, "Response sending error => closing connection.");
-            return;
         }
     }
 }

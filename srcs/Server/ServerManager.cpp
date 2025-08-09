@@ -399,7 +399,10 @@ void    ServerManager::run()
 
 void    ServerManager::stop()
 {
-    if (write(_exit_pipe[1], "waf", 4) == -1)
+    ssize_t ret;
+
+    ret = write(_exit_pipe[1], "waf", 4);
+    if (ret == -1 || ret == 0)
         Logger::log(Logger::FATAL, "Write to fd error");
 }
 

@@ -60,7 +60,7 @@ class Response
         std::string                 _testIndex(std::string URI);
         void                        _initContentType(std::string file);
         bool                        _isUploadAllowed();
-        bool                        _isMethodSupportedByRoute();
+        int                        _isMethodSupportedByRoute();
         bool                        _setLocation();
         bool                        _isPathLegal();
 

@@ -116,7 +116,7 @@ def main():
         content_length = int(os.environ.get('CONTENT_LENGTH', 0))
         uploads_allowed = os.environ.get("UPLOAD_ENABLE")
         if uploads_allowed != "on":
-            response = create_http_error(403, )
+            response = create_http_error(403)
             print(response)
             return
         upload_path = os.environ.get("UPLOAD_PATH")
@@ -128,6 +128,10 @@ def main():
 
         post_body = sys.stdin.buffer.read(content_length)
         boundary = extract_boundary(os.environ.get('CONTENT_TYPE'))
+        if boundary == None:
+            response = create_http_error(400)
+            print(response)
+            return
         fields_list = parse_multipart_fields(post_body, boundary)
         
         prefix_value = None

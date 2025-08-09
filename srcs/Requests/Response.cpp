@@ -232,7 +232,7 @@ bool    Response::_setLocation()
     return (false);
 }
 
-bool    Response::_isMethodSupportedByRoute()
+int    Response::_isMethodSupportedByRoute()
 {
     switch (_req.method)
     {
@@ -240,52 +240,52 @@ bool    Response::_isMethodSupportedByRoute()
             if (_location_ctx)
             {
                 if (_location_ctx->getGetMethod())
-                    return (true);
+                    return (1);
             }
             else
                 if (_ctx->getGetMethod())
-                    return (true);
+                    return (1);
             break;
         case HttpLexer::HTTP_POST:
             if (_location_ctx)
             {
                 if (_location_ctx->getPostMethod())
-                    return (true);
+                    return (1);
             }
             else
                 if (_ctx->getPostMethod())
-                    return (true);
+                    return (1);
             break;
         case HttpLexer::HTTP_DELETE:
             if (_location_ctx)
             {
                 if (_location_ctx->getDeleteMethod())
-                    return (true);
+                    return (1);
             }
             else
                 if (_ctx->getDeleteMethod())
-                    return (true);
+                    return (1);
             break;
         case HttpLexer::HTTP_HEAD:
-            return (false);
+            return (-1);
             break;
         case HttpLexer::HTTP_PUT:
-            return (false);
+            return (-1);
             break;
         case HttpLexer::HTTP_CONNECT:
-            return (false);
+            return (-1);
             break;
         case HttpLexer::HTTP_OPTIONS:
-            return (false);
+            return (-1);
             break;
         case HttpLexer::HTTP_PATCH:
-            return (false);
+            return (-1);
             break;
         case HttpLexer::HTTP_TRACE:
-            return (false);
+            return (-1);
             break;
         default:
-            return (false);
+            return (0);
     }
     return false;
 }
@@ -508,7 +508,9 @@ std::string Response::_handleGet()
 std::string Response::_handleUpload(std::string uploadDir)
 {
     Logger::log(Logger::DEBUG, "Target path: " + uploadDir);
-    if (_location_ctx && !_location_ctx->getCGIExtension().empty())
+
+    if ((_location_ctx && !_location_ctx->getCGIExtension().empty())
+        && uploadDir.substr(uploadDir.find_last_of(".")) == _location_ctx->getCGIExtension())
     {
         Logger::log(Logger::DEBUG, "Forwarding raw body to CGI");
         CGI cgi_handler(std::string("POST"), _req, _req.contentType, _ctx, _location_ctx, _parent);
@@ -543,6 +545,10 @@ std::string Response::_handlePost()
         if (_ctx->getRootPath().size() > 0)
             fullPath = _ctx->getRootPath() + _req.path;
     Logger::log(Logger::DEBUG, "POST target path: " + fullPath);
+
+    if (isDirectory(fullPath) && _location_ctx 
+        && _location_ctx->getCGIPass().find(_location_ctx->getCGIExtension()) == std::string::npos)
+        return (_createError(403, "Forbidden", "POST not correctly configured for this route."));
 
     if (access(fullPath.c_str(), F_OK) == 0)
     {
@@ -642,10 +648,13 @@ std::string Response::createResponseSTR()
     else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
         return (_createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
-    if (!_isMethodSupportedByRoute())
+    int is_method_supported = _isMethodSupportedByRoute();
+    if (is_method_supported == 0)
         return (_createError(405, "Method Not Allowed",
-            "The request method is known by the server but is not supported by the target resource. "));
-        
+            "The request method is not allowed on this route or doesn't exists."));
+    if (is_method_supported == -1)
+        return (_createError(501, "Not implemented",
+            "The request method is known by the server but is not supported by the target resource. ")); 
     return (_handleMethod());
     return (_createResponse(200, "OK", "Hello World"));
     
@@ -666,11 +675,15 @@ std::string Response::createCGIResponseSTR(int cgi_fd)
     }
     
     Logger::log(Logger::DEBUG, "CGI pipe content:");
+    if (DEBUG_MODE)
+        std::cout << _response_cgi << std::endl;
 
     if (_location_ctx->getCGIExtension() == ".php")
     {
         _response_cgi = buildHttpResponseFromCGI(_response_cgi);
         Logger::log(Logger::DEBUG, "php CGI formated content:");
+        if (DEBUG_MODE)
+            std::cout << _response_cgi << std::endl;
     }
 
     return (_response_cgi);

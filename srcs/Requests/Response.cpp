@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 23:44:20 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 23:50:26 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,24 +104,12 @@ int    Response::_isMethodSupportedByRoute()
                 if (_ctx->getDeleteMethod())
                     return (1);
             break;
-        case HttpLexer::HTTP_HEAD:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_PUT:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_CONNECT:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_OPTIONS:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_PATCH:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_TRACE:
-            return (-1);
-            break;
+        case HttpLexer::HTTP_HEAD:  return (-1);    break;
+        case HttpLexer::HTTP_PUT:   return (-1);    break;
+        case HttpLexer::HTTP_CONNECT:   return (-1);    break;
+        case HttpLexer::HTTP_OPTIONS:   return (-1);    break;
+        case HttpLexer::HTTP_PATCH:     return (-1);    break;
+        case HttpLexer::HTTP_TRACE:     return (-1);    break;
         default:
             return (0);
     }
@@ -130,12 +118,8 @@ int    Response::_isMethodSupportedByRoute()
 
 bool    Response::_isPathLegal()
 {
-    std::string request_root;
-
-    if (_location_ctx)
-        request_root = _location_ctx->getRootPath();
-    else
-        request_root = _ctx->getRootPath();
+    std::string request_root =
+        _location_ctx ? _location_ctx->getRootPath() : _ctx->getRootPath();
 
     Logger::log(Logger::DEBUG, "request root: " + request_root);
     Logger::log(Logger::DEBUG, "request path: " + _req.path);
@@ -162,7 +146,6 @@ std::string Response::_handleMethod()
             return (post.handleRequest());
             break;
         }
-            
         case HttpLexer::HTTP_DELETE:
         {
             DeleteHandler del(_ctx, _location_ctx, _req, _err, _parent);

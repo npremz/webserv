@@ -524,18 +524,6 @@ std::string Response::_handleUpload(std::string uploadDir)
     }
 }
 
-std::string Response::_handlePostContentType(std::string fullPath)
-{
-    (void)fullPath;
-    Logger::log(Logger::DEBUG, "POST: Directory post.");
-    std::string contentType;
-    contentType = _req.contentType;
-    if (contentType.find("multipart/form-data") != std::string::npos
-        || contentType.find("application/x-www-form-urlencoded") != std::string::npos)
-        return (_handleUpload(fullPath));
-    return (_createError(415, "Unsupported Media Type", "Content type not supported for directory POST"));
-}
-
 std::string Response::_handlePost()
 {
     std::string fullPath;
@@ -553,7 +541,7 @@ std::string Response::_handlePost()
     if (access(fullPath.c_str(), F_OK) == 0)
     {
         if (access(fullPath.c_str(), R_OK | X_OK) == 0)
-            return (_handlePostContentType(fullPath));
+            return (_handleUpload(fullPath));
         else
             return (_createError(403, "Forbidden", "Request failed due to insufficient permissions"));
     }

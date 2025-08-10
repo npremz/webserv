@@ -21,7 +21,8 @@ SRC             :=      main.cpp \
 						Config/BlocLocation.cpp \
 						Logger/Logger.cpp \
 						Requests/HttpLexer.cpp Requests/Response.cpp Requests/CGI.cpp \
-						Http/ErrorHandler.cpp Http/ResponseHandler.cpp
+						Http/ErrorHandler.cpp Http/ResponseHandler.cpp \
+						Http/RedirectHandler.cpp
 
 
 SRCPATH         :=      ./srcs/

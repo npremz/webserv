@@ -6,17 +6,11 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 14:11:47 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 14:22:00 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 15:54:20 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Http/ResponseHanlder.hpp"
-
-ResponseHandler::ResponseHandler()
-{}
-
-ResponseHandler::~ResponseHandler()
-{}
 
 std::string ResponseHandler::createResponse(unsigned int code, std::string msg,
     const std::string& bodyStr, std::string content_type)

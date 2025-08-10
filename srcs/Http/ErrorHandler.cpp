@@ -6,15 +6,17 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:16 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 14:23:59 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 15:44:08 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/Http/ErrorHandler.hpp"
 
-ErrorHandler::ErrorHandler(BlocServer* ctx, const BlocLocation* location_ctx) 
+ErrorHandler::ErrorHandler(BlocServer* ctx, const BlocLocation* location_ctx,
+    HttpLexer::parsedRequest req) 
     :   _ctx(ctx),
-        _location_ctx(location_ctx)
+        _location_ctx(location_ctx),
+        _req(req)
 {}
 
 ErrorHandler::~ErrorHandler()
@@ -96,4 +98,31 @@ std::string ErrorHandler::createError(unsigned int code, std::string error,
     Logger::log(Logger::DEBUG, oss.str());
 
     return (oss.str());
+}
+
+std::string ErrorHandler::sendError(std::string error)
+{
+
+    std::string msg;
+    switch (_req.endstatus)
+    {
+        case 400: msg = "Bad Request"; break;
+        case 401: msg = "Unauthorized"; break;
+        case 403: msg = "Forbidden"; break;
+        case 404: msg = "Not Found"; break;
+        case 405: msg = "Method Not Allowed"; break;
+        case 408: msg = "Request Timeout"; break;
+        case 413: msg = "Payload Too Large"; break;
+        case 500: msg = "Internal Server Error"; break;
+        case 501: msg = "Not Implemented"; break;
+        case 502: msg = "Bad Gateway"; break;
+        case 503: msg = "Service Unavailable"; break;
+        default:
+        {
+            std::ostringstream oss;
+            oss << "Unknown HTTP Error (" << _req.endstatus << ")";
+            msg = oss.str();
+        }
+    }
+    return (createError(_req.endstatus, msg, error));
 }

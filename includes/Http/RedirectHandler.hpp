@@ -1,26 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ResponseHanlder.hpp                                :+:      :+:    :+:   */
+/*   RedirectHandler.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/08/10 14:08:28 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 15:51:02 by npremont         ###   ########.fr       */
+/*   Created: 2025/08/10 15:46:14 by npremont          #+#    #+#             */
+/*   Updated: 2025/08/10 15:58:23 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef RESPONSEHANDLER_HPP
-# define RESPONSEHANDLER_HPP
+#ifndef REDIRECTHANDLER_HPP
+# define REDIRECTHANDLER_HPP
 
-# include "../Config/BlocServer.hpp"
+# include <iostream>
+# include <sstream>
 
-class ResponseHandler
+class RedirectHandler
 {
     private:
     public:
-        static std::string createResponse(unsigned int code, std::string msg,
-            const std::string& bodyStr, std::string content_type);
+        static std::string createRedirect(unsigned int code, const std::string& url);
 };
 
 #endif

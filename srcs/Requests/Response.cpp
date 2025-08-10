@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 14:19:34 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 15:59:48 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent
 {
     (void)_ctx;
     _setLocation();
-    _err = new ErrorHandler(_ctx, _location_ctx);
+    _err = new ErrorHandler(_ctx, _location_ctx, req);
 }
 
 Response::~Response()
@@ -30,67 +30,7 @@ Response::~Response()
 
 std::string Response::sendError(std::string error)
 {
-    std::string msg;
-    switch (_req.endstatus)
-    {
-        case 400: msg = "Bad Request"; break;
-        case 401: msg = "Unauthorized"; break;
-        case 403: msg = "Forbidden"; break;
-        case 404: msg = "Not Found"; break;
-        case 405: msg = "Method Not Allowed"; break;
-        case 408: msg = "Request Timeout"; break;
-        case 413: msg = "Payload Too Large"; break;
-        case 500: msg = "Internal Server Error"; break;
-        case 501: msg = "Not Implemented"; break;
-        case 502: msg = "Bad Gateway"; break;
-        case 503: msg = "Service Unavailable"; break;
-        default:
-        {
-            std::ostringstream oss;
-            oss << "Unknown HTTP Error (" << _req.endstatus << ")";
-            msg = oss.str();
-        }
-    }
-    return (_err->createError(_req.endstatus, msg, error));
-}
-
-std::string Response::_createRedirect(unsigned int code, const std::string& url)
-{
-    std::string status_msg;
-
-    if (code == 300)
-        status_msg = "Multiple Choices";
-    else if (code == 301)
-        status_msg = "Moved Permanently";
-    else if (code == 302)
-        status_msg = "Found";
-    else if (code == 303)
-        status_msg = "See Other";
-    else if (code == 305)
-        status_msg = "Use Proxy";
-    else if (code == 306)
-        status_msg = "(Unused)";
-    else if (code == 307)
-        status_msg = "Temporary Redirect";
-
-    std::ostringstream oss_body;
-    oss_body << "<html><head><title>" << code << status_msg << "</title></head><body><h1>"
-             << code << " " << status_msg
-             << "</h1><p>The document has moved <a href=" 
-             << url
-             << ">here</a>."
-             << "</p></body></html>"
-             << "\r\n\r\n";
-
-    std::ostringstream oss_header;
-    oss_header << "HTTP/1.1 " << code << " " << status_msg << "\r\n"
-               << "Location: " << url << "\r\n"
-               << "Content-Type: text/html\r\n"
-               << "Content-Length: " << oss_body.str().size() << "\r\n"
-               << "\r\n";
-    
-    std::string response = oss_header.str() + oss_body.str();
-    return (response);
+    return (_err->sendError(error));
 }
 
 std::string Response::_handleLexerErrors()
@@ -322,7 +262,7 @@ std::string Response::_generateAutoIndex(std::string fullpath)
     }
 
     html << "</ul></body></html>";
-    return _rep.createResponse(200, "OK", html.str(), _content_type);
+    return ResponseHandler::createResponse(200, "OK", html.str(), _content_type);
 }
 
 bool Response::_handleGetCGI()
@@ -370,7 +310,7 @@ std::string Response::_handleGet()
                     return ("CGI");
                 std::ostringstream oss;
                 oss << indexFile.rdbuf();
-                return _rep.createResponse(200, "OK", oss.str(), _content_type);
+                return ResponseHandler::createResponse(200, "OK", oss.str(), _content_type);
             } 
             else if (_location_ctx)
             {
@@ -414,7 +354,7 @@ std::string Response::_handleGet()
 
             Logger::log(Logger::DEBUG, "File buffer filled.");
 
-            return _rep.createResponse(200, "OK", buffer, _content_type);
+            return ResponseHandler::createResponse(200, "OK", buffer, _content_type);
         }
     }
     return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
@@ -507,7 +447,7 @@ std::string Response::_handleDelete()
             if (delete_res == 0)
             {
                 Logger::log(Logger::DEBUG, "Deleted " + fullpath);
-                return (_rep.createResponse(200, "OK", "", _content_type));
+                return (ResponseHandler::createResponse(200, "OK", "", _content_type));
             }
             else
                 return (_err->createError(500, "Internal Server Error", ""));
@@ -542,7 +482,7 @@ std::string Response::createResponseSTR()
     if (!_isPathLegal())
         return (_err->createError(403, "Forbidden", "Illegal request path."));
     if (_location_ctx && _location_ctx->isRedirectSet())
-        return (_createRedirect(_location_ctx->getRedirectCode(),
+        return (RedirectHandler::createRedirect(_location_ctx->getRedirectCode(),
             _location_ctx->getRedirectUrl()));
     if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
         return (_err->createError(413, "Content Too Large",
@@ -558,7 +498,7 @@ std::string Response::createResponseSTR()
         return (_err->createError(501, "Not implemented",
             "The request method is known by the server but is not supported by the target resource. ")); 
     return (_handleMethod());
-    return (_rep.createResponse(200, "OK", "Hello World", _content_type));
+    return (ResponseHandler::createResponse(200, "OK", "Hello World", _content_type));
     
 }
 

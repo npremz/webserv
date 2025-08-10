@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseHandler.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 14:11:47 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 15:54:20 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 21:48:37 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../includes/Http/ResponseHanlder.hpp"
+#include "../../includes/Http/ResponseHandler.hpp"
 
 std::string ResponseHandler::createResponse(unsigned int code, std::string msg,
     const std::string& bodyStr, std::string content_type)

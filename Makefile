@@ -22,7 +22,9 @@ SRC             :=      main.cpp \
 						Logger/Logger.cpp \
 						Requests/HttpLexer.cpp Requests/Response.cpp Requests/CGI.cpp \
 						Http/ErrorHandler.cpp Http/ResponseHandler.cpp \
-						Http/RedirectHandler.cpp
+						Http/RedirectHandler.cpp \
+						Methods/GetHandler.cpp Methods/PostHandler.cpp \
+						Methods/DeleteHandler.cpp
 
 
 SRCPATH         :=      ./srcs/

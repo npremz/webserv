@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:22 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 15:43:41 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 21:08:19 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ class ErrorHandler
         std::string createError(unsigned int code, std::string error,
             std::string bodyStr);
         std::string sendError(std::string error);
+        std::string handleLexerError();
 };
 
 #endif

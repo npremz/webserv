@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 15:59:13 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 23:37:17 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # include <istream>
 # include <iostream>
 # include <string>
-# include <algorithm>
-# include <dirent.h>
+# include <algorithm> // x
+# include <dirent.h> // x
 # include <cstdio>
 
 # include "../Utils/utils.hpp"
@@ -26,8 +26,11 @@
 # include "../Requests/CGI.hpp"
 # include "../Logger/Logger.hpp"
 # include "../Http/ErrorHandler.hpp"
-# include "../Http/ResponseHanlder.hpp"
+# include "../Http/ResponseHandler.hpp"
 # include "../Http/RedirectHandler.hpp"
+# include "../Methods/GetHandler.hpp"
+# include "../Methods/PostHandler.hpp"
+# include "../Methods/DeleteHandler.hpp"
 
 class Response
 {
@@ -35,21 +38,11 @@ class Response
         BlocServer*                 _ctx;
         const BlocLocation*         _location_ctx;
         HttpLexer::parsedRequest    _req;
-        std::string                 _content_type;
         Client*                     _parent;
         std::string                 _response_cgi;
         ErrorHandler*               _err;
         
-        std::string                 _handleLexerErrors();
         std::string                 _handleMethod();
-        std::string                 _handleDelete();
-        std::string                 _handlePost();
-        std::string                 _handleUpload(std::string uploadDir);
-        std::string                 _handleGet();
-        bool                        _handleGetCGI();
-        std::string                 _generateAutoIndex(std::string fullpath);
-        std::string                 _testIndex(std::string URI);
-        void                        _initContentType(std::string file);
         int                         _isMethodSupportedByRoute();
         bool                        _setLocation();
         bool                        _isPathLegal();

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ResponseHanlder.hpp                                :+:      :+:    :+:   */
+/*   ResponseHandler.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 14:08:28 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 15:51:02 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 23:43:56 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ class ResponseHandler
     private:
     public:
         static std::string createResponse(unsigned int code, std::string msg,
-            const std::string& bodyStr, std::string content_type);
+            const std::string& bodyStr, std::string content_type = "");
 };
 
 #endif

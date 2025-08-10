@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:16 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 15:44:08 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 21:08:33 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,4 +125,21 @@ std::string ErrorHandler::sendError(std::string error)
         }
     }
     return (createError(_req.endstatus, msg, error));
+}
+
+std::string ErrorHandler::handleLexerError()
+{
+    Logger::log(Logger::DEBUG, "req endstatus after lexer >= 400");
+    switch (_req.endstatus)
+    {
+        case 400:
+            return (createError(400, "Bad Request",
+                "The server cannot or will not process the request due to something that is perceived to be a client error"));
+            break;
+        case 413:
+            return (createError(413, "Content Too Large",
+                "The request body is larger than limits defined by server"));
+    }
+    return (createError(400, "Bad Request",
+        "The server cannot or will not process the request due to something that is perceived to be a client error"));
 }

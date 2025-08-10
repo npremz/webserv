@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 13:19:20 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 11:06:59 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 14:20:07 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include "../Requests/CGI.hpp"
 # include "../Logger/Logger.hpp"
 # include "../Http/ErrorHandler.hpp"
+# include "../Http/ResponseHanlder.hpp"
 
 class Response
 {
@@ -37,9 +38,8 @@ class Response
         Client*                     _parent;
         std::string                 _response_cgi;
         ErrorHandler*               _err;
+        ResponseHandler             _rep;
 
-        std::string                 _createResponse(unsigned int code, std::string msg,
-                                        const std::string& bodyStr);
         std::string                 _createRedirect(unsigned int code, const std::string& url);
 
         std::string                 _handleLexerErrors();

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:16 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 11:02:43 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 14:23:59 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,9 @@ std::string ErrorHandler::getCustomErrorPath(unsigned int code)
 std::string ErrorHandler::createCustomError(unsigned int code, std::string error_page,
     std::string error_msg)
 {
-    std::ifstream file((_ctx->getRootPath() + error_page).c_str(), std::ios::binary);
+    std::string root = _location_ctx ? _location_ctx->getRootPath() : _ctx->getRootPath();
+
+    std::ifstream file((root + error_page).c_str(), std::ios::binary);
     if (!file.is_open())
         return createError(500, "Internal Server Error",
             "The HTTP 500 Internal Server Error server error response status code indicates that the server encountered an unexpected condition that prevented it from fulfilling the request.");

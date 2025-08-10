@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 11:06:10 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 14:19:34 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,20 +26,6 @@ Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent
 Response::~Response()
 {
     delete _err;
-}
-
-std::string Response::_createResponse(unsigned int code, std::string msg, const std::string& bodyStr)
-{
-    std::ostringstream oss_header;
-    oss_header << "HTTP/1.1 " << code << " " << msg << "\r\n";
-    oss_header << "Content-Type: " << _content_type << "\r\n";
-    oss_header << "Content-Length: " << bodyStr.size() << "\r\n";
-    oss_header << "\r\n"; 
-
-    std::string response = oss_header.str();
-    response.append(bodyStr.data(), bodyStr.size());
-
-    return (response);
 }
 
 std::string Response::sendError(std::string error)
@@ -336,7 +322,7 @@ std::string Response::_generateAutoIndex(std::string fullpath)
     }
 
     html << "</ul></body></html>";
-    return _createResponse(200, "OK", html.str());
+    return _rep.createResponse(200, "OK", html.str(), _content_type);
 }
 
 bool Response::_handleGetCGI()
@@ -384,7 +370,7 @@ std::string Response::_handleGet()
                     return ("CGI");
                 std::ostringstream oss;
                 oss << indexFile.rdbuf();
-                return _createResponse(200, "OK", oss.str());
+                return _rep.createResponse(200, "OK", oss.str(), _content_type);
             } 
             else if (_location_ctx)
             {
@@ -428,7 +414,7 @@ std::string Response::_handleGet()
 
             Logger::log(Logger::DEBUG, "File buffer filled.");
 
-            return _createResponse(200, "OK", buffer);
+            return _rep.createResponse(200, "OK", buffer, _content_type);
         }
     }
     return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
@@ -521,7 +507,7 @@ std::string Response::_handleDelete()
             if (delete_res == 0)
             {
                 Logger::log(Logger::DEBUG, "Deleted " + fullpath);
-                return (_createResponse(200, "OK", ""));
+                return (_rep.createResponse(200, "OK", "", _content_type));
             }
             else
                 return (_err->createError(500, "Internal Server Error", ""));
@@ -572,7 +558,7 @@ std::string Response::createResponseSTR()
         return (_err->createError(501, "Not implemented",
             "The request method is known by the server but is not supported by the target resource. ")); 
     return (_handleMethod());
-    return (_createResponse(200, "OK", "Hello World"));
+    return (_rep.createResponse(200, "OK", "Hello World", _content_type));
     
 }
 

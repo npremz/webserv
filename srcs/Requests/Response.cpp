@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/03 14:12:18 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 11:06:10 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,84 +19,13 @@ Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent
     _parent(parent)
 {
     (void)_ctx;
+    _setLocation();
+    _err = new ErrorHandler(_ctx, _location_ctx);
 }
 
 Response::~Response()
-{}
-
-std::string Response::_isCustomError(unsigned int code)
 {
-    if (!_ctx)
-        return ("");
-    for (std::map<int, std::string>::const_iterator it = _ctx->getErrorPages().begin();
-        it != _ctx->getErrorPages().end(); ++it)
-    {
-        if (it->first == (int)code)
-            return (it->second);
-    }
-    return ("");
-}
-
-std::string Response::_createCustomError(unsigned int code, std::string error_page,
-    std::string error_msg)
-{
-    std::ifstream file((_ctx->getRootPath() + error_page).c_str(), std::ios::binary);
-    if (!file.is_open())
-        return _createError(500, "Internal Server Error",
-            "The HTTP 500 Internal Server Error server error response status code indicates that the server encountered an unexpected condition that prevented it from fulfilling the request.");
-    
-    file.seekg(0, std::ios::end);
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::string buffer;
-    if (size > 0)
-    {
-        buffer.resize(size);
-        file.read(&buffer[0], size);
-    }
-
-    std::ostringstream oss_header;
-    oss_header << "HTTP/1.1 " << code << " " << error_msg << "\r\n";
-    oss_header << "Content-Type: text/html\r\n";
-    oss_header << "Content-Length: " << buffer.size() << "\r\n";
-    oss_header << "\r\n"; 
-
-    std::string response = oss_header.str();
-    response.append(buffer.data(), buffer.size());
-
-    return (response);
-}
-
-std::string Response::_createError(unsigned int code, std::string error, std::string bodyStr)
-{
-    std::string error_page = _isCustomError(code);
-    if (error_page.size() > 0)
-        return (_createCustomError(code, error_page, error));
-
-    std::ostringstream oss;
-    std::ostringstream oss_header;
-    std::ostringstream oss_body;
-
-    oss_header << "HTTP/1.1 " << code << " " << error << "\r\n";
-    oss_body << "<html><head><title>" << code << " " << error << "</title></head><body><h1>"
-             << code << " " << error
-             << "</h1><p>"
-             << bodyStr
-             << "</p></body></html>"
-             << "\r\n\r\n";
-
-    oss << oss_header.str()
-        << "Content-Type: text/html\r\n"
-        << "Content-length: " << oss_body.str().size() << "\r\n";
-    if (code == 500)
-        oss << "Connection: close\r\n";
-    oss << "\r\n"
-        << oss_body.str();
-
-    Logger::log(Logger::DEBUG, oss.str());
-
-    return (oss.str());
+    delete _err;
 }
 
 std::string Response::_createResponse(unsigned int code, std::string msg, const std::string& bodyStr)
@@ -136,7 +65,7 @@ std::string Response::sendError(std::string error)
             msg = oss.str();
         }
     }
-    return (_createError(_req.endstatus, msg, error));
+    return (_err->createError(_req.endstatus, msg, error));
 }
 
 std::string Response::_createRedirect(unsigned int code, const std::string& url)
@@ -184,14 +113,14 @@ std::string Response::_handleLexerErrors()
     switch (_req.endstatus)
     {
         case 400:
-            return (_createError(400, "Bad Request",
+            return (_err->createError(400, "Bad Request",
                 "The server cannot or will not process the request due to something that is perceived to be a client error"));
             break;
         case 413:
-            return (_createError(413, "Content Too Large",
+            return (_err->createError(413, "Content Too Large",
                 "The request body is larger than limits defined by server"));
     }
-    return (_createError(400, "Bad Request",
+    return (_err->createError(400, "Bad Request",
         "The server cannot or will not process the request due to something that is perceived to be a client error"));
 }
 
@@ -361,9 +290,9 @@ void    Response::_initContentType(std::string file)
     else if (".webp" == ext)
         _content_type = "image/webp";
     else if (".svg" == ext)
-        _content_type = "image/webp";
-    else if (".pdf" == ext)
         _content_type = "image/svg+xml";
+    else if (".pdf" == ext)
+        _content_type = "application/pdf";
     else if (".php" == ext)
         _content_type = "cgi/php";
     else if (".py" == ext)
@@ -382,7 +311,7 @@ std::string Response::_generateAutoIndex(std::string fullpath)
 
     DIR* dir = opendir(fullpath.c_str());
     if (!dir) 
-        return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
+        return (_err->createError(403, "Forbidden", "The client does not have access rights to the content"));
 
     std::vector<std::string> entries;
     struct dirent* entry;
@@ -462,7 +391,7 @@ std::string Response::_handleGet()
                 if (_location_ctx->getAutoindex())
                     return (_generateAutoIndex(fullPath));
                 else
-                    return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
+                    return (_err->createError(403, "Forbidden", "The client does not have access rights to the content"));
             }
             else if (_ctx->getAutoindex())
             {
@@ -470,7 +399,7 @@ std::string Response::_handleGet()
             } 
             else
             {
-                return (_createError(403, "Forbidden", "The client does not have access rights to the content"));
+                return (_err->createError(403, "Forbidden", "The client does not have access rights to the content"));
             }
         } 
         else 
@@ -482,7 +411,7 @@ std::string Response::_handleGet()
 
             std::ifstream file(fullPath.c_str(), std::ios::binary);
             if (!file.is_open())
-                return _createError(403, "Forbidden", "The client does not have access rights to the content");
+                return _err->createError(403, "Forbidden", "The client does not have access rights to the content");
             
             file.seekg(0, std::ios::end);
             std::streamsize size = file.tellg();
@@ -502,7 +431,7 @@ std::string Response::_handleGet()
             return _createResponse(200, "OK", buffer);
         }
     }
-    return (_createError(404, "Not Found", "The server cannot find the requested resource"));
+    return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
 std::string Response::_handleUpload(std::string uploadDir)
@@ -520,7 +449,7 @@ std::string Response::_handleUpload(std::string uploadDir)
     else
     {
         Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
-        return (_createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
+        return (_err->createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
     }
 }
 
@@ -536,16 +465,16 @@ std::string Response::_handlePost()
 
     if (isDirectory(fullPath) && _location_ctx 
         && _location_ctx->getCGIPass().find(_location_ctx->getCGIExtension()) == std::string::npos)
-        return (_createError(403, "Forbidden", "POST not correctly configured for this route."));
+        return (_err->createError(403, "Forbidden", "POST not correctly configured for this route."));
 
     if (access(fullPath.c_str(), F_OK) == 0)
     {
         if (access(fullPath.c_str(), R_OK | X_OK) == 0)
             return (_handleUpload(fullPath));
         else
-            return (_createError(403, "Forbidden", "Request failed due to insufficient permissions"));
+            return (_err->createError(403, "Forbidden", "Request failed due to insufficient permissions"));
     }
-    return (_createError(404, "Not Found", "The server cannot find the requested resource"));
+    return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
 }
 
 std::string Response::_handleDelete()
@@ -568,7 +497,7 @@ std::string Response::_handleDelete()
                         && _location_ctx->getCGIExtension() == ".php")))
         {
             if (access(fullpath.c_str(), R_OK | X_OK) != 0)
-                _createError(403, "Forbidden", "Request failed due to insufficient permissions");
+                _err->createError(403, "Forbidden", "Request failed due to insufficient permissions");
             
             Logger::log(Logger::DEBUG, "Sending delete request to cgi.");
             CGI cgi_handler(std::string("DELETE"), _req, _req.contentType, _ctx, _location_ctx, _parent);
@@ -586,7 +515,7 @@ std::string Response::_handleDelete()
             Logger::log(Logger::DEBUG, "Delete directory target: " + directory_path);
 
             if (access(directory_path.c_str(), W_OK | X_OK) != 0)
-                _createError(403, "Forbidden", "Request failed due to insufficient permissions");
+                _err->createError(403, "Forbidden", "Request failed due to insufficient permissions");
 
             int delete_res = std::remove(fullpath.c_str()); 
             if (delete_res == 0)
@@ -595,10 +524,10 @@ std::string Response::_handleDelete()
                 return (_createResponse(200, "OK", ""));
             }
             else
-                return (_createError(500, "Internal Server Error", ""));
+                return (_err->createError(500, "Internal Server Error", ""));
         }
     }
-    return (_createError(404, "Not Found", "The server cannot find the requested resource"));
+    return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
     
 }
 
@@ -624,24 +553,23 @@ std::string Response::createResponseSTR()
 {
     if (_req.endstatus >= 400)
         return (_handleLexerErrors());
-    _setLocation();
     if (!_isPathLegal())
-        return (_createError(403, "Forbidden", "Illegal request path."));
+        return (_err->createError(403, "Forbidden", "Illegal request path."));
     if (_location_ctx && _location_ctx->isRedirectSet())
         return (_createRedirect(_location_ctx->getRedirectCode(),
             _location_ctx->getRedirectUrl()));
     if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
-        return (_createError(413, "Content Too Large",
+        return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
-        return (_createError(413, "Content Too Large",
+        return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     int is_method_supported = _isMethodSupportedByRoute();
     if (is_method_supported == 0)
-        return (_createError(405, "Method Not Allowed",
+        return (_err->createError(405, "Method Not Allowed",
             "The request method is not allowed on this route or doesn't exists."));
     if (is_method_supported == -1)
-        return (_createError(501, "Not implemented",
+        return (_err->createError(501, "Not implemented",
             "The request method is known by the server but is not supported by the target resource. ")); 
     return (_handleMethod());
     return (_createResponse(200, "OK", "Hello World"));

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 23:50:26 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 00:12:01 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,8 +181,6 @@ std::string Response::createResponseSTR()
         return (_err->createError(501, "Not implemented",
             "The request method is known by the server but is not supported by the target resource. ")); 
     return (_handleMethod());
-    return (ResponseHandler::createResponse(200, "OK", "Hello World"));
-    
 }
 
 std::string Response::createCGIResponseSTR(int cgi_fd)

@@ -70,7 +70,6 @@ def postRequestSocket():
     print(response.decode(errors='replace'))
 
 def main():
-
     postRequestSocket()
 
 if __name__ == '__main__':

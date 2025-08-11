@@ -275,8 +275,10 @@ void    ServerManager::_run()
     {
         struct epoll_event  events[128];
         int n = epoll_wait(_epoll_fd, events, 128, 1000);
-        if (n == -1) {
-            if (errno == EINTR) {
+        if (n == -1)
+        {
+            if (errno == EINTR)
+            {
                 if (!isRunning)
                     break;
                 continue;
@@ -312,15 +314,17 @@ void    ServerManager::_run()
                 Client* c_client;
                 if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
-                    try {
+                    try
+                    {
+                        if (events[i].events & EPOLLERR)
+                        {
+                            c_client->state = Client::FINISHED;
+                            Logger::log(Logger::ERROR, "Epoll error.");
+                        }
                         if (events[i].events & EPOLLIN || events[i].events & EPOLLHUP)
-                        {
                             c_client->handleResponse(true, events[i].data.fd);
-                        }
                         if (events[i].events & EPOLLOUT)
-                        {
                             c_client->writeRequestBodyToCGI(events[i].data.fd);
-                        }
                     }
                     catch (const std::exception &e)
                     {
@@ -340,16 +344,22 @@ void    ServerManager::_run()
                     c_client = _clients[events[i].data.fd];
                     try 
                     {
+                        if (events[i].events & EPOLLERR)
+                        {
+                            c_client->state = Client::FINISHED;
+                            Logger::log(Logger::ERROR, "Epoll error.");
+                        }
+                        if (events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
+                        {
+                            if (c_client->getLexer()->getRequest().receivedoctets < c_client->getLexer()->getRequest().expectedoctets)
+                                c_client->sendError("Bad Request");
+                        }
                         if (events[i].events & EPOLLIN)
                         {
                             if (c_client->state == Client::DRAINING_BODY)
-                            {
                                 c_client->drainBody();
-                            }
                             else
-                            {
                                 c_client->handleRequest();
-                            }
                         }
                         if (events[i].events & EPOLLOUT)
                             c_client->handleSend();

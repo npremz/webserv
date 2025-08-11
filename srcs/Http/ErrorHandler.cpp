@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:16 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 21:08:33 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 11:20:09 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ std::string ErrorHandler::createError(unsigned int code, std::string error,
     oss << oss_header.str()
         << "Content-Type: text/html\r\n"
         << "Content-length: " << oss_body.str().size() << "\r\n";
-    if (code == 500)
+    if (code == 500 || code == 408)
         oss << "Connection: close\r\n";
     oss << "\r\n"
         << oss_body.str();

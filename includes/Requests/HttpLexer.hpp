@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/03 13:44:17 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 11:23:25 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,6 +106,7 @@ class HttpLexer
 		
 		Status				feed(const char *data, size_t len);
 		void				setEndStatus(size_t status); 
+		size_t				getEndStatus() const;
 		const parsedRequest &getRequest() const;
 
 };

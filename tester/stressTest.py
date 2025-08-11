@@ -5,9 +5,9 @@ import time
 import socket
 
  
-SERVER_ADDRESS = "http://127.0.0.1:8067/"
+SERVER_ADDRESS = "http://127.0.0.1:8060/"
 HOST = "127.0.0.1"
-PORT = 8067
+PORT = 8060
 
 def getRequest():
 

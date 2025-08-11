@@ -246,13 +246,16 @@ void    ServerManager::_sweepTimeout()
     time_t actual_time = time(NULL);
     for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end();)
     {
-        if (actual_time - it->second->last_activity > 30)
+        if (actual_time - it->second->last_activity > 10)
         {
+
             try {
+                Logger::log(Logger::DEBUG, "Timeout Detected.");
                 it->second->last_activity = actual_time;
-                if (it->second->state != Client::FINISHED)
+                if (it->second->state != Client::FINISHED && it->second->timed_out == false)
                 {
                     it->second->sendError("Server timeout");
+                    it->second->timed_out = true;
                 }
             }
             catch (const std::exception &e)
@@ -309,7 +312,6 @@ void    ServerManager::_run()
                 Client* c_client;
                 if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
-                    c_client->last_activity = time(NULL);
                     try {
                         if (events[i].events & EPOLLIN || events[i].events & EPOLLHUP)
                         {
@@ -332,12 +334,10 @@ void    ServerManager::_run()
                             std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
-                    c_client->last_activity = time(NULL);
                 }
                 else
                 {
                     c_client = _clients[events[i].data.fd];
-                    c_client->last_activity = time(NULL);
                     try 
                     {
                         if (events[i].events & EPOLLIN)
@@ -366,7 +366,6 @@ void    ServerManager::_run()
                             std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
-                    c_client->last_activity = time(NULL);
                 }
                 if (c_client->state == Client::FINISHED)
                 {

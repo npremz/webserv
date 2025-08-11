@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/03 14:19:21 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 11:24:10 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -385,4 +385,9 @@ const HttpLexer::parsedRequest& HttpLexer::getRequest() const
 void HttpLexer::setEndStatus(size_t status)
 {
 	_req.endstatus = status;
+}
+
+size_t	HttpLexer::getEndStatus() const
+{
+	return (this->_req.endstatus);
 }

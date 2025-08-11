@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/11 11:14:35 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 00:24:11 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,13 +79,6 @@ void    CGI::_initEnvTab()
     }
 
     _env_tab.push_back(NULL);
-    
-    // Logger::log(Logger::DEBUG, "CGI env:");
-    // for (std::vector<char *>::iterator it = _env_tab.begin();
-    //     it != _env_tab.end() - 1; it++)
-    // {
-    //     Logger::log(Logger::DEBUG, "\t" + std::string(*it));
-    // }
 }
 
 void CGI::_initArgv()
@@ -102,13 +95,6 @@ void CGI::_initArgv()
     if (_method == "GET")
         _argv.push_back(const_cast<char *>(_file_name.c_str()));
     _argv.push_back(NULL);
-
-    // Logger::log(Logger::DEBUG, "CGI argv:");
-    // for (std::vector<char *>::iterator it = _argv.begin();
-    //     it != _argv.end() - 1; it++)
-    // {
-    //     Logger::log(Logger::DEBUG, "\t" + std::string(*it));
-    // }
 }
 
 void    CGI::exec()

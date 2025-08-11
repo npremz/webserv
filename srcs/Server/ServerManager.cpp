@@ -137,18 +137,22 @@ int     ServerManager::_isListenSocket(int event_fd)
     return (-1);
 }
 
-void    ServerManager::_addClient(int fd, u_int32_t ip) {
+void    ServerManager::_addClient(int fd, u_int32_t ip)
+{
     _clients[fd] = new Client(fd, ip, _router, this);
     _client_fds.push_back(fd);
 }
 
-void    ServerManager::_removeClient(int fd) {
+void    ServerManager::_removeClient(int fd)
+{
+    close(fd);
     delete _clients[fd];
     _clients.erase(fd);
     _client_fds.remove(fd);
 }
 
-void    ServerManager::_closeAllClients() {
+void    ServerManager::_closeAllClients()
+{
     for (std::map<int, Client*>::iterator it = _clients.begin();
         it != _clients.end();)
     {
@@ -396,7 +400,6 @@ void    ServerManager::_run()
                 {
                     if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
                         Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl del c_socket error");
-                    close(events[i].data.fd);
                     _removeClient(events[i].data.fd);
                 }
             }

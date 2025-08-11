@@ -1,5 +1,8 @@
 let filesSection = document.querySelector(".section--files");
 let errorSection = document.querySelector(".section--error");
+let responseSection = document.querySelector(".section--response");
+
+console.log(responseSection)
 
 function getFiles() {
     fetch('/cgi-bin/getFiles.py')
@@ -28,7 +31,7 @@ function getFiles() {
             deleteBtn.classList.add("btn")
             deleteBtn.innerText = "Delete";
             deleteBtn.onclick = function() {
-                fetch(`/cgi-bin/deleteFile.py?name=${encodeURIComponent(fileName)}`, {
+                fetch(`/cgi-bin/deleteFile.py?file=${encodeURIComponent(fileName)}`, {
                     method: "DELETE"
                 })
                 .then(response => {
@@ -37,6 +40,8 @@ function getFiles() {
                             throw new Error(`${response.status}\n${text}`);
                         });
                     }
+                    responseSection.classList.remove("section--hidden");
+                    responseSection.innerText = "Response status: " + response.status;
                     getFiles();
                 })
                 .catch(error => {

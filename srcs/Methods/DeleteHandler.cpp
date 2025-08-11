@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:04:10 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 23:43:44 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 14:06:24 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ std::string DeleteHandler::handleRequest()
             if (delete_res == 0)
             {
                 Logger::log(Logger::DEBUG, "Deleted " + fullpath);
-                return (ResponseHandler::createResponse(200, "OK", ""));
+                return (ResponseHandler::createResponse(204, "No Content", ""));
             }
             else
                 return (_err->createError(500, "Internal Server Error", ""));

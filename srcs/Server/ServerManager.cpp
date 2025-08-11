@@ -83,7 +83,7 @@ void    ServerManager::_initListenSockets()
 
         if (bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa)) == -1)
             Logger::log(Logger::FATAL, "Initialisation error => bind error " + std::string(strerror(errno)));
-        if (listen(socket_fd, 128) == -1)
+        if (listen(socket_fd, LISTEN_QUEUE) == -1)
             Logger::log(Logger::FATAL, "Initialisation error => listen error");
         
         _listen_sockets.push_back(socket_fd);
@@ -246,13 +246,16 @@ void    ServerManager::_sweepTimeout()
     time_t actual_time = time(NULL);
     for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end();)
     {
-        if (actual_time - it->second->last_activity > 30)
+        if (actual_time - it->second->last_activity > REQUEST_TIMEOUT)
         {
+
             try {
+                Logger::log(Logger::DEBUG, "Timeout Detected.");
                 it->second->last_activity = actual_time;
-                if (it->second->state != Client::FINISHED)
+                if (it->second->state != Client::FINISHED && it->second->timed_out == false)
                 {
                     it->second->sendError("Server timeout");
+                    it->second->timed_out = true;
                 }
             }
             catch (const std::exception &e)
@@ -270,10 +273,12 @@ void    ServerManager::_run()
     isRunning = true;
     while (isRunning)
     {
-        struct epoll_event  events[128];
-        int n = epoll_wait(_epoll_fd, events, 128, 1000);
-        if (n == -1) {
-            if (errno == EINTR) {
+        struct epoll_event  events[EPOLL_MAX_EVENTS];
+        int n = epoll_wait(_epoll_fd, events, EPOLL_MAX_EVENTS, EPOLL_TIMEOUT);
+        if (n == -1)
+        {
+            if (errno == EINTR)
+            {
                 if (!isRunning)
                     break;
                 continue;
@@ -291,34 +296,50 @@ void    ServerManager::_run()
             int f_socket_fd;
             if ((f_socket_fd = _isListenSocket(events[i].data.fd)) != -1)
             {
-                struct sockaddr_in cli;
-                socklen_t len = sizeof(cli);
-
-                int c_socket_fd = accept(f_socket_fd, reinterpret_cast<struct sockaddr*>(&cli), &len);
-                if (fcntl(c_socket_fd, F_SETFL, O_NONBLOCK) == -1)
-                    Logger::log(Logger::FATAL, "Initialisation error => fcntl c_socket error");
-                epoll_event ev;
-                ev.events = EPOLLIN;
-                ev.data.fd = c_socket_fd;
-                if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev) == -1)
-                    Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl add c_socket error");
-                _addClient(c_socket_fd, ntohl(cli.sin_addr.s_addr));
+                try
+                {
+                    struct sockaddr_in cli;
+                    socklen_t len = sizeof(cli);
+    
+                    int c_socket_fd = accept(f_socket_fd, reinterpret_cast<struct sockaddr*>(&cli), &len);
+                    if (c_socket_fd == -1)
+                        Logger::log(Logger::ERROR, "Accept error");
+                    if (fcntl(c_socket_fd, F_SETFL, O_NONBLOCK) == -1)
+                    {
+                        close(c_socket_fd);
+                        Logger::log(Logger::ERROR, "Client initialisation error => fcntl c_socket error");
+                    }
+                    epoll_event ev;
+                    ev.events = EPOLLIN;
+                    ev.data.fd = c_socket_fd;
+                    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, c_socket_fd, &ev) == -1)
+                    {
+                        close(c_socket_fd);
+                        Logger::log(Logger::ERROR, "Client initialisation error => epoll_ctl add c_socket error");
+                    }
+                    _addClient(c_socket_fd, ntohl(cli.sin_addr.s_addr));
+                }
+                catch (const std::exception& e)
+                {
+                    std::cout << e.what() << std::endl;
+                }
             }
             else
             {
                 Client* c_client;
                 if ((c_client = _isCGIClient(events[i].data.fd)) != NULL) 
                 {
-                    c_client->last_activity = time(NULL);
-                    try {
+                    try
+                    {
+                        if (events[i].events & EPOLLERR)
+                        {
+                            c_client->state = Client::FINISHED;
+                            Logger::log(Logger::ERROR, "Epoll error.");
+                        }
                         if (events[i].events & EPOLLIN || events[i].events & EPOLLHUP)
-                        {
                             c_client->handleResponse(true, events[i].data.fd);
-                        }
                         if (events[i].events & EPOLLOUT)
-                        {
                             c_client->writeRequestBodyToCGI(events[i].data.fd);
-                        }
                     }
                     catch (const std::exception &e)
                     {
@@ -332,24 +353,28 @@ void    ServerManager::_run()
                             std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
-                    c_client->last_activity = time(NULL);
                 }
                 else
                 {
                     c_client = _clients[events[i].data.fd];
-                    c_client->last_activity = time(NULL);
                     try 
                     {
+                        if (events[i].events & EPOLLERR)
+                        {
+                            c_client->state = Client::FINISHED;
+                            Logger::log(Logger::ERROR, "Epoll error.");
+                        }
+                        if (events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP)
+                        {
+                            if (c_client->getLexer()->getRequest().receivedoctets < c_client->getLexer()->getRequest().expectedoctets)
+                                c_client->sendError("Bad Request");
+                        }
                         if (events[i].events & EPOLLIN)
                         {
                             if (c_client->state == Client::DRAINING_BODY)
-                            {
                                 c_client->drainBody();
-                            }
                             else
-                            {
                                 c_client->handleRequest();
-                            }
                         }
                         if (events[i].events & EPOLLOUT)
                             c_client->handleSend();
@@ -366,7 +391,6 @@ void    ServerManager::_run()
                             std::cout << e.what() << ". Couldn't send error to client." << std::endl;
                         }
                     }
-                    c_client->last_activity = time(NULL);
                 }
                 if (c_client->state == Client::FINISHED)
                 {

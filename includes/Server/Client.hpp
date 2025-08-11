@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/18 18:22:47 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 11:59:21 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,7 @@ class Client
     public:
         time_t          last_activity;
         RequestState    state;
+        bool            timed_out;
         
         Client(int fd, u_int32_t ip, RouterMap& router, ServerManager* server);
         ~Client();
@@ -72,6 +73,7 @@ class Client
         void    sendError(std::string error);
         void    drainBody();
 
-        int     getSockerFd() const; 
+        int                 getSockerFd() const; 
+        const HttpLexer*    getLexer() const;
 };
 #endif

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/03 14:19:21 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 17:24:14 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,8 @@ HttpLexer::HttpLexer(u_int32_t ip) : _state(START_LINE), _req_size(0)
 HttpLexer::~HttpLexer()
 {}
 
-HttpLexer::ParseState HttpLexer::_handleStatusError(unsigned int endstatus, std::string errorStr, ParseState state)
+HttpLexer::ParseState HttpLexer::_handleStatusError(unsigned int endstatus,
+	std::string errorStr, ParseState state)
 {
 	_req.endstatus = endstatus;
 	_req.errorMsg = errorStr;
@@ -55,9 +56,13 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	if (method.empty() || target.empty() || httpv.empty() || !bin.empty())
 	{
 		if (bin.empty())
-			return (_handleStatusError(400, "Malformed request line: missing method, URI or HTTP version.", PARSE_ERROR));
+			return (_handleStatusError(400,
+				"Malformed request line: missing method, URI or HTTP version.",
+				PARSE_ERROR));
 		else
-			return (_handleStatusError(400, "Malformed request line: too many elements (expected: METHOD URI VERSION).", PARSE_ERROR));
+			return (_handleStatusError(400,
+				"Malformed request line: too many elements (expected: METHOD URI VERSION).",
+				PARSE_ERROR));
 	}
 	if (method == "GET")
 		_req.method = HTTP_GET;
@@ -80,7 +85,9 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 	else
 	{
 		_req.method = HTTP_UNKNOWN;
-		return (_handleStatusError(501, "The server does not support the functionality required to fulfill the request (unknown HTTP method).", PARSE_ERROR));
+		return (_handleStatusError(501,
+			"The server does not support the functionality required to fulfill the request (unknown HTTP method).",
+			PARSE_ERROR));
 	}
 
 	_req.targetraw = target;
@@ -100,12 +107,18 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 			it++;
 	}
 	if (httpv.length() != 8)
-		return (_handleStatusError(400, "Malformed request line: invalid HTTP version (expected: HTTP/1.1).", PARSE_ERROR));
+		return (_handleStatusError(400,
+			"Malformed request line: invalid HTTP version (expected: HTTP/1.1).",
+			PARSE_ERROR));
 	pos = httpv.find("/");
 	if (pos == std::string::npos)
-		return (_handleStatusError(400, "Malformed request line: invalid HTTP version (expected: HTTP/1.1).", PARSE_ERROR));
+		return (_handleStatusError(400,
+			"Malformed request line: invalid HTTP version (expected: HTTP/1.1).",
+			PARSE_ERROR));
 	if (httpv.substr(0, pos + 1) != "HTTP/")
-		return (_handleStatusError(400, "Malformed request line: invalid HTTP version (expected: HTTP/1.1).", PARSE_ERROR));
+		return (_handleStatusError(400,
+			"Malformed request line: invalid HTTP version (expected: HTTP/1.1).",
+			PARSE_ERROR));
 	_req.httpver = httpv.substr(pos + 1);
 	_buf.erase(0, end);
 	Logger::log(Logger::DEBUG, std::string(_req.method == HTTP_GET ? "GET" : "") + std::string(_req.method == HTTP_POST ? "POST" : "") + std::string(_req.method == HTTP_DELETE ? "DELETE" : "") + " " + _req.targetraw + " " + _req.httpver);
@@ -154,7 +167,7 @@ bool        HttpLexer::_isValidHostValue(const std::string& val)
 		return (false);
 	std::istringstream  iss(port_str);
 	unsigned int        port;
-	if (iss >> port && port < 65536)
+	if (iss >> port && port < MAX_PORT)
 		_req.ip_port.port = port;
 	else
 		return (false);
@@ -192,7 +205,8 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 		if (delim == std::string::npos)
 		{
 			if (countWords(*it) > 1)
-				return (_handleStatusError(400, "Malformed header: missing ':' delimiter.", PARSE_ERROR));
+				return (_handleStatusError(400,
+					"Malformed header: missing ':' delimiter.", PARSE_ERROR));
             continue;
 		}
 
@@ -224,10 +238,14 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 		else if (to_lowercase(key) == "content-length")
 		{
 			if (!_isValidContentLengthValue(val))
-				return (_handleStatusError(400, "Invalid Content-Length header: must be a valid integer.", PARSE_ERROR));
+				return (_handleStatusError(400,
+					"Invalid Content-Length header: must be a valid integer.",
+					PARSE_ERROR));
 			Logger::log(Logger::DEBUG, "Content-length detected: " + val);
 			if (_req.expectedoctets > MAX_CLIENT_SIZE)
-				return (_handleStatusError(413, "The request is larger than the server is willing or able to process.", PARSE_ERROR));
+				return (_handleStatusError(413,
+					"The request is larger than the server is willing or able to process.",
+					PARSE_ERROR));
 		}
 		else if (to_lowercase(key) == "transfer-encoding")
 		{
@@ -251,7 +269,9 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 			else
 			{
 				if (_isNonDuplicableHeader(key_in_map->first))
-					return (_handleStatusError(400, "Duplicate header detected: " + key_in_map->first, PARSE_ERROR));
+					return (_handleStatusError(400,
+						"Duplicate header detected: " + key_in_map->first,
+						PARSE_ERROR));
 				else
 				{
 					_req.headers[key_in_map->first] += "," + val; 
@@ -369,6 +389,11 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 		default:
 			break;
 		}
+		if (_buf.size() > MAX_STARTLINE_SIZE)
+		{
+			_req.endstatus = 400;
+			Logger::log(Logger::ERROR, "Startline size limit exceeded.");
+		}
 		if (parsing_state == PAUSE)
 			return (NEED_MORE);
 	}
@@ -385,4 +410,9 @@ const HttpLexer::parsedRequest& HttpLexer::getRequest() const
 void HttpLexer::setEndStatus(size_t status)
 {
 	_req.endstatus = status;
+}
+
+size_t	HttpLexer::getEndStatus() const
+{
+	return (this->_req.endstatus);
 }

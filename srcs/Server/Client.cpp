@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/03 13:44:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 12:02:44 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,8 @@ Client::Client(int fd, u_int32_t ip, RouterMap& router, ServerManager* server) :
     _server(server),
     _bytes_to_cgi_stdin(0),
     last_activity(time(NULL)),
-    state(IDLE)
+    state(IDLE),
+    timed_out(false)
 {
     Logger::log(Logger::INFO, "Accepted client from " + ipIntToString(_ip));
     _lexer = new HttpLexer(_ip);
@@ -41,6 +42,8 @@ void    Client::sendError(std::string error)
     state = SENDING_ERROR;
     if (error == "Server timeout")
         _lexer->setEndStatus(408);
+    if (error == "Bad Request")
+        _lexer->setEndStatus(400);
     _response_ctx = _responseRouting();
     Response rep(_response_ctx, _lexer->getRequest(), this);
     _response_str = rep.sendError(error);
@@ -143,6 +146,7 @@ void    Client::writeRequestBodyToCGI(int cgi_fd)
 
     if ((bytes_written = write(cgi_fd, _lexer->getRequest().body.data() + _bytes_to_cgi_stdin, write_size)) > 0)
     {    
+        last_activity = time(NULL);
         _bytes_to_cgi_stdin += bytes_written;
         if (_bytes_to_cgi_stdin == _lexer->getRequest().expectedoctets)
         {
@@ -169,6 +173,7 @@ void    Client::handleRequest()
     {
         HttpLexer::Status   c_status;
 
+        last_activity = time(NULL);
         c_status = _lexer->feed(_buf, byte_rec);
         if (c_status == HttpLexer::COMPLETE)
         {
@@ -194,6 +199,7 @@ void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
     if (isCGIResponse)
     {
         _response_str = _rep->createCGIResponseSTR(cgi_fd);
+        last_activity = time(NULL);
         if (_response_str == "Not complete.")
         {
             Logger::log(Logger::DEBUG, "CGI pipe reading not completed, back to epoll");
@@ -279,19 +285,24 @@ void    Client::handleSend()
 
         if (n > 0)
         {
+            last_activity = time(NULL);
             _response_sent += n;
             if (_response_sent == _response_len)
             {
                 _removeEpollout();
                 Logger::log(Logger::DEBUG, "Response totally sent");
-                if (state == SENDING_ERROR && _lexer->getRequest().expectedoctets > 0)
+                if (state == SENDING_ERROR && _lexer->getRequest().expectedoctets > 0
+                    && _lexer->getEndStatus() != 408)
                 {
                     state = DRAINING_BODY;
                     _body_drained = _lexer->getRequest().receivedoctets;
                     _expected_body_size = _lexer->getRequest().expectedoctets;
                 }
                 else
+                {
                     state = FINISHED;
+                    Logger::log(Logger::DEBUG, "Client State set to FINISHED.");
+                }
             }
         }
         else if (n == -1)
@@ -307,4 +318,9 @@ void    Client::handleSend()
 int Client::getSockerFd() const
 {
     return (this->_socket_fd);
+}
+
+const HttpLexer*    Client::getLexer() const
+{
+    return (this->_lexer);
 }

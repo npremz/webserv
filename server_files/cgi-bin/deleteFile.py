@@ -59,49 +59,49 @@ def create_http_error(status_code, message=""):
 def safe_delete_file(relative_path, base_dir):
 
     if not relative_path:
-        return False, 400, "Paramètre 'file' manquant."
+        return False, 400, "Missing file parameter."
 
     if os.path.isabs(relative_path):
-        return False, 400, "Chemin absolu interdit."
+        return False, 400, "Illegal absolute path."
     rel_clean = relative_path.lstrip("/").strip()
     if not rel_clean:
-        return False, 400, "Chemin vide après normalisation."
+        return False, 400, "Empty path after normalisation."
 
     base_real = os.path.realpath(base_dir)
     target_real = os.path.realpath(os.path.join(base_real, rel_clean))
 
     if not (target_real == base_real or target_real.startswith(base_real + os.sep)):
-        return False, 403, "Accès hors du répertoire autorisé."
+        return False, 403, "Path out of scope."
 
     if not os.path.exists("." + target_real):
-        return False, 404, "Fichier introuvable."
+        return False, 404, "Missing file."
     if not os.path.isfile("." + target_real):
-        return False, 415, "Le chemin indiqué n'est pas un fichier."
+        return False, 415, "Not a file."
 
     try:
         os.remove("." + target_real)
         return True, 204, "" 
     except PermissionError:
-        return False, 403, "Permissions insuffisantes pour supprimer ce fichier."
+        return False, 403, "Unsuffisant permissions for this action."
     except FileNotFoundError:
-        return False, 404, "Fichier introuvable (peut avoir déjà été supprimé)."
+        return False, 404, "Missing file (could be already deleted)."
     except OSError as e:
-        return False, 500, f"Erreur système: {e}"
+        return False, 500, f"Internal Server Error: {e}"
 
 def main():
     try:
         if os.environ.get("REQUEST_METHOD") != "DELETE":
-            print(create_http_error(405, "Seule la méthode DELETE est autorisée."))
+            print(create_http_error(405, "This script only works with DELETE"))
             return
 
         upload_path = os.environ.get("UPLOAD_PATH")
         document_root = os.environ.get("DOCUMENT_ROOT")
 
         if not upload_path:
-            print(create_http_error(500, "UPLOAD_PATH non défini sur le serveur."))
+            print(create_http_error(500, "UPLOAD_PATH not defined on server."))
             return
         if not document_root:
-            print(create_http_error(500, "DOCUMENT_ROOT non défini sur le serveur."))
+            print(create_http_error(500, "DOCUMENT_ROOT not defined on server."))
             return
 
         base_dir = os.path.join(document_root, upload_path)

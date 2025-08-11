@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/11 09:55:22 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/11 14:37:47 by kederhet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,8 @@ std::string Response::sendError(std::string error)
 
 bool    Response::_setLocation()
 {
+    if (!_ctx)
+        return (false);
     if (_ctx->getLocationBlocs().size() == 0)
         return (false);
     for (std::vector<BlocLocation>::const_iterator it = _ctx->getLocationBlocs().begin(); 

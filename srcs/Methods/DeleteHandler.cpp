@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:04:10 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/11 14:06:24 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 00:47:10 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,9 @@ std::string DeleteHandler::handleRequest()
 
     if (access(fullpath.c_str(), F_OK) == 0)
     {
+        if (isDirectory(fullpath))
+            return (_err->createError(403, "Forbidden", "Dictory deleting not allowed"));
+
         if (_location_ctx && !_location_ctx->getCGIExtension().empty()
             && ((fullpath.size() >= 3 && (fullpath.substr(fullpath.size() - 3) == ".py" 
                     && _location_ctx->getCGIExtension() == ".py"))
@@ -45,7 +48,7 @@ std::string DeleteHandler::handleRequest()
                     && _location_ctx->getCGIExtension() == ".php")))
         {
             if (access(fullpath.c_str(), R_OK | X_OK) != 0)
-                _err->createError(403, "Forbidden", "Request failed due to insufficient permissions");
+                return (_err->createError(403, "Forbidden", "Request failed due to insufficient permissions"));
             
             Logger::log(Logger::DEBUG, "Sending delete request to cgi.");
             CGI cgi_handler(std::string("DELETE"), _req, _req.contentType, _ctx, _location_ctx, _rep_parent);
@@ -63,7 +66,7 @@ std::string DeleteHandler::handleRequest()
             Logger::log(Logger::DEBUG, "Delete directory target: " + directory_path);
 
             if (access(directory_path.c_str(), W_OK | X_OK) != 0)
-                _err->createError(403, "Forbidden", "Request failed due to insufficient permissions");
+                return(_err->createError(403, "Forbidden", "Request failed due to insufficient permissions"));
 
             int delete_res = std::remove(fullpath.c_str()); 
             if (delete_res == 0)

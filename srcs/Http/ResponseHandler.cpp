@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 14:11:47 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 21:48:37 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 00:37:29 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,10 @@ std::string ResponseHandler::createResponse(unsigned int code, std::string msg,
 {
     std::ostringstream oss_header;
     oss_header << "HTTP/1.1 " << code << " " << msg << "\r\n";
-    if (!content_type.empty())
+    if (content_type.size() > 0)
         oss_header << "Content-Type: " << content_type << "\r\n";
-    oss_header << "Content-Length: " << bodyStr.size() << "\r\n";
+    if (bodyStr.size() > 0)
+        oss_header << "Content-Length: " << bodyStr.size() << "\r\n";
     oss_header << "\r\n"; 
 
     std::string response = oss_header.str();

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 14:12:28 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 17:15:24 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,17 @@ void    CGI::_initEnvTab()
     {
         std::string env = "HTTP_";
         std::string header_name = it->first;
+
+        std::string lower_key = to_lowercase(header_name);
+        if (lower_key == "host" ||
+            lower_key == "content-length" ||
+            lower_key == "content-type" ||
+            lower_key == "content-encoding" ||
+            lower_key == "content-range" ||
+            lower_key == "user-agent" ||
+            lower_key == "server")
+            continue;
+
         for (size_t i = 0; i < header_name.size(); ++i) {
             char c = header_name[i];
             if (c == '-')

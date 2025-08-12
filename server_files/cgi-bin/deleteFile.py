@@ -33,8 +33,6 @@ def create_http_response(body, status_code=200, content_type="text/plain"):
 
     response_lines = [
         f"Status: {status_code}",
-        f"Content-Type: {content_type}",
-        f"Content-Length: {content_length}",
         "Connection: close",
         "",
         payload
@@ -112,7 +110,7 @@ def main():
 
         ok, code, msg = safe_delete_file(target_rel, base_dir)
         if ok:
-            response = create_http_response("", status_code=204, content_type="text/plain")
+            response = create_http_response("", status_code=204)
         else:
             response = create_http_error(code, msg)
 

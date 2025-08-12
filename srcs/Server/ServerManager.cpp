@@ -22,7 +22,7 @@ ServerManager::~ServerManager()
 
 void    ServerManager::signalHandler(int signum)
 {
-    if (signum == SIGINT)
+    if (signum == SIGINT || signum == SIGTERM)
     {
         std::cout << std::endl;
         Logger::log(Logger::INFO, "Stopping Webserv...");

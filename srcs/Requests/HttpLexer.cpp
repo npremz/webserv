@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/11 17:24:14 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 17:17:46 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ HttpLexer::HttpLexer(u_int32_t ip) : _state(START_LINE), _req_size(0)
 	_req.expectedoctets = 0;
 	_req.receivedoctets = 0;
 	_req.ip_port.ip = ip;
+	_req.ip_port.port = 0;
 }
 
 HttpLexer::~HttpLexer()
@@ -232,6 +233,7 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 			if (!_isValidHostValue(val))
 				return (_handleStatusError(400, "Invalid Host header.", PARSE_ERROR));
 			_req.has_host = true;
+			
 			Logger::log(Logger::DEBUG, "Host detected: " + _req.host);
 			Logger::log(Logger::DEBUG, "Request ip: " + ipPortToString(_req.ip_port));
 		}
@@ -258,26 +260,28 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 				_req.contentType = val;
 			Logger::log(Logger::DEBUG, "content-type detected: " + val);
 		}
+
+		HeaderMap::iterator key_in_map;
+		if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
+		{
+			_req.headers[key] = val;
+		}
 		else
 		{
-			HeaderMap::iterator key_in_map;
-			
-			if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
-			{
-				_req.headers[key] = val;
-			}
+			if (_isNonDuplicableHeader(key_in_map->first))
+				return (_handleStatusError(400,
+					"Duplicate header detected: " + key_in_map->first,
+					PARSE_ERROR));
 			else
 			{
-				if (_isNonDuplicableHeader(key_in_map->first))
-					return (_handleStatusError(400,
-						"Duplicate header detected: " + key_in_map->first,
-						PARSE_ERROR));
-				else
-				{
-					_req.headers[key_in_map->first] += "," + val; 
-				}
+				_req.headers[key_in_map->first] += "," + val; 
 			}
 		}
+
+		if (_req.headers.size() > MAX_HEADERS)
+			return (_handleStatusError(400,
+					"Headers limit exceeded: " + key_in_map->first,
+					PARSE_ERROR));
 	}
 	_buf.erase(0, pos + 4);
 	return (GOOD);

@@ -143,8 +143,24 @@ void    ServerManager::_addClient(int fd, u_int32_t ip)
     _client_fds.push_back(fd);
 }
 
-void    ServerManager::_removeClient(int fd)
+void    ServerManager::_removeClient(int fd, Client* c_client)
 {
+    for (std::multimap<Client*, int>::iterator it = _cgi_map.begin();
+        it != _cgi_map.end();)
+    {
+        if (it->first == c_client)
+        {
+            if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, it->second, NULL) == -1)
+            {   
+                Logger::log(Logger::ERROR, "Error while deleting cgi pipe from epoll.");
+            }
+            close(it->second);
+            _cgi_map.erase(it++);
+        }
+        else
+            it++;
+    }
+
     close(fd);
     delete _clients[fd];
     _clients.erase(fd);
@@ -400,7 +416,7 @@ void    ServerManager::_run()
                 {
                     if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
                         Logger::log(Logger::FATAL, "Initialisation error => epoll_ctl del c_socket error");
-                    _removeClient(events[i].data.fd);
+                    _removeClient(events[i].data.fd, c_client);
                 }
             }
         }

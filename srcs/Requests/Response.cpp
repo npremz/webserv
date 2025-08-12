@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/11 21:06:05 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 11:01:09 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,42 +33,104 @@ std::string Response::sendError(std::string error)
     return (_err->sendError(error));
 }
 
+// bool    Response::_setLocation()
+// {
+//     if (!_ctx)
+//         return (false);
+//     if (_ctx->getLocationBlocs().size() == 0)
+//         return (false);
+//     for (std::vector<BlocLocation>::const_iterator it = _ctx->getLocationBlocs().begin(); 
+//     it < _ctx->getLocationBlocs().end(); it++)
+//     {
+//         std::string location = it->getLocationPath();
+//         if (*(location.end() - 1) != '/')
+//             location += "/";
+        
+//         std::string path = _req.path;
+//         std::string fullpath = _ctx->getRootPath() + path;
+
+//         if (isDirectory(fullpath))
+//         {
+//             if (*(path.end() - 1) != '/')
+//                 path += "/";
+//         } 
+//         else
+//         {
+//             std::string::size_type pos = path.find_last_of("/");
+//             path = path.substr(0, pos + 1);
+//         }
+
+//         if (location == path)
+//         {
+//             _location_ctx = &(*it);
+//             Logger::log(Logger::DEBUG, "Location found.");
+//             if (DEBUG_MODE)
+//                 it->print(2);
+//             return (true);
+//         }
+//     }
+//     return (false);
+// }
+
 bool    Response::_setLocation()
 {
     if (!_ctx)
         return (false);
     if (_ctx->getLocationBlocs().size() == 0)
         return (false);
+
+    std::string path = _req.path;
+    std::string fullpath = _ctx->getRootPath() + path;
+
+    if (isDirectory(fullpath))
+    {
+        if (*(path.end() - 1) != '/')
+            path += "/";
+    } 
+    else
+    {
+        std::string::size_type pos = path.find_last_of("/");
+        path = path.substr(0, pos + 1);
+    }
+
+    Logger::log(Logger::DEBUG, "path tested against locations: " + path);
+
+
+    const BlocLocation* best_matching_location = NULL;
+    
     for (std::vector<BlocLocation>::const_iterator it = _ctx->getLocationBlocs().begin(); 
     it < _ctx->getLocationBlocs().end(); it++)
     {
         std::string location = it->getLocationPath();
         if (*(location.end() - 1) != '/')
             location += "/";
-        
-        std::string path = _req.path;
-        std::string fullpath = _ctx->getRootPath() + path;
 
-        if (isDirectory(fullpath))
+        if (starts_with(path, location))
         {
-            if (*(path.end() - 1) != '/')
-                path += "/";
-        } 
-        else
-        {
-            std::string::size_type pos = path.find_last_of("/");
-            path = path.substr(0, pos + 1);
-        }
-
-        if (location == path)
-        {
-            _location_ctx = &(*it);
-            Logger::log(Logger::DEBUG, "Location found.");
-            if (DEBUG_MODE)
-                it->print(2);
-            return (true);
+            if (!best_matching_location)
+            {
+                best_matching_location = &(*it);
+                Logger::log(Logger::DEBUG, "Location \"" + location + "\" matches");
+            }
+            if (best_matching_location
+                && best_matching_location->getLocationPath() < location)
+            {
+                best_matching_location = &(*it);
+                Logger::log(Logger::DEBUG, "Location \"" + location + "\" matches");
+            }
+            
         }
     }
+
+    if (best_matching_location)
+    {
+        _location_ctx = best_matching_location;
+        Logger::log(Logger::DEBUG, "Location found.");
+        if (DEBUG_MODE)
+            _location_ctx->print(2);
+        return (true);
+    }
+
     return (false);
 }
 

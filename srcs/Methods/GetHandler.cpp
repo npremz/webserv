@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:04:04 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 21:36:47 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 10:56:46 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,6 @@ std::string GetHandler::handleRequest()
         fullPath = _location_ctx->getRootPath() + _req.path;
     else
         fullPath = _ctx->getRootPath() + _req.path;
-    Logger::log(Logger::DEBUG, "Path of location: " + fullPath);
     struct stat pathStat;
     if (stat(fullPath.c_str(), &pathStat) == 0) {
         if (S_ISDIR(pathStat.st_mode))

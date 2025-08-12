@@ -34,3 +34,5 @@
 settings.json
 
 webserv
+
+__pycache__/

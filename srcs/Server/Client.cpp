@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: kederhet <kederhet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 14:04:28 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 15:36:31 by kederhet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -185,7 +185,10 @@ void    Client::handleRequest()
         {
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
+            {
+                _lexer->setEndStatus(400);
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
+            }
             Logger::log(Logger::DEBUG, "Request parsed");
             _rep = new Response(_response_ctx, _lexer->getRequest(), this);
             handleResponse();

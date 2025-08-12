@@ -20,7 +20,6 @@ def ensure_sessions_dir():
         if not os.path.isdir(SESSIONS_DIR):
             os.makedirs(SESSIONS_DIR, 0o700)
     except Exception:
-        # On laisse la création échouer plus loin si besoin
         pass
 
 def now():
@@ -30,13 +29,11 @@ def new_expiry(ttl=SESSION_TTL):
     return now() + int(ttl)
 
 def generate_session_id(nbytes=32):
-    # ID opaque, imprévisible, encodé base64url sans '=' de padding
     raw = os.urandom(nbytes)
     sid = base64.urlsafe_b64encode(raw).decode('ascii').rstrip("=")
     return sid
 
 def session_path(session_id):
-    # Eviter les caractères inattendus
     safe = "".join(c for c in session_id if c.isalnum() or c in "-_")
     return os.path.join(SESSIONS_DIR, safe)
 
@@ -73,7 +70,6 @@ def refresh_session(session_id, ttl=SESSION_TTL):
     if not data:
         return False
     data["expires_at"] = new_expiry(ttl)
-    # Écriture atomique
     path = session_path(session_id)
     tmp = path + ".tmp"
     with open(tmp, "w") as f:
@@ -180,7 +176,6 @@ def authentification(login, password):
 def already_logged_response(login, session_id, refresh=True):
     headers = []
     if refresh:
-        # Sliding expiration: rafraîchit la session et renvoie un nouveau Max-Age
         if refresh_session(session_id, SESSION_TTL):
             headers.append(("Set-Cookie", build_set_cookie(SESSION_COOKIE, session_id, max_age=SESSION_TTL)))
     body = "Déjà connecté en tant que %s.\n" % login
@@ -199,7 +194,6 @@ def create_json_response(obj, status_code=200, extra_headers=None):
                                 extra_headers=extra_headers)
 
 def accept_json():
-    # petit helper: format=json dans la query OU Accept contient application/json
     qs = parse_query_string()
     if qs.get("format", [""])[0].lower() == "json":
         return True
@@ -224,12 +218,10 @@ def main():
         content_length = int(os.environ.get('CONTENT_LENGTH', 0))
         post_body = sys.stdin.read(content_length)
 
-        # 0) Logout (GET ou POST) prioritaire
         if qs.get("action", [""])[0].lower() == "logout":
             resp = handle_logout(session_id or "", reason="GET logout")
             print(resp); return
         if os.environ.get('REQUEST_METHOD') == "POST":
-            # lecture POST pour éventuellement action=logout via POST
             content_type = os.environ.get('CONTENT_TYPE', '')
             if "application/x-www-form-urlencoded" in content_type:
                 
@@ -241,14 +233,11 @@ def main():
                     resp = handle_logout(session_id or "", reason="POST logout")
                     print(resp); return
             else:
-                # on traitera plus bas si c'est une tentative de login invalide
                 login = password = action = ""
 
-        # 1) Endpoint status (GET sans session ou avec session)
         if os.environ.get('REQUEST_METHOD') == "GET":
             if accept_json():
                 if session:
-                    # option: rafraîchir la session (sliding)
                     refresh_session(session_id, SESSION_TTL)
                     set_cookie = build_set_cookie(SESSION_COOKIE, session_id, max_age=SESSION_TTL)
                     resp = create_json_response({"loggedIn": True, "login": session.get("login", "")},
@@ -257,14 +246,11 @@ def main():
                     resp = create_json_response({"loggedIn": False})
                 print(resp); return
             else:
-                # sans JSON, garder ton comportement précédent si tu préfères, ou renvoyer une petite page
                 if session:
                     print(already_logged_response(session.get("login",""), session_id, refresh=True)); return
                 else:
-                    # on renvoie 200 vide pour laisser le front gérer
                     print(create_http_response("Not logged in.\n")); return
 
-        # 2) À partir d'ici: tentative d’authentification via POST x-www-form-urlencoded
         if os.environ.get('REQUEST_METHOD') != "POST":
             print(create_http_error(405)); return
         content_type = os.environ.get('CONTENT_TYPE', '')
@@ -281,7 +267,6 @@ def main():
 
         log_status = authentification(login, password)
         if log_status == "logged":
-            # rotation de session
             if session_id and not session:
                 destroy_session(session_id)
             new_sid = generate_session_id()

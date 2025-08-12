@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/11 11:23:25 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 17:37:24 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class HttpLexer
 		
 		enum Status {
 			NEED_MORE,
+			MUST_CHECK,
 			COMPLETE,
 			ERR	
 		};
@@ -78,6 +79,7 @@ class HttpLexer
 			bool				has_host;
 			std::string			host;
 			s_ip_port			ip_port;
+			bool				received_expected_100;
 		};
 
 	private:

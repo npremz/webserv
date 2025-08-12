@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 14:04:28 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 18:23:50 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,13 +181,29 @@ void    Client::handleRequest()
 
         last_activity = time(NULL);
         c_status = _lexer->feed(_buf, byte_rec);
+        if (c_status == HttpLexer::MUST_CHECK)
+        {
+            _response_ctx = _responseRouting();
+            if (_response_ctx == NULL)
+                Logger::log(Logger::ERROR, "Invalid Request => host not supported");
+            Logger::log(Logger::DEBUG, "Checking if request will be rejected...");
+            handleChecking();
+            return ;
+        }
         if (c_status == HttpLexer::COMPLETE)
         {
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
             Logger::log(Logger::DEBUG, "Request parsed");
-            _rep = new Response(_response_ctx, _lexer->getRequest(), this);
+            try
+            {
+                _rep = new Response(_response_ctx, _lexer->getRequest(), this);
+            }
+            catch (const std::exception& e)
+            {
+                Logger::log(Logger::ERROR, "Response initialisation failed: " + std::string(e.what()));
+            }
             handleResponse();
             return ;
         }
@@ -198,6 +214,14 @@ void    Client::handleRequest()
         Logger::log(Logger::ERROR, "Request reading error => closing connection.");
     else
         return;
+}
+
+void    Client::handleChecking()
+{
+    Response rep_checker(_response_ctx, _lexer->getRequest(), this);
+    _response_str = rep_checker.checkRequest();
+    last_activity = time(NULL);
+    _prepareAndSend();
 }
 
 void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
@@ -303,6 +327,11 @@ void    Client::handleSend()
                     state = DRAINING_BODY;
                     _body_drained = _lexer->getRequest().receivedoctets;
                     _expected_body_size = _lexer->getRequest().expectedoctets;
+                }
+                else if (state == ACCEPTING_CONTINUE)
+                {
+                    state = IDLE;
+                    Logger::log(Logger::DEBUG, "100 Continue sent, waiting for more.");
                 }
                 else
                 {

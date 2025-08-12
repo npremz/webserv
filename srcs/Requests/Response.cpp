@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 14:05:27 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 18:10:16 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -243,4 +243,31 @@ std::string Response::createCGIResponseSTR(int cgi_fd)
 
 
     return (_response_cgi);
+}
+
+std::string Response::checkRequest()
+{
+    if (_req.endstatus >= 400)
+        return (_err->handleLexerError());  
+    if (!_isPathLegal())
+        return (_err->createError(403, "Forbidden", "Illegal request path."));
+    if (_location_ctx && _location_ctx->isRedirectSet())
+        return (RedirectHandler::createRedirect(_location_ctx->getRedirectCode(),
+            _location_ctx->getRedirectUrl()));
+    if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
+        return (_err->createError(413, "Content Too Large",
+            "The request entity was larger than limits defined by server."));
+    else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
+        return (_err->createError(413, "Content Too Large",
+            "The request entity was larger than limits defined by server."));
+    int is_method_supported = _isMethodSupportedByRoute();
+    if (is_method_supported == 0)
+        return (_err->createError(405, "Method Not Allowed",
+            "The request method is not allowed on this route or doesn't exists."));
+    if (is_method_supported == -1)
+        return (_err->createError(501, "Not implemented",
+            "The request method is known by the server but is not supported by the target resource. ")); 
+    Logger::log(Logger::DEBUG, "Request is fine, sending '100 Continue'");
+    _parent->state = Client::ACCEPTING_CONTINUE;
+    return ("HTTP/1.1 100 Continue\r\n\r\n");
 }

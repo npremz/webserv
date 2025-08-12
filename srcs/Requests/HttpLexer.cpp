@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/12 17:17:46 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 18:32:19 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ HttpLexer::HttpLexer(u_int32_t ip) : _state(START_LINE), _req_size(0)
 	_req.receivedoctets = 0;
 	_req.ip_port.ip = ip;
 	_req.ip_port.port = 0;
+	_req.received_expected_100 = false;
 }
 
 HttpLexer::~HttpLexer()
@@ -260,6 +261,13 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 				_req.contentType = val;
 			Logger::log(Logger::DEBUG, "content-type detected: " + val);
 		}
+		else if (to_lowercase(key) == "expect")
+		{
+			Logger::log(Logger::DEBUG, "Expect detected: " + val);
+			if (val == "100-continue"){
+				_req.received_expected_100 = true;
+			}
+		}
 
 		HeaderMap::iterator key_in_map;
 		if ((key_in_map = _req.headers.find(key)) == _req.headers.end())
@@ -373,11 +381,23 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 					_req.endstatus = 400;
 					_state = ERROR;
 				}
+
+				if (_req.method == HTTP_POST && _req.expectedoctets <= 0)
+				{
+					_req.endstatus = 400;
+					_state = ERROR;
+				}
+
 				else if (_req.expectedoctets > 0)
 					_state = BODY;
 				else
 					_state = DONE;
-        		Logger::log(Logger::DEBUG, "Header parsing done");
+				Logger::log(Logger::DEBUG, "Header parsing done");
+				if (_req.received_expected_100)
+				{
+					Logger::log(Logger::DEBUG, "Reveived 'Expect: 100-continue'");
+					return (MUST_CHECK);
+				}
 			}
 			break;
 		case BODY:

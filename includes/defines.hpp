@@ -35,6 +35,7 @@
 # define MAX_PORT 65536
 # define LISTEN_QUEUE 128
 # define MAX_STARTLINE_SIZE 2048
+# define MAX_HEADERS 1024
 
 # define DEBUG_MODE 1
 

@@ -139,7 +139,13 @@ int     ServerManager::_isListenSocket(int event_fd)
 
 void    ServerManager::_addClient(int fd, u_int32_t ip)
 {
-    _clients[fd] = new Client(fd, ip, _router, this);
+    try{
+        _clients[fd] = new Client(fd, ip, _router, this);
+    }
+    catch (const std::exception& e)
+    {
+        Logger::log(Logger::ERROR, "Client initialisation failed: " + std::string(e.what()));
+    }
     _client_fds.push_back(fd);
 }
 

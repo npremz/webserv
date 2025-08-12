@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 00:24:11 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 14:12:28 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,7 +122,13 @@ void    CGI::exec()
         dup2(_cgi_pipe_output[1], STDERR_FILENO);
         close(_cgi_pipe_output[1]);
         _initArgv();
-        _initEnvTab();
+        try {
+            _initEnvTab();
+        }
+        catch (const std::exception& e)
+        {
+            exit (1);
+        }
 
         size_t      slash_pos = _req.path.find_last_of("/");
         std::string cgi_path = _req.path.substr(0, slash_pos);

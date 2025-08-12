@@ -23,6 +23,7 @@
 # include <map>
 # include <cstring>
 # include <cstdlib>
+# include <limits.h>
 
 # include "../Logger/Logger.hpp"
 
@@ -96,6 +97,7 @@ std::string 				ipPortToString(const s_ip_port& ip_port);
 
 char*                   	makeEnvVar(const std::string& key, const std::string& value);
 std::string					buildHttpResponseFromCGI(const std::string& cgi_output);
+bool						validateCgiResponse(const std::string &raw, std::string *why);
 std::string					normalize_path(const std::string& document_root,
 								const std::string& request_path);
 

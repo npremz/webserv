@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 11:01:09 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 14:05:27 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,13 @@ Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent
 {
     (void)_ctx;
     _setLocation();
-    _err = new ErrorHandler(_ctx, _location_ctx, req);
+    try{
+        _err = new ErrorHandler(_ctx, _location_ctx, req);
+    }
+    catch (const std::exception& e)
+    {
+        Logger::log(Logger::ERROR, "Error handler initialisation failed: " + std::string(e.what()));
+    }
 }
 
 Response::~Response()
@@ -32,45 +38,6 @@ std::string Response::sendError(std::string error)
 {
     return (_err->sendError(error));
 }
-
-// bool    Response::_setLocation()
-// {
-//     if (!_ctx)
-//         return (false);
-//     if (_ctx->getLocationBlocs().size() == 0)
-//         return (false);
-//     for (std::vector<BlocLocation>::const_iterator it = _ctx->getLocationBlocs().begin(); 
-//     it < _ctx->getLocationBlocs().end(); it++)
-//     {
-//         std::string location = it->getLocationPath();
-//         if (*(location.end() - 1) != '/')
-//             location += "/";
-        
-//         std::string path = _req.path;
-//         std::string fullpath = _ctx->getRootPath() + path;
-
-//         if (isDirectory(fullpath))
-//         {
-//             if (*(path.end() - 1) != '/')
-//                 path += "/";
-//         } 
-//         else
-//         {
-//             std::string::size_type pos = path.find_last_of("/");
-//             path = path.substr(0, pos + 1);
-//         }
-
-//         if (location == path)
-//         {
-//             _location_ctx = &(*it);
-//             Logger::log(Logger::DEBUG, "Location found.");
-//             if (DEBUG_MODE)
-//                 it->print(2);
-//             return (true);
-//         }
-//     }
-//     return (false);
-// }
 
 bool    Response::_setLocation()
 {
@@ -265,13 +232,15 @@ std::string Response::createCGIResponseSTR(int cgi_fd)
     if (DEBUG_MODE)
         std::cout << _response_cgi << std::endl;
 
-    if (_location_ctx->getCGIExtension() == ".php")
-    {
-        _response_cgi = buildHttpResponseFromCGI(_response_cgi);
-        Logger::log(Logger::DEBUG, "php CGI formated content:");
-        if (DEBUG_MODE)
-            std::cout << _response_cgi << std::endl;
-    }
+    std::string reason;
+    if (!validateCgiResponse(_response_cgi, &reason))
+        return (_err->createError(502, "Bad Gateway", reason));
+        
+    _response_cgi = buildHttpResponseFromCGI(_response_cgi);
+    Logger::log(Logger::DEBUG, "CGI formated content:");
+    if (DEBUG_MODE)
+        std::cout << _response_cgi << std::endl;
+
 
     return (_response_cgi);
 }

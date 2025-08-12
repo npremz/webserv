@@ -32,7 +32,7 @@ def create_http_response(body, status_code=200, content_type="text/plain"):
         payload = body.decode("utf-8", errors="replace")
 
     response_lines = [
-        f"HTTP/1.1 {status_code} {reason}",
+        f"Status: {status_code}",
         f"Content-Type: {content_type}",
         f"Content-Length: {content_length}",
         "Connection: close",

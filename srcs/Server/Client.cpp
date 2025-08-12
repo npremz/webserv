@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 00:23:52 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 14:04:28 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,13 @@ Client::Client(int fd, u_int32_t ip, RouterMap& router, ServerManager* server) :
     timed_out(false)
 {
     Logger::log(Logger::INFO, "Accepted client from " + ipIntToString(_ip));
-    _lexer = new HttpLexer(_ip);
+    try{
+        _lexer = new HttpLexer(_ip);
+    }
+    catch (const std::exception& e)
+    {
+        Logger::log(Logger::ERROR, "Client initialisation failed: " + std::string(e.what()));
+    }
 }
 
 Client::~Client()

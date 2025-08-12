@@ -137,11 +137,79 @@ int countWords(const std::string& str)
 char* makeEnvVar(const std::string& key, const std::string& value)
 {
     std::string var = key + "=" + value;
-    char* env = new char[var.size() + 1];
-    std::strcpy(env, var.c_str());
-    return env;
+    try {
+        char* env = new char[var.size() + 1];
+        std::strcpy(env, var.c_str());
+        return env;
+    }
+    catch (const std::exception& e)
+    {
+        Logger::log(Logger::ERROR, "CGI initialisation failed.");
+    }
+    return NULL;
 }
 
+static const char* defaultReasonPhrase(int code) {
+    switch (code) {
+        // 1xx
+        case 100: return "Continue";
+        case 101: return "Switching Protocols";
+        case 102: return "Processing";
+        // 2xx
+        case 200: return "OK";
+        case 201: return "Created";
+        case 202: return "Accepted";
+        case 203: return "Non-Authoritative Information";
+        case 204: return "No Content";
+        case 205: return "Reset Content";
+        case 206: return "Partial Content";
+        // 3xx
+        case 300: return "Multiple Choices";
+        case 301: return "Moved Permanently";
+        case 302: return "Found";
+        case 303: return "See Other";
+        case 304: return "Not Modified";
+        case 307: return "Temporary Redirect";
+        case 308: return "Permanent Redirect";
+        // 4xx
+        case 400: return "Bad Request";
+        case 401: return "Unauthorized";
+        case 402: return "Payment Required";
+        case 403: return "Forbidden";
+        case 404: return "Not Found";
+        case 405: return "Method Not Allowed";
+        case 406: return "Not Acceptable";
+        case 407: return "Proxy Authentication Required";
+        case 408: return "Request Timeout";
+        case 409: return "Conflict";
+        case 410: return "Gone";
+        case 411: return "Length Required";
+        case 412: return "Precondition Failed";
+        case 413: return "Payload Too Large";
+        case 414: return "URI Too Long";
+        case 415: return "Unsupported Media Type";
+        case 416: return "Range Not Satisfiable";
+        case 417: return "Expectation Failed";
+        case 418: return "I'm a teapot";
+        case 421: return "Misdirected Request";
+        case 422: return "Unprocessable Entity";
+        case 425: return "Too Early";
+        case 426: return "Upgrade Required";
+        case 428: return "Precondition Required";
+        case 429: return "Too Many Requests";
+        case 431: return "Request Header Fields Too Large";
+        case 451: return "Unavailable For Legal Reasons";
+        // 5xx
+        case 500: return "Internal Server Error";
+        case 501: return "Not Implemented";
+        case 502: return "Bad Gateway";
+        case 503: return "Service Unavailable";
+        case 504: return "Gateway Timeout";
+        case 505: return "HTTP Version Not Supported";
+        case 511: return "Network Authentication Required";
+    }
+    return "Unknown";
+}
 
 std::string buildHttpResponseFromCGI(const std::string& cgi_output)
 {
@@ -175,7 +243,28 @@ std::string buildHttpResponseFromCGI(const std::string& cgi_output)
     }
 
     if (!status_value.empty())
-        status_line = "HTTP/1.1 " + status_value + "\r\n";
+    {
+        std::istringstream ss(status_value);
+        int code = 0;
+        ss >> code;
+
+        std::string reason;
+        std::getline(ss, reason);
+
+        if (code <= 0)
+        {
+            code = 500;
+            reason = defaultReasonPhrase(code);
+        }
+        else if (reason.empty())
+        {
+            reason = defaultReasonPhrase(code);
+        }
+
+        std::ostringstream oss;
+        oss << "HTTP/1.1 " << code << ' ' << reason << "\r\n";
+        status_line = oss.str();
+    }
 
     std::string http_response;
     http_response += status_line;
@@ -243,3 +332,109 @@ bool starts_with(const std::string& s, const std::string& prefix)
 {
     return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
 }
+
+static std::string trim_left_spaces(const std::string &s) {
+    std::string::size_type i = 0;
+    while (i < s.size() && (s[i] == ' ' || s[i] == '\t')) ++i;
+    return s.substr(i);
+}
+
+static bool is_ctl_except_ht(unsigned char c) {
+    return ((c <= 31 && c != '\t') || c == 127);
+}
+
+bool validateCgiResponse(const std::string &raw, std::string *why) {
+    if (why) why->clear();
+    if (raw.empty()) { if (why) *why = "Empty response from CGI"; return false; }
+
+    std::string::size_type sep = std::string::npos;
+    std::string::size_type p1 = raw.find("\r\n\r\n");
+    std::string::size_type p2 = raw.find("\n\n");
+    if (p1 != std::string::npos) sep = p1 + 4;
+    else if (p2 != std::string::npos) sep = p2 + 2;
+    if (sep == std::string::npos) { if (why) *why = "No new line after headers"; return false; }
+
+    std::string head = raw.substr(0, sep);
+    std::string body = raw.substr(sep);
+
+    if (head.size() >= 4 && head.compare(head.size()-4, 4, "\r\n\r\n") == 0) head.erase(head.size()-4);
+    else if (head.size() >= 2 && head.compare(head.size()-2, 2, "\n\n") == 0) head.erase(head.size()-2);
+
+    bool hasContentType = false;
+    bool hasLocation    = false;
+    bool seenContentLen = false;
+    long contentLen     = -1;
+
+    std::string::size_type start = 0;
+    int header_count = 0;
+    while (start < head.size()) {
+        std::string::size_type end = head.find('\n', start);
+        std::string line = (end == std::string::npos) ? head.substr(start) : head.substr(start, end - start + 1);
+
+        if (!line.empty() && line[line.size()-1] == '\n') line.erase(line.size()-1, 1);
+        if (!line.empty() && line[line.size()-1] == '\r') line.erase(line.size()-1, 1);
+
+        if (line.empty()) break;
+
+        Logger::log(Logger::DEBUG, line);
+
+        std::string::size_type colon = line.find(':');
+        if (colon == std::string::npos || colon == 0) {
+            if (why) *why = "Invalid header";
+            return false;
+        }
+
+        for (std::string::size_type i = 0; i < colon; ++i) {
+            unsigned char c = (unsigned char)line[i];
+            if (is_ctl_except_ht(c) || c == ' ' || c == '\t') {
+                if (why) *why = "Invalid header name";
+                return false;
+            }
+        }
+
+        std::string value = trim_left_spaces(line.substr(colon + 1));
+        for (std::string::size_type i = 0; i < value.size(); ++i) {
+            if (is_ctl_except_ht((unsigned char)value[i])) {
+                if (why) *why = "Illagal char in header value";
+                return false;
+            }
+        }
+
+        const std::string name = line.substr(0, colon);
+        std::string lname; lname.reserve(name.size());
+        for (std::string::size_type i = 0; i < name.size(); ++i)
+            lname.push_back((char)std::tolower((unsigned char)name[i]));
+
+        if (lname == "content-type") {
+            hasContentType = true;
+        } else if (lname == "location") {
+            hasLocation = true;
+        } else if (lname == "content-length") {
+            if (seenContentLen) { if (why) *why = "multiple content-length"; return false; }
+            seenContentLen = true;
+
+            if (value.empty()) { if (why) *why = "Empty Content-Length"; return false; }
+            long v = 0;
+            for (std::string::size_type i = 0; i < value.size(); ++i) {
+                unsigned char c = (unsigned char)value[i];
+                if (!std::isdigit(c)) { if (why) *why = "Invalid Content-Length"; return false; }
+                int d = c - '0';
+                if (v > (LONG_MAX - d) / 10) { if (why) *why = "Content-Length too big"; return false; }
+                v = v * 10 + d;
+            }
+            contentLen = v;
+        }
+
+        if (end == std::string::npos) break;
+        start = end + 1;
+
+        if (++header_count > MAX_HEADERS) { if (why) *why = "Too many headers"; return false; }
+    }
+
+    if (seenContentLen) {
+        if (contentLen < 0) { if (why) *why = "Negative Content-Length"; return false; }
+    }
+
+    return true;
+}
+

@@ -205,6 +205,7 @@ def main():
         cookies = parse_cookies()
         session_id = cookies.get(SESSION_COOKIE)
         session = None
+
         if session_id:
             session = load_session(session_id)
             if not session or int(session.get("expires_at", 0)) < now():
@@ -215,7 +216,10 @@ def main():
 
         qs = parse_query_string()
 
+
         content_length = int(os.environ.get('CONTENT_LENGTH', 0))
+        if (content_length <= 0 and os.environ.get('REQUEST_METHOD') == "POST"):
+            print(create_http_error(400, "This route requires a body on POST method")); return
         post_body = sys.stdin.read(content_length)
 
         if qs.get("action", [""])[0].lower() == "logout":

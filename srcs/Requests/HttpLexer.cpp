@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/12 18:32:19 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/13 12:11:00 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,7 +258,7 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 		}
         else if (to_lowercase(key) == "content-type")
 		{
-				_req.contentType = val;
+			_req.contentType = val;
 			Logger::log(Logger::DEBUG, "content-type detected: " + val);
 		}
 		else if (to_lowercase(key) == "expect")
@@ -382,18 +382,12 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 					_state = ERROR;
 				}
 
-				if (_req.method == HTTP_POST && _req.expectedoctets <= 0)
-				{
-					_req.endstatus = 400;
-					_state = ERROR;
-				}
-
 				else if (_req.expectedoctets > 0)
 					_state = BODY;
 				else
 					_state = DONE;
 				Logger::log(Logger::DEBUG, "Header parsing done");
-				if (_req.received_expected_100)
+				if (_req.received_expected_100 && _req.expectedoctets > 0)
 				{
 					Logger::log(Logger::DEBUG, "Reveived 'Expect: 100-continue'");
 					return (MUST_CHECK);

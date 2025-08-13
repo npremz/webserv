@@ -360,8 +360,6 @@ bool validateCgiResponse(const std::string &raw, std::string *why) {
     if (head.size() >= 4 && head.compare(head.size()-4, 4, "\r\n\r\n") == 0) head.erase(head.size()-4);
     else if (head.size() >= 2 && head.compare(head.size()-2, 2, "\n\n") == 0) head.erase(head.size()-2);
 
-    bool hasContentType = false;
-    bool hasLocation    = false;
     bool seenContentLen = false;
     long contentLen     = -1;
 
@@ -405,11 +403,7 @@ bool validateCgiResponse(const std::string &raw, std::string *why) {
         for (std::string::size_type i = 0; i < name.size(); ++i)
             lname.push_back((char)std::tolower((unsigned char)name[i]));
 
-        if (lname == "content-type") {
-            hasContentType = true;
-        } else if (lname == "location") {
-            hasLocation = true;
-        } else if (lname == "content-length") {
+        if (lname == "content-length") {
             if (seenContentLen) { if (why) *why = "multiple content-length"; return false; }
             seenContentLen = true;
 

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 18:33:59 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 23:24:08 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,6 +162,10 @@ void    Client::writeRequestBodyToCGI(int cgi_fd)
             _server->removeCGILink(cgi_fd);
             Logger::log(Logger::DEBUG, "Request body written to CGI STDIN.");
         }
+    }
+    else if (bytes_written == 0)
+    {
+        Logger::log(Logger::DEBUG, "Write to cgi stdin returned 0.");
     }
     else if (bytes_written == -1)
     {

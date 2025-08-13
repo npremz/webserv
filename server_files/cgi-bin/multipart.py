@@ -114,6 +114,8 @@ def main():
             print(response)
             return
         content_length = int(os.environ.get('CONTENT_LENGTH', 0))
+        if (content_length <= 0):
+            print(create_http_error(400, "This route requires a body")); return
         uploads_allowed = os.environ.get("UPLOAD_ENABLE")
         if uploads_allowed != "on":
             response = create_http_error(403)
@@ -125,6 +127,7 @@ def main():
             print(response)
             return
         upload_path = os.environ.get("DOCUMENT_ROOT") + upload_path
+
 
         post_body = sys.stdin.buffer.read(content_length)
         boundary = extract_boundary(os.environ.get('CONTENT_TYPE'))
@@ -149,7 +152,7 @@ def main():
         files_saved = save_uploaded_files(fields_list, prefix_value, upload_path, start_index=prefix_pos+1)
         response = create_http_response(f"Saved files: {files_saved}", 200)
     except Exception as e:
-        response = create_http_error(500, str(e))
+        response = create_http_error(500, str(e) + "\n")
     print(response)
 
 if __name__ == '__main__':

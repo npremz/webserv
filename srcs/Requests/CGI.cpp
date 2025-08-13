@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 17:15:24 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/13 11:54:02 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,7 @@ void    CGI::_initEnvTab()
     _env_tab.push_back(makeEnvVar("REMOTE_ADDR", "127.0.0.1"));
     _env_tab.push_back(makeEnvVar("UPLOAD_ENABLE", _location_ctx->getUploadEnable()));
     _env_tab.push_back(makeEnvVar("UPLOAD_PATH", _location_ctx->getUploadPath()));
-    
-    if (_req.contentType.size() > 0)
-        _env_tab.push_back(makeEnvVar("CONTENT_TYPE", _req.contentType));
+    _env_tab.push_back(makeEnvVar("CONTENT_TYPE", _req.contentType));
     if (_req.expectedoctets > 0)
     {
         std::ostringstream oss;
@@ -113,7 +111,7 @@ void    CGI::exec()
     if (pipe(_cgi_pipe_output) == -1)
         Logger::log(Logger::ERROR, "Output pipe error.");
 
-    if (_method == "POST" && pipe(_cgi_pipe_input) == -1)
+    if (_req.expectedoctets > 0 && pipe(_cgi_pipe_input) == -1)
         Logger::log(Logger::ERROR, "Input pipe error.");
 
     pid_t pid;
@@ -122,7 +120,7 @@ void    CGI::exec()
 
     if (pid == 0)
     {
-        if (_method == "POST")
+        if (_req.expectedoctets > 0)
         {
             dup2(_cgi_pipe_input[0], STDIN_FILENO);
             close(_cgi_pipe_input[0]);
@@ -150,7 +148,7 @@ void    CGI::exec()
         exit(1);
     }
     Logger::log(Logger::DEBUG, "Main process passed fork.");
-    if (_method == "POST")
+    if (_req.expectedoctets > 0)
     {
         _client->addCGIEpollOut(_cgi_pipe_input[1]);
         close(_cgi_pipe_input[0]);

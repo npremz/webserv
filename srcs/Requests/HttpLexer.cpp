@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/13 14:26:01 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/13 14:29:54 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -412,11 +412,6 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			break;
 		default:
 			break;
-		}
-		if (_buf.size() > MAX_STARTLINE_SIZE)
-		{
-			_req.endstatus = 400;
-			Logger::log(Logger::ERROR, "Startline size limit exceeded.");
 		}
 		if (parsing_state == PAUSE)
 			return (NEED_MORE);

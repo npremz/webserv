@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/13 12:11:00 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/13 14:26:01 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,12 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 				"Malformed request line: too many elements (expected: METHOD URI VERSION).",
 				PARSE_ERROR));
 	}
+
+	if (target.size() > MAX_STARTLINE_SIZE)
+		return (_handleStatusError(414,
+			"URI too long",
+			PARSE_ERROR));
+
 	if (method == "GET")
 		_req.method = HTTP_GET;
 	else if (method == "HEAD")

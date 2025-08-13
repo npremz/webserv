@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/13 14:29:54 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/13 15:11:54 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,6 +165,18 @@ bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
 
 bool        HttpLexer::_isValidHostValue(const std::string& val)
 {
+
+	if (val.empty()) return false;
+
+    for (std::string::size_type i = 0; i < val.size(); ++i) {
+        const unsigned char c = static_cast<unsigned char>(val[i]);
+        if (c <= 31 || c == 127 || c == ' ') return false;
+        if (std::isalnum(c)) continue;
+        if (c == '-' || c == '.' || c == ':' || c == '[' || c == ']') continue;
+        
+		return false;
+    }
+
 	size_t		dual_dots_pos = val.find(':');
 	if (dual_dots_pos == std::string::npos)
 		return (false);

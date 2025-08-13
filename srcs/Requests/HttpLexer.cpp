@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/13 15:11:54 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/13 15:21:09 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,9 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 			PARSE_ERROR));
     if (target[0] != '/')
             return (_handleStatusError(400, "Illegal URI", PARSE_ERROR));
+
+	if (has_illegal_uri_chars(target))
+		return (_handleStatusError(400, "Illegal chars in URI", PARSE_ERROR));
 
 	if (method == "GET")
 		_req.method = HTTP_GET;

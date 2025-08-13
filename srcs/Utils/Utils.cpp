@@ -432,3 +432,34 @@ bool validateCgiResponse(const std::string &raw, std::string *why) {
     return true;
 }
 
+inline bool has_illegal_uri_chars(const std::string& uri)
+{
+    if (uri.empty()) return true;
+
+    for (std::string::size_type i = 0; i < uri.size(); ++i) {
+        const unsigned char c = static_cast<unsigned char>(uri[i]);
+
+        if (c <= 31 || c == 127 || c >= 128 || c == ' ') return true;
+
+        if (c == '%') {
+            if (i + 2 >= uri.size()) return true;
+            const unsigned char h1 = static_cast<unsigned char>(uri[i+1]);
+            const unsigned char h2 = static_cast<unsigned char>(uri[i+2]);
+            const bool is_hex1 = (std::isdigit(h1) || (h1 >= 'A' && h1 <= 'F') || (h1 >= 'a' && h1 <= 'f'));
+            const bool is_hex2 = (std::isdigit(h2) || (h2 >= 'A' && h2 <= 'F') || (h2 >= 'a' && h2 <= 'f'));
+            if (!is_hex1 || !is_hex2) return true;
+            i += 2;
+            continue;
+        }
+
+        if (std::isalnum(c) || c == '-' || c == '.' || c == '_' || c == '~') continue;
+
+        if (c == '!' || c == '$' || c == '&' || c == '\'' || c == '(' || c == ')' ||
+            c == '*' || c == '+' || c == ',' || c == ';' || c == '=') continue;
+
+        if (c == ':' || c == '@' || c == '/' || c == '?') continue;
+
+        return true;
+    }
+    return false;
+}

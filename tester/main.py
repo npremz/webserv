@@ -1,10 +1,10 @@
 import time
-from tests.requests_tests import getRequestLargeNb, getRequestBadUrl
-from tests.socket_tests import send_multiple_timeout, test_host_parser, test_path_traversal
+from tests.requests_tests import getRequestLargeNb
+from tests.socket_tests import send_multiple_timeout, test_host_parser, test_path_traversal, getRequestBadUrl
 from tests.concurrency import timeout_sim, test_concurrent_delete
 
 def main():
-    # wait = 1
+    wait = 1
     # time.sleep(wait)
     # getRequestLargeNb(10)
     # time.sleep(wait)
@@ -12,7 +12,7 @@ def main():
     # time.sleep(wait)
     # getRequestLargeNb(1000)
     # time.sleep(wait)
-    # getRequestBadUrl()
+    getRequestBadUrl()
     # time.sleep(wait)
     # timeout_sim(send_multiple_timeout, 1000, 408)
     # time.sleep(wait)

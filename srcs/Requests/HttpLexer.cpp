@@ -71,6 +71,8 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		return (_handleStatusError(414,
 			"URI too long",
 			PARSE_ERROR));
+    if (target[0] != '/')
+            return (_handleStatusError(400, "Illegal URI", PARSE_ERROR));
 
 	if (method == "GET")
 		_req.method = HTTP_GET;

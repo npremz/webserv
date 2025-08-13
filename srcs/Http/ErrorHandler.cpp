@@ -113,6 +113,7 @@ std::string ErrorHandler::sendError(std::string error)
         case 405: msg = "Method Not Allowed"; break;
         case 408: msg = "Request Timeout"; break;
         case 413: msg = "Payload Too Large"; break;
+        case 414: msg = "URI too long"; break;
         case 500: msg = "Internal Server Error"; break;
         case 501: msg = "Not Implemented"; break;
         case 502: msg = "Bad Gateway"; break;

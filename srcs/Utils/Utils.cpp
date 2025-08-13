@@ -432,7 +432,7 @@ bool validateCgiResponse(const std::string &raw, std::string *why) {
     return true;
 }
 
-inline bool has_illegal_uri_chars(const std::string& uri)
+bool has_illegal_uri_chars(const std::string& uri)
 {
     if (uri.empty()) return true;
 

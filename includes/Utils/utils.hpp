@@ -101,7 +101,7 @@ bool						validateCgiResponse(const std::string &raw, std::string *why);
 std::string					normalize_path(const std::string& document_root,
 								const std::string& request_path);
 
-inline bool					has_illegal_uri_chars(const std::string& uri);
+bool				    	has_illegal_uri_chars(const std::string& uri);
 
 
 #endif

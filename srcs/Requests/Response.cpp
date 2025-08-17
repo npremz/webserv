@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 16:04:57 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/17 14:07:47 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,13 @@ Response::Response(BlocServer* ctx, HttpLexer::parsedRequest req, Client* parent
 {
     (void)_ctx;
     _setLocation();
-    _err = new ErrorHandler(_ctx, _location_ctx, req);
+    try{
+        _err = new ErrorHandler(_ctx, _location_ctx, req);
+    }
+    catch (const std::exception& e)
+    {
+        Logger::log(Logger::ERROR, "Error handler initialisation failed: " + std::string(e.what()));
+    }
 }
 
 Response::~Response()
@@ -35,38 +41,63 @@ std::string Response::sendError(std::string error)
 
 bool    Response::_setLocation()
 {
+    if (!_ctx)
+        return (false);
     if (_ctx->getLocationBlocs().size() == 0)
         return (false);
+
+    std::string path = _req.path;
+    std::string fullpath = _ctx->getRootPath() + path;
+
+    if (isDirectory(fullpath))
+    {
+        if (*(path.end() - 1) != '/')
+            path += "/";
+    } 
+    else
+    {
+        std::string::size_type pos = path.find_last_of("/");
+        path = path.substr(0, pos + 1);
+    }
+
+    Logger::log(Logger::DEBUG, "path tested against locations: " + path);
+
+
+    const BlocLocation* best_matching_location = NULL;
+    
     for (std::vector<BlocLocation>::const_iterator it = _ctx->getLocationBlocs().begin(); 
     it < _ctx->getLocationBlocs().end(); it++)
     {
         std::string location = it->getLocationPath();
         if (*(location.end() - 1) != '/')
             location += "/";
-        
-        std::string path = _req.path;
-        std::string fullpath = _ctx->getRootPath() + path;
 
-        if (isDirectory(fullpath))
+        if (starts_with(path, location))
         {
-            if (*(path.end() - 1) != '/')
-                path += "/";
-        } 
-        else
-        {
-            std::string::size_type pos = path.find_last_of("/");
-            path = path.substr(0, pos + 1);
-        }
-
-        if (location == path)
-        {
-            _location_ctx = &(*it);
-            Logger::log(Logger::DEBUG, "Location found.");
-            if (DEBUG_MODE)
-                it->print(2);
-            return (true);
+            if (!best_matching_location)
+            {
+                best_matching_location = &(*it);
+                Logger::log(Logger::DEBUG, "Location \"" + location + "\" matches");
+            }
+            if (best_matching_location
+                && best_matching_location->getLocationPath() < location)
+            {
+                best_matching_location = &(*it);
+                Logger::log(Logger::DEBUG, "Location \"" + location + "\" matches");
+            }
+            
         }
     }
+
+    if (best_matching_location)
+    {
+        _location_ctx = best_matching_location;
+        Logger::log(Logger::DEBUG, "Location found.");
+        if (DEBUG_MODE)
+            _location_ctx->print(2);
+        return (true);
+    }
+
     return (false);
 }
 
@@ -104,24 +135,12 @@ int    Response::_isMethodSupportedByRoute()
                 if (_ctx->getDeleteMethod())
                     return (1);
             break;
-        case HttpLexer::HTTP_HEAD:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_PUT:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_CONNECT:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_OPTIONS:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_PATCH:
-            return (-1);
-            break;
-        case HttpLexer::HTTP_TRACE:
-            return (-1);
-            break;
+        case HttpLexer::HTTP_HEAD:  return (-1);    break;
+        case HttpLexer::HTTP_PUT:   return (-1);    break;
+        case HttpLexer::HTTP_CONNECT:   return (-1);    break;
+        case HttpLexer::HTTP_OPTIONS:   return (-1);    break;
+        case HttpLexer::HTTP_PATCH:     return (-1);    break;
+        case HttpLexer::HTTP_TRACE:     return (-1);    break;
         default:
             return (0);
     }
@@ -130,12 +149,8 @@ int    Response::_isMethodSupportedByRoute()
 
 bool    Response::_isPathLegal()
 {
-    std::string request_root;
-
-    if (_location_ctx)
-        request_root = _location_ctx->getRootPath();
-    else
-        request_root = _ctx->getRootPath();
+    std::string request_root =
+        _location_ctx ? _location_ctx->getRootPath() : _ctx->getRootPath();
 
     Logger::log(Logger::DEBUG, "request root: " + request_root);
     Logger::log(Logger::DEBUG, "request path: " + _req.path);
@@ -145,313 +160,29 @@ bool    Response::_isPathLegal()
     return (true);
 }
 
-std::string Response::_testIndex(std::string URI)
-{
-    if (_location_ctx)
-    {
-        for (std::vector<std::string>::const_iterator it = _location_ctx->getIndex().begin();
-            it < _location_ctx->getIndex().end(); it ++)
-        {
-            if (access((URI + (*it)).c_str(), R_OK) == 0)
-                return ((*it));
-        }
-    }
-    else
-    {
-        for (std::vector<std::string>::const_iterator it = _ctx->getIndex().begin();
-            it < _ctx->getIndex().end(); it ++)
-        {
-            if (access((URI + (*it)).c_str(), R_OK) == 0)
-                return ((*it));
-        }
-    }
-    return ("none");
-}
-
-void    Response::_initContentType(std::string file)
-{
-    Logger::log(Logger::DEBUG, file);
-    size_t dot_pos = file.find_last_of('.');
-    std::string ext;
-    if (dot_pos != std::string::npos)
-        ext = file.substr(dot_pos);
-    else 
-        ext = "";
-
-    Logger::log(Logger::DEBUG, "response ext: " + ext);
-
-    if (".html" == ext || ".htm" == ext)
-        _content_type = "text/html";
-    else if (".css" == ext)
-        _content_type = "text/css";
-    else if (".js" == ext)
-        _content_type = "application/javascript";
-    else if (".txt" == ext)
-        _content_type = "text/plain";
-    else if (".png" == ext)
-        _content_type = "image/png";
-    else if (".gif" == ext)
-        _content_type = "image/gif";
-    else if (".ico" == ext)
-        _content_type = "image/x-icon";
-    else if (".jpeg" == ext || ".jpg" == ext)
-        _content_type = "image/jpeg";
-    else if (".webp" == ext)
-        _content_type = "image/webp";
-    else if (".svg" == ext)
-        _content_type = "image/svg+xml";
-    else if (".pdf" == ext)
-        _content_type = "application/pdf";
-    else if (".php" == ext)
-        _content_type = "cgi/php";
-    else if (".py" == ext)
-        _content_type = "cgi/py";
-    else
-        _content_type = "application/octet-stream";
-    
-    Logger::log(Logger::DEBUG, _content_type);
-}
-
-std::string Response::_generateAutoIndex(std::string fullpath)
-{
-    std::ostringstream html;
-    html << "<html><head><title>Index of " << _req.path << "</title></head><body>";
-    html << "<h1>Index of " << _req.path << "</h1><ul>";
-
-    DIR* dir = opendir(fullpath.c_str());
-    if (!dir) 
-        return (_err->createError(403, "Forbidden", "The client does not have access rights to the content"));
-
-    std::vector<std::string> entries;
-    struct dirent* entry;
-    
-    while ((entry = readdir(dir)) != NULL) {
-        entries.push_back(entry->d_name);
-    }
-    closedir(dir);
-
-    std::sort(entries.begin(), entries.end());
-
-    for (std::vector<std::string>::iterator it = entries.begin(); it != entries.end(); ++it) {
-        std::string url = _req.path;
-        if (*(url.end() - 1) != '/')
-            url += "/";
-        url += *it;
-
-        Logger::log(Logger::DEBUG, "url: " + url);
-
-        html << "<li><a href=\"" << url << "\">"
-             << *it << "</a></li>";
-    }
-
-    html << "</ul></body></html>";
-    return ResponseHandler::createResponse(200, "OK", html.str(), _content_type);
-}
-
-bool Response::_handleGetCGI()
-{
-    if (!_location_ctx)
-        return (false);
-    
-    Logger::log(Logger::DEBUG, "_location_ctx for CGi checked.");
-
-    if (!((_content_type == "cgi/py" && _location_ctx->getCGIExtension() == ".py") 
-        || (_content_type == "cgi/php" && _location_ctx->getCGIExtension() == ".php")))
-        return (false);
-
-    Logger::log(Logger::DEBUG, "CGI detected with: " + _location_ctx->getCGIExtension());
-
-    CGI cgi_handler(std::string("GET"), _req, _content_type, _ctx, _location_ctx, _parent);
-    cgi_handler.exec();
-
-    return (true);
-}
-
-std::string Response::_handleGet()
-{
-    std::string fullPath;
-    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
-        fullPath = _location_ctx->getRootPath() + _req.path;
-    else
-        if (_ctx->getRootPath().size() > 0)
-            fullPath = _ctx->getRootPath() + _req.path;
-    Logger::log(Logger::DEBUG, "Path of location: " + fullPath);
-    struct stat pathStat;
-    if (stat(fullPath.c_str(), &pathStat) == 0) {
-        if (S_ISDIR(pathStat.st_mode))
-        {
-            Logger::log(Logger::DEBUG, "Path is a directory.");
-            std::string indexPath = _testIndex(fullPath);
-            Logger::log(Logger::DEBUG, "Path of index: " + indexPath);
-            if (indexPath != "none")
-                _req.path += indexPath;
-            std::ifstream indexFile((fullPath + indexPath).c_str());
-            if (indexFile.is_open())
-            {
-                _initContentType(_req.path);
-                if (_handleGetCGI())
-                    return ("CGI");
-                std::ostringstream oss;
-                oss << indexFile.rdbuf();
-                return ResponseHandler::createResponse(200, "OK", oss.str(), _content_type);
-            } 
-            else if (_location_ctx)
-            {
-                if (_location_ctx->getAutoindex())
-                    return (_generateAutoIndex(fullPath));
-                else
-                    return (_err->createError(403, "Forbidden", "The client does not have access rights to the content"));
-            }
-            else if (_ctx->getAutoindex())
-            {
-                return (_generateAutoIndex(fullPath));
-            } 
-            else
-            {
-                return (_err->createError(403, "Forbidden", "The client does not have access rights to the content"));
-            }
-        } 
-        else 
-        {
-            Logger::log(Logger::DEBUG, "Fullpath of response: " + fullPath);
-            _initContentType(fullPath);
-            if (_handleGetCGI())
-                    return ("CGI");
-
-            std::ifstream file(fullPath.c_str(), std::ios::binary);
-            if (!file.is_open())
-                return _err->createError(403, "Forbidden", "The client does not have access rights to the content");
-            
-            file.seekg(0, std::ios::end);
-            std::streamsize size = file.tellg();
-            file.seekg(0, std::ios::beg);
-
-            Logger::log(Logger::DEBUG, "File size initialized.");
-
-            std::string buffer;
-            if (size > 0)
-            {
-                buffer.resize(size);
-                file.read(&buffer[0], size);
-            }
-
-            Logger::log(Logger::DEBUG, "File buffer filled.");
-
-            return ResponseHandler::createResponse(200, "OK", buffer, _content_type);
-        }
-    }
-    return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
-}
-
-std::string Response::_handleUpload(std::string uploadDir)
-{
-    Logger::log(Logger::DEBUG, "Target path: " + uploadDir);
-
-    if ((_location_ctx && !_location_ctx->getCGIExtension().empty())
-        && uploadDir.substr(uploadDir.find_last_of(".")) == _location_ctx->getCGIExtension())
-    {
-        Logger::log(Logger::DEBUG, "Forwarding raw body to CGI");
-        CGI cgi_handler(std::string("POST"), _req, _req.contentType, _ctx, _location_ctx, _parent);
-        cgi_handler.exec();
-        return ("CGI");
-    }
-    else
-    {
-        Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
-        return (_err->createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
-    }
-}
-
-std::string Response::_handlePost()
-{
-    std::string fullPath;
-    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
-        fullPath = _location_ctx->getRootPath() + _req.path;
-    else
-        if (_ctx->getRootPath().size() > 0)
-            fullPath = _ctx->getRootPath() + _req.path;
-    Logger::log(Logger::DEBUG, "POST target path: " + fullPath);
-
-    if (isDirectory(fullPath) && _location_ctx 
-        && _location_ctx->getCGIPass().find(_location_ctx->getCGIExtension()) == std::string::npos)
-        return (_err->createError(403, "Forbidden", "POST not correctly configured for this route."));
-
-    if (access(fullPath.c_str(), F_OK) == 0)
-    {
-        if (access(fullPath.c_str(), R_OK | X_OK) == 0)
-            return (_handleUpload(fullPath));
-        else
-            return (_err->createError(403, "Forbidden", "Request failed due to insufficient permissions"));
-    }
-    return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
-}
-
-std::string Response::_handleDelete()
-{
-    std::string fullpath;
-    if (_location_ctx && _location_ctx->getRootPath().size() > 0)
-        fullpath = _location_ctx->getRootPath() + _req.path;
-    else
-        if (_ctx->getRootPath().size() > 0)
-            fullpath = _ctx->getRootPath() + _req.path;
-
-    Logger::log(Logger::DEBUG, "DELETE target path: " + fullpath);
-
-    if (access(fullpath.c_str(), F_OK) == 0)
-    {
-        if (_location_ctx && !_location_ctx->getCGIExtension().empty()
-                && ((fullpath.size() >= 3 && (fullpath.substr(fullpath.size() - 3) == ".py" 
-                        && _location_ctx->getCGIExtension() == ".py"))
-                    || ((fullpath.size() >= 4 && fullpath.substr(fullpath.size() - 4) == ".php")
-                        && _location_ctx->getCGIExtension() == ".php")))
-        {
-            if (access(fullpath.c_str(), R_OK | X_OK) != 0)
-                _err->createError(403, "Forbidden", "Request failed due to insufficient permissions");
-            
-            Logger::log(Logger::DEBUG, "Sending delete request to cgi.");
-            CGI cgi_handler(std::string("DELETE"), _req, _req.contentType, _ctx, _location_ctx, _parent);
-            cgi_handler.exec();
-            return ("CGI");
-        }
-        else
-        {
-            Logger::log(Logger::DEBUG, "native DELETE");
-
-            std::string directory_path;
-            std::string::size_type pos = fullpath.find_last_of("/");
-
-            directory_path = fullpath.substr(0, pos);
-            Logger::log(Logger::DEBUG, "Delete directory target: " + directory_path);
-
-            if (access(directory_path.c_str(), W_OK | X_OK) != 0)
-                _err->createError(403, "Forbidden", "Request failed due to insufficient permissions");
-
-            int delete_res = std::remove(fullpath.c_str()); 
-            if (delete_res == 0)
-            {
-                Logger::log(Logger::DEBUG, "Deleted " + fullpath);
-                return (ResponseHandler::createResponse(200, "OK", "", _content_type));
-            }
-            else
-                return (_err->createError(500, "Internal Server Error", ""));
-        }
-    }
-    return (_err->createError(404, "Not Found", "The server cannot find the requested resource"));
-    
-}
 
 std::string Response::_handleMethod()
 {
     switch (_req.method)
     {
         case HttpLexer::HTTP_GET:
-            return (_handleGet());
+        {
+            GetHandler get(_ctx, _location_ctx, _req, _err, _parent);
+            return (get.handleRequest());
             break;
+        }
         case HttpLexer::HTTP_POST:
-            return (_handlePost());
+        {
+            PostHandler post(_ctx, _location_ctx, _req, _err, _parent);
+            return (post.handleRequest());
             break;
+        }
         case HttpLexer::HTTP_DELETE:
-            return (_handleDelete());
+        {
+            DeleteHandler del(_ctx, _location_ctx, _req, _err, _parent);
+            return (del.handleRequest());
+            break;
+        }
         default:
             return ("waf");
     }
@@ -461,7 +192,11 @@ std::string Response::_handleMethod()
 std::string Response::createResponseSTR()
 {
     if (_req.endstatus >= 400)
+<<<<<<< HEAD
         return (_err->handleLexerErrors());
+=======
+        return (_err->handleLexerError());  
+>>>>>>> 7947324033fbbfea930d751e8a5def4953429996
     if (!_isPathLegal())
         return (_err->createError(403, "Forbidden", "Illegal request path."));
     if (_location_ctx && _location_ctx->isRedirectSet())
@@ -481,8 +216,6 @@ std::string Response::createResponseSTR()
         return (_err->createError(501, "Not implemented",
             "The request method is known by the server but is not supported by the target resource. ")); 
     return (_handleMethod());
-    return (ResponseHandler::createResponse(200, "OK", "Hello World", _content_type));
-    
 }
 
 std::string Response::createCGIResponseSTR(int cgi_fd)
@@ -503,13 +236,42 @@ std::string Response::createCGIResponseSTR(int cgi_fd)
     if (DEBUG_MODE)
         std::cout << _response_cgi << std::endl;
 
-    if (_location_ctx->getCGIExtension() == ".php")
-    {
-        _response_cgi = buildHttpResponseFromCGI(_response_cgi);
-        Logger::log(Logger::DEBUG, "php CGI formated content:");
-        if (DEBUG_MODE)
-            std::cout << _response_cgi << std::endl;
-    }
+    std::string reason;
+    if (!validateCgiResponse(_response_cgi, &reason))
+        return (_err->createError(502, "Bad Gateway", reason));
+        
+    _response_cgi = buildHttpResponseFromCGI(_response_cgi);
+    Logger::log(Logger::DEBUG, "CGI formated content:");
+    if (DEBUG_MODE)
+        std::cout << _response_cgi << std::endl;
+
 
     return (_response_cgi);
+}
+
+std::string Response::checkRequest()
+{
+    if (_req.endstatus >= 400)
+        return (_err->handleLexerError());  
+    if (!_isPathLegal())
+        return (_err->createError(403, "Forbidden", "Illegal request path."));
+    if (_location_ctx && _location_ctx->isRedirectSet())
+        return (RedirectHandler::createRedirect(_location_ctx->getRedirectCode(),
+            _location_ctx->getRedirectUrl()));
+    if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
+        return (_err->createError(413, "Content Too Large",
+            "The request entity was larger than limits defined by server."));
+    else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
+        return (_err->createError(413, "Content Too Large",
+            "The request entity was larger than limits defined by server."));
+    int is_method_supported = _isMethodSupportedByRoute();
+    if (is_method_supported == 0)
+        return (_err->createError(405, "Method Not Allowed",
+            "The request method is not allowed on this route or doesn't exists."));
+    if (is_method_supported == -1)
+        return (_err->createError(501, "Not implemented",
+            "The request method is known by the server but is not supported by the target resource. ")); 
+    Logger::log(Logger::DEBUG, "Request is fine, sending '100 Continue'");
+    _parent->state = Client::ACCEPTING_CONTINUE;
+    return ("HTTP/1.1 100 Continue\r\n\r\n");
 }

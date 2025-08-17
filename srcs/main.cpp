@@ -31,6 +31,7 @@ int main (int ac, char* av[])
         ServerManager::instance = &webserv;
         webserv.initConfig(config_src);
         signal(SIGINT, ServerManager::signalHandler);
+        signal(SIGTERM, ServerManager::signalHandler);
         signal(SIGCHLD, ServerManager::signalHandler);
         webserv.run();
     }

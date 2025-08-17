@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:16 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 16:04:30 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/17 14:07:24 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ std::string ErrorHandler::createError(unsigned int code, std::string error,
     oss << oss_header.str()
         << "Content-Type: text/html\r\n"
         << "Content-length: " << oss_body.str().size() << "\r\n";
-    if (code == 500)
+    if (code == 500 || code == 408)
         oss << "Connection: close\r\n";
     oss << "\r\n"
         << oss_body.str();
@@ -113,6 +113,7 @@ std::string ErrorHandler::sendError(std::string error)
         case 405: msg = "Method Not Allowed"; break;
         case 408: msg = "Request Timeout"; break;
         case 413: msg = "Payload Too Large"; break;
+        case 414: msg = "URI too long"; break;
         case 500: msg = "Internal Server Error"; break;
         case 501: msg = "Not Implemented"; break;
         case 502: msg = "Bad Gateway"; break;
@@ -127,7 +128,11 @@ std::string ErrorHandler::sendError(std::string error)
     return (createError(_req.endstatus, msg, error));
 }
 
+<<<<<<< HEAD
 std::string ErrorHandler::handleLexerErrors()
+=======
+std::string ErrorHandler::handleLexerError()
+>>>>>>> 7947324033fbbfea930d751e8a5def4953429996
 {
     Logger::log(Logger::DEBUG, "req endstatus after lexer >= 400");
     switch (_req.endstatus)

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/18 18:22:47 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 18:09:46 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ class Response;
 class Client
 {
     public: 
-        enum RequestState { IDLE = 0, SENDING_ERROR, DRAINING_BODY, FINISHED };
+        enum RequestState { IDLE = 0, ACCEPTING_CONTINUE, SENDING_ERROR, DRAINING_BODY, FINISHED };
 
     private:
         HttpLexer*      _lexer;
@@ -58,6 +58,7 @@ class Client
     public:
         time_t          last_activity;
         RequestState    state;
+        bool            timed_out;
         
         Client(int fd, u_int32_t ip, RouterMap& router, ServerManager* server);
         ~Client();
@@ -68,10 +69,12 @@ class Client
         
         void    handleRequest();
         void    handleResponse(bool isCGIResponse = false, int cgi_fd = 0);
+        void    handleChecking();
         void    handleSend();
         void    sendError(std::string error);
         void    drainBody();
 
-        int     getSockerFd() const; 
+        int                 getSockerFd() const; 
+        const HttpLexer*    getLexer() const;
 };
 #endif

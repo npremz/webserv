@@ -29,6 +29,13 @@
 
 # define MAX_CLIENT_SIZE 67108864
 # define MAX_CHUNK_SIZE 8192
+# define EPOLL_TIMEOUT 1000 //miliseconds
+# define EPOLL_MAX_EVENTS 128
+# define REQUEST_TIMEOUT 10 //seconds
+# define MAX_PORT 65536
+# define LISTEN_QUEUE 128
+# define MAX_STARTLINE_SIZE 2048
+# define MAX_HEADERS 1024
 
 # define DEBUG_MODE 1
 

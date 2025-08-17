@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/03 13:44:58 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/12 23:24:08 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,17 @@ Client::Client(int fd, u_int32_t ip, RouterMap& router, ServerManager* server) :
     _server(server),
     _bytes_to_cgi_stdin(0),
     last_activity(time(NULL)),
-    state(IDLE)
+    state(IDLE),
+    timed_out(false)
 {
     Logger::log(Logger::INFO, "Accepted client from " + ipIntToString(_ip));
-    _lexer = new HttpLexer(_ip);
+    try{
+        _lexer = new HttpLexer(_ip);
+    }
+    catch (const std::exception& e)
+    {
+        Logger::log(Logger::ERROR, "Client initialisation failed: " + std::string(e.what()));
+    }
 }
 
 Client::~Client()
@@ -41,6 +48,8 @@ void    Client::sendError(std::string error)
     state = SENDING_ERROR;
     if (error == "Server timeout")
         _lexer->setEndStatus(408);
+    if (error == "Bad Request")
+        _lexer->setEndStatus(400);
     _response_ctx = _responseRouting();
     Response rep(_response_ctx, _lexer->getRequest(), this);
     _response_str = rep.sendError(error);
@@ -143,6 +152,7 @@ void    Client::writeRequestBodyToCGI(int cgi_fd)
 
     if ((bytes_written = write(cgi_fd, _lexer->getRequest().body.data() + _bytes_to_cgi_stdin, write_size)) > 0)
     {    
+        last_activity = time(NULL);
         _bytes_to_cgi_stdin += bytes_written;
         if (_bytes_to_cgi_stdin == _lexer->getRequest().expectedoctets)
         {
@@ -152,6 +162,10 @@ void    Client::writeRequestBodyToCGI(int cgi_fd)
             _server->removeCGILink(cgi_fd);
             Logger::log(Logger::DEBUG, "Request body written to CGI STDIN.");
         }
+    }
+    else if (bytes_written == 0)
+    {
+        Logger::log(Logger::DEBUG, "Write to cgi stdin returned 0.");
     }
     else if (bytes_written == -1)
     {
@@ -169,14 +183,34 @@ void    Client::handleRequest()
     {
         HttpLexer::Status   c_status;
 
+        last_activity = time(NULL);
         c_status = _lexer->feed(_buf, byte_rec);
-        if (c_status == HttpLexer::COMPLETE)
+        if (c_status == HttpLexer::MUST_CHECK)
         {
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
+            Logger::log(Logger::DEBUG, "Checking if request will be rejected...");
+            handleChecking();
+            return ;
+        }
+        if (c_status == HttpLexer::COMPLETE)
+        {
+            _response_ctx = _responseRouting();
+            if (_response_ctx == NULL)
+            {
+                _lexer->setEndStatus(400);
+                Logger::log(Logger::ERROR, "Invalid Request => host not supported");
+            }
             Logger::log(Logger::DEBUG, "Request parsed");
-            _rep = new Response(_response_ctx, _lexer->getRequest(), this);
+            try
+            {
+                _rep = new Response(_response_ctx, _lexer->getRequest(), this);
+            }
+            catch (const std::exception& e)
+            {
+                Logger::log(Logger::ERROR, "Response initialisation failed: " + std::string(e.what()));
+            }
             handleResponse();
             return ;
         }
@@ -189,11 +223,20 @@ void    Client::handleRequest()
         return;
 }
 
+void    Client::handleChecking()
+{
+    Response rep_checker(_response_ctx, _lexer->getRequest(), this);
+    _response_str = rep_checker.checkRequest();
+    last_activity = time(NULL);
+    _prepareAndSend();
+}
+
 void    Client::handleResponse(bool isCGIResponse, int cgi_fd)
 {
     if (isCGIResponse)
     {
         _response_str = _rep->createCGIResponseSTR(cgi_fd);
+        last_activity = time(NULL);
         if (_response_str == "Not complete.")
         {
             Logger::log(Logger::DEBUG, "CGI pipe reading not completed, back to epoll");
@@ -279,19 +322,29 @@ void    Client::handleSend()
 
         if (n > 0)
         {
+            last_activity = time(NULL);
             _response_sent += n;
             if (_response_sent == _response_len)
             {
                 _removeEpollout();
                 Logger::log(Logger::DEBUG, "Response totally sent");
-                if (state == SENDING_ERROR && _lexer->getRequest().expectedoctets > 0)
+                if (state == SENDING_ERROR && _lexer->getRequest().expectedoctets > 0
+                    && _lexer->getEndStatus() != 408)
                 {
                     state = DRAINING_BODY;
                     _body_drained = _lexer->getRequest().receivedoctets;
                     _expected_body_size = _lexer->getRequest().expectedoctets;
                 }
+                else if (state == ACCEPTING_CONTINUE)
+                {
+                    state = IDLE;
+                    Logger::log(Logger::DEBUG, "100 Continue sent, waiting for more.");
+                }
                 else
+                {
                     state = FINISHED;
+                    Logger::log(Logger::DEBUG, "Client State set to FINISHED.");
+                }
             }
         }
         else if (n == -1)
@@ -307,4 +360,9 @@ void    Client::handleSend()
 int Client::getSockerFd() const
 {
     return (this->_socket_fd);
+}
+
+const HttpLexer*    Client::getLexer() const
+{
+    return (this->_lexer);
 }

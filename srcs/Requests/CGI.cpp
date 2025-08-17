@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/07/18 17:57:41 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/13 11:54:02 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,7 @@ void    CGI::_initEnvTab()
     _env_tab.push_back(makeEnvVar("REMOTE_ADDR", "127.0.0.1"));
     _env_tab.push_back(makeEnvVar("UPLOAD_ENABLE", _location_ctx->getUploadEnable()));
     _env_tab.push_back(makeEnvVar("UPLOAD_PATH", _location_ctx->getUploadPath()));
-    
-    if (_req.contentType.size() > 0)
-        _env_tab.push_back(makeEnvVar("CONTENT_TYPE", _req.contentType));
+    _env_tab.push_back(makeEnvVar("CONTENT_TYPE", _req.contentType));
     if (_req.expectedoctets > 0)
     {
         std::ostringstream oss;
@@ -68,6 +66,17 @@ void    CGI::_initEnvTab()
     {
         std::string env = "HTTP_";
         std::string header_name = it->first;
+
+        std::string lower_key = to_lowercase(header_name);
+        if (lower_key == "host" ||
+            lower_key == "content-length" ||
+            lower_key == "content-type" ||
+            lower_key == "content-encoding" ||
+            lower_key == "content-range" ||
+            lower_key == "user-agent" ||
+            lower_key == "server")
+            continue;
+
         for (size_t i = 0; i < header_name.size(); ++i) {
             char c = header_name[i];
             if (c == '-')
@@ -79,13 +88,6 @@ void    CGI::_initEnvTab()
     }
 
     _env_tab.push_back(NULL);
-    
-    // Logger::log(Logger::DEBUG, "CGI env:");
-    // for (std::vector<char *>::iterator it = _env_tab.begin();
-    //     it != _env_tab.end() - 1; it++)
-    // {
-    //     Logger::log(Logger::DEBUG, "\t" + std::string(*it));
-    // }
 }
 
 void CGI::_initArgv()
@@ -102,13 +104,6 @@ void CGI::_initArgv()
     if (_method == "GET")
         _argv.push_back(const_cast<char *>(_file_name.c_str()));
     _argv.push_back(NULL);
-
-    // Logger::log(Logger::DEBUG, "CGI argv:");
-    // for (std::vector<char *>::iterator it = _argv.begin();
-    //     it != _argv.end() - 1; it++)
-    // {
-    //     Logger::log(Logger::DEBUG, "\t" + std::string(*it));
-    // }
 }
 
 void    CGI::exec()
@@ -116,7 +111,7 @@ void    CGI::exec()
     if (pipe(_cgi_pipe_output) == -1)
         Logger::log(Logger::ERROR, "Output pipe error.");
 
-    if (_method == "POST" && pipe(_cgi_pipe_input) == -1)
+    if (_req.expectedoctets > 0 && pipe(_cgi_pipe_input) == -1)
         Logger::log(Logger::ERROR, "Input pipe error.");
 
     pid_t pid;
@@ -125,7 +120,7 @@ void    CGI::exec()
 
     if (pid == 0)
     {
-        if (_method == "POST")
+        if (_req.expectedoctets > 0)
         {
             dup2(_cgi_pipe_input[0], STDIN_FILENO);
             close(_cgi_pipe_input[0]);
@@ -136,7 +131,13 @@ void    CGI::exec()
         dup2(_cgi_pipe_output[1], STDERR_FILENO);
         close(_cgi_pipe_output[1]);
         _initArgv();
-        _initEnvTab();
+        try {
+            _initEnvTab();
+        }
+        catch (const std::exception& e)
+        {
+            exit (1);
+        }
 
         size_t      slash_pos = _req.path.find_last_of("/");
         std::string cgi_path = _req.path.substr(0, slash_pos);
@@ -147,7 +148,7 @@ void    CGI::exec()
         exit(1);
     }
     Logger::log(Logger::DEBUG, "Main process passed fork.");
-    if (_method == "POST")
+    if (_req.expectedoctets > 0)
     {
         _client->addCGIEpollOut(_cgi_pipe_input[1]);
         close(_cgi_pipe_input[0]);

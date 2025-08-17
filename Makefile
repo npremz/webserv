@@ -15,14 +15,16 @@ CFLAGS          :=      -Wall -Wextra -Werror -MMD -MP -pedantic -std=c++98 -g
 ########################################################################################
 
 SRC             :=      main.cpp \
-						Utils/utils.cpp \
+						Utils/Utils.cpp \
 						Server/Client.cpp Server/ServerManager.cpp \
 						Config/ParserConfig.cpp Config/BlocServer.cpp \
 						Config/BlocLocation.cpp \
 						Logger/Logger.cpp \
 						Requests/HttpLexer.cpp Requests/Response.cpp Requests/CGI.cpp \
 						Http/ErrorHandler.cpp Http/ResponseHandler.cpp \
-						Http/RedirectHandler.cpp
+						Http/RedirectHandler.cpp \
+						Methods/GetHandler.cpp Methods/PostHandler.cpp \
+						Methods/DeleteHandler.cpp
 
 
 SRCPATH         :=      ./srcs/

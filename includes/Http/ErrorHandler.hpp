@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:22 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 16:03:39 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/17 14:07:07 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,11 @@ class ErrorHandler
         std::string createError(unsigned int code, std::string error,
             std::string bodyStr);
         std::string sendError(std::string error);
+<<<<<<< HEAD
         std::string handleLexerErrors();
+=======
+        std::string handleLexerError();
+>>>>>>> 7947324033fbbfea930d751e8a5def4953429996
 };
 
 #endif

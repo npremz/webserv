@@ -23,6 +23,7 @@
 # include <map>
 # include <cstring>
 # include <cstdlib>
+# include <limits.h>
 
 # include "../Logger/Logger.hpp"
 
@@ -81,18 +82,26 @@ typedef std::map<s_ip_port, std::vector<BlocServer>, s_ip_portCompare> RouterMap
 
 void                        trim(std::string &s);
 std::vector<std::string>    ws_split(const std::string& str);
+bool						starts_with(const std::string& s, const std::string& prefix);
+std::string					to_lowercase(const std::string& input);
+int							countWords(const std::string& str);
+
 bool                        isDirectory(const std::string& path);
 bool                        isReadable(const std::string& path);
 bool                        isExecutable(const std::string& path);
+bool						isNumeric(const std::string& s);
+
 unsigned int				ipStringToInt(const std::string& ip);
 std::string					ipIntToString(unsigned int ip_int);
 std::string 				ipPortToString(const s_ip_port& ip_port);
-bool						isNumeric(const std::string& s);
-std::string					to_lowercase(const std::string& input);
-int							countWords(const std::string& str);
+
 char*                   	makeEnvVar(const std::string& key, const std::string& value);
 std::string					buildHttpResponseFromCGI(const std::string& cgi_output);
-std::string					normalize_path(const std::string& document_root, const std::string& request_path);
+bool						validateCgiResponse(const std::string &raw, std::string *why);
+std::string					normalize_path(const std::string& document_root,
+								const std::string& request_path);
+
+bool				    	has_illegal_uri_chars(const std::string& uri);
 
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 15:59:48 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/10 16:04:57 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,23 +31,6 @@ Response::~Response()
 std::string Response::sendError(std::string error)
 {
     return (_err->sendError(error));
-}
-
-std::string Response::_handleLexerErrors()
-{
-    Logger::log(Logger::DEBUG, "req endstatus after lexer >= 400");
-    switch (_req.endstatus)
-    {
-        case 400:
-            return (_err->createError(400, "Bad Request",
-                "The server cannot or will not process the request due to something that is perceived to be a client error"));
-            break;
-        case 413:
-            return (_err->createError(413, "Content Too Large",
-                "The request body is larger than limits defined by server"));
-    }
-    return (_err->createError(400, "Bad Request",
-        "The server cannot or will not process the request due to something that is perceived to be a client error"));
 }
 
 bool    Response::_setLocation()
@@ -478,7 +461,7 @@ std::string Response::_handleMethod()
 std::string Response::createResponseSTR()
 {
     if (_req.endstatus >= 400)
-        return (_handleLexerErrors());
+        return (_err->handleLexerErrors());
     if (!_isPathLegal())
         return (_err->createError(403, "Forbidden", "Illegal request path."));
     if (_location_ctx && _location_ctx->isRedirectSet())

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/17 14:07:47 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/17 14:09:57 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,11 +192,7 @@ std::string Response::_handleMethod()
 std::string Response::createResponseSTR()
 {
     if (_req.endstatus >= 400)
-<<<<<<< HEAD
-        return (_err->handleLexerErrors());
-=======
         return (_err->handleLexerError());  
->>>>>>> 7947324033fbbfea930d751e8a5def4953429996
     if (!_isPathLegal())
         return (_err->createError(403, "Forbidden", "Illegal request path."));
     if (_location_ctx && _location_ctx->isRedirectSet())

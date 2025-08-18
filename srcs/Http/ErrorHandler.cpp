@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:16 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/17 14:07:24 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/17 14:10:42 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,11 +128,7 @@ std::string ErrorHandler::sendError(std::string error)
     return (createError(_req.endstatus, msg, error));
 }
 
-<<<<<<< HEAD
-std::string ErrorHandler::handleLexerErrors()
-=======
 std::string ErrorHandler::handleLexerError()
->>>>>>> 7947324033fbbfea930d751e8a5def4953429996
 {
     Logger::log(Logger::DEBUG, "req endstatus after lexer >= 400");
     switch (_req.endstatus)

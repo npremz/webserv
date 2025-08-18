@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/13 15:21:09 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/18 12:34:04 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,16 +67,6 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 				PARSE_ERROR));
 	}
 
-	if (target.size() > MAX_STARTLINE_SIZE)
-		return (_handleStatusError(414,
-			"URI too long",
-			PARSE_ERROR));
-    if (target[0] != '/')
-            return (_handleStatusError(400, "Illegal URI", PARSE_ERROR));
-
-	if (has_illegal_uri_chars(target))
-		return (_handleStatusError(400, "Illegal chars in URI", PARSE_ERROR));
-
 	if (method == "GET")
 		_req.method = HTTP_GET;
 	else if (method == "HEAD")
@@ -103,6 +93,16 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 			PARSE_ERROR));
 	}
 
+	if (target.size() > MAX_STARTLINE_SIZE)
+		return (_handleStatusError(414,
+			"URI too long",
+			PARSE_ERROR));
+    if (target[0] != '/')
+            return (_handleStatusError(400, "Illegal URI", PARSE_ERROR));
+
+	if (has_illegal_uri_chars(target))
+		return (_handleStatusError(400, "Illegal chars in URI", PARSE_ERROR));
+
 	_req.targetraw = target;
 	pos = target.find("?");
 	if (pos == std::string::npos)
@@ -112,6 +112,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		_req.path = target.substr(0, pos);
 		_req.query = target.substr(pos + 1);
 	}
+
 	for (std::string::iterator it = _req.path.begin(); it != _req.path.end(); )
 	{
 		if (*it == '/' && ((it + 1) != _req.path.end() && (*(it + 1) == '/')))
@@ -119,6 +120,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 		else
 			it++;
 	}
+
 	if (httpv.length() != 8)
 		return (_handleStatusError(400,
 			"Malformed request line: invalid HTTP version (expected: HTTP/1.1).",
@@ -133,6 +135,10 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
 			"Malformed request line: invalid HTTP version (expected: HTTP/1.1).",
 			PARSE_ERROR));
 	_req.httpver = httpv.substr(pos + 1);
+	if (_req.httpver != "1.1")
+		return (_handleStatusError(400,
+			"Malformed request line: invalid HTTP version (expected: HTTP/1.1).",
+			PARSE_ERROR));
 	_buf.erase(0, end);
 	Logger::log(Logger::DEBUG, std::string(_req.method == HTTP_GET ? "GET" : "") + std::string(_req.method == HTTP_POST ? "POST" : "") + std::string(_req.method == HTTP_DELETE ? "DELETE" : "") + " " + _req.targetraw + " " + _req.httpver);
 	return (GOOD);

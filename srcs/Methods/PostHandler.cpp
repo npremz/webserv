@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   PostHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:04:02 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/10 23:25:07 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/18 15:31:10 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,54 @@ PostHandler::PostHandler(BlocServer* ctx, const BlocLocation* location_ctx,
 PostHandler::~PostHandler()
 {}
 
+std::string PostHandler::_handlePlainText()
+{
+    Logger::log(Logger::DEBUG, "Handling plain/text");
+
+    try {
+        std::time_t now = std::time(0);
+        std::tm* timeinfo = std::localtime(&now);
+    
+        std::ostringstream filename;
+        filename << "file_" 
+                << (timeinfo->tm_year + 1900)
+                << (timeinfo->tm_mon + 1)
+                << timeinfo->tm_mday
+                << "_"
+                << timeinfo->tm_hour
+                << timeinfo->tm_min
+                << timeinfo->tm_sec
+                << ".txt";
+    
+        std::ofstream file((_fullpath + "/" + filename.str()).c_str());
+        file << _req.body;
+        file.close();
+
+        Logger::log(Logger::DEBUG, _fullpath + "/" + filename.str() + " created.");
+    }
+    catch (const std::exception& e)
+    {
+        return (_err->createError(500, "Internal Server Error", e.what()));
+    }
+
+    return (ResponseHandler::createResponse(201, "Created",
+        "Ressource created successfully."));
+}
+
+std::string PostHandler::_handleNativePost()
+{
+    if (!isDirectory(_fullpath))
+        return (_err->createError(405, "Method Not Allowed",
+            "This server does not allow native POST on files."));
+
+    if (_req.contentType == "plain/text")
+        return (_handlePlainText());
+    // if (_req.contentType.find("multipart/form-data") != std::string::npos)
+    //     return (_handleMultiPart());
+    return (_err->createError(415, "Unsupported Media Type",
+        "The server refused to accept the request because the message content format is not supported"));
+}
+
 std::string PostHandler::_handleUpload(std::string uploadDir)
 {
     Logger::log(Logger::DEBUG, "Target path: " + uploadDir);
@@ -40,6 +88,8 @@ std::string PostHandler::_handleUpload(std::string uploadDir)
     }
     else
     {
+        Logger::log(Logger::DEBUG, "Native Post.");
+        return (_handleNativePost());
         Logger::log(Logger::DEBUG, "No CGI configured. sending 405");
         return (_err->createError(405, "Method Not Allowed", "This server does not support direct form processing. Please configure a CGI handler"));
     }
@@ -47,21 +97,20 @@ std::string PostHandler::_handleUpload(std::string uploadDir)
 
 std::string PostHandler::handleRequest()
 {
-    std::string fullPath;
     if (_location_ctx)
-        fullPath = _location_ctx->getRootPath() + _req.path;
+        _fullpath = _location_ctx->getRootPath() + _req.path;
     else
-        fullPath = _ctx->getRootPath() + _req.path;
-    Logger::log(Logger::DEBUG, "POST target path: " + fullPath);
+        _fullpath = _ctx->getRootPath() + _req.path;
+    Logger::log(Logger::DEBUG, "POST target path: " + _fullpath);
 
-    if (isDirectory(fullPath) && _location_ctx 
+    if (isDirectory(_fullpath) && _location_ctx 
         && _location_ctx->getCGIPass().find(_location_ctx->getCGIExtension()) == std::string::npos)
         return (_err->createError(403, "Forbidden", "POST not correctly configured for this route."));
 
-    if (access(fullPath.c_str(), F_OK) == 0)
+    if (access(_fullpath.c_str(), F_OK) == 0)
     {
-        if (access(fullPath.c_str(), R_OK | X_OK) == 0)
-            return (_handleUpload(fullPath));
+        if (access(_fullpath.c_str(), R_OK | X_OK) == 0)
+            return (_handleUpload(_fullpath));
         else
             return (_err->createError(403, "Forbidden", "Request failed due to insufficient permissions"));
     }

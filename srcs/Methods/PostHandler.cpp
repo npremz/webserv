@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   PostHandler.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:04:02 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/18 15:31:10 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/20 17:32:33 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,12 +49,30 @@ std::string PostHandler::_handlePlainText()
         file << _req.body;
         file.close();
 
-        Logger::log(Logger::DEBUG, _fullpath + "/" + filename.str() + " created.");
+        Logger::log(Logger::INFO, "File " + _fullpath + "/" + filename.str() + " saved.");
     }
     catch (const std::exception& e)
     {
         return (_err->createError(500, "Internal Server Error", e.what()));
     }
+
+    return (ResponseHandler::createResponse(201, "Created",
+        "Ressource created successfully."));
+}
+
+std::string PostHandler::_handleMultiPart()
+{
+    Logger::log(Logger::DEBUG, "Handling multipart/form-data");
+    PostMultiPartHandler mp_hdl(_req, _fullpath);
+
+    if (mp_hdl.parseMultipartData() == false)
+        return _err->createError(400, "Bad Request",
+            "Invalid request format for multipart");
+
+    
+    if (mp_hdl.saveUploadedFiles() == false)
+        return _err->createError(500, "Internal Server Error",
+            "The server occured an intern error while attempting to upload the files.");
 
     return (ResponseHandler::createResponse(201, "Created",
         "Ressource created successfully."));
@@ -66,10 +84,20 @@ std::string PostHandler::_handleNativePost()
         return (_err->createError(405, "Method Not Allowed",
             "This server does not allow native POST on files."));
 
-    if (_req.contentType == "plain/text")
+    if (_location_ctx && _location_ctx->getUploadEnable() == "off")
+        return (_err->createError(403, "Forbidden",
+            "Upload not allowed on this route."));
+
+    if (_location_ctx && !(_location_ctx->getUploadPath().empty()))
+        _fullpath = _fullpath + _location_ctx->getUploadPath();
+    
+    Logger::log(Logger::DEBUG, "Upload path: " + _fullpath);
+    
+    if (_req.contentType == "text/plain")
         return (_handlePlainText());
-    // if (_req.contentType.find("multipart/form-data") != std::string::npos)
-    //     return (_handleMultiPart());
+    if (_req.contentType.find("multipart/form-data") != std::string::npos)
+        return (_handleMultiPart());
+
     return (_err->createError(415, "Unsupported Media Type",
         "The server refused to accept the request because the message content format is not supported"));
 }

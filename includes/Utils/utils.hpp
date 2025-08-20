@@ -85,6 +85,7 @@ std::vector<std::string>    ws_split(const std::string& str);
 bool						starts_with(const std::string& s, const std::string& prefix);
 std::string					to_lowercase(const std::string& input);
 int							countWords(const std::string& str);
+std::string 				removeQuotes(const std::string& str);
 
 bool                        isDirectory(const std::string& path);
 bool                        isReadable(const std::string& path);

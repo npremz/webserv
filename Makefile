@@ -24,7 +24,7 @@ SRC             :=      main.cpp \
 						Http/ErrorHandler.cpp Http/ResponseHandler.cpp \
 						Http/RedirectHandler.cpp \
 						Methods/GetHandler.cpp Methods/PostHandler.cpp \
-						Methods/DeleteHandler.cpp
+						Methods/DeleteHandler.cpp Methods/PostMultiPartHandler.cpp
 
 
 SRCPATH         :=      ./srcs/

@@ -463,3 +463,15 @@ bool has_illegal_uri_chars(const std::string& uri)
     }
     return false;
 }
+
+std::string removeQuotes(const std::string& str)
+{
+    std::string result = str;
+    if (result.length() >= 2) {
+        if ((result[0] == '"' && result[result.length()-1] == '"') ||
+            (result[0] == '\'' && result[result.length()-1] == '\'')) {
+            result = result.substr(1, result.length() - 2);
+        }
+    }
+    return result;
+}

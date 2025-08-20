@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   PostHandler.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:01:30 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/18 15:24:01 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/20 15:28:34 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 # include "../Http/ResponseHandler.hpp"
 # include "../Requests/CGI.hpp"
 # include "../Server/Client.hpp"
+# include "./PostMultiPartHandler.hpp"
 
 class PostHandler
 {

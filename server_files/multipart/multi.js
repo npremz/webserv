@@ -52,3 +52,7 @@ uploadForm.addEventListener("submit", (e) => {
         responseBloc.innerText = error;
     });
 })
+
+responseCross.addEventListener("click", (e) => {
+    responseSection.classList.add("section--hidden");
+})

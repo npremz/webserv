@@ -21,7 +21,7 @@ BlocLocation::BlocLocation(BlocServer* parent, std::string location_path,
     _post(parent->getPostMethod()),
     _delete(parent->getDeleteMethod()),
     _autoindex(parent->getAutoindex()),
-    _upload_enable("off"),
+    _upload_enable("on"),
     _root_path(parent->getRootPath()),
     _client_max_body_size(parent->getClientMaxBodySize())
 {

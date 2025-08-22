@@ -168,13 +168,13 @@ def test_headers_parser():
 
 def test_body_parser():
     host_headers_to_try = [
-        (b"Content-Length: 5\r\n\r\nhello\r\n\r\n", 200, "Valid Content-Length body"),
+        (b"Content-Length: 5\r\n\r\nhello\r\n\r\n", 201, "Valid Content-Length body"),
         (b"Content-Length: 10\r\n\r\nhello\r\n\r\n", 408, "Body shorter than Content-Length"),
         (b"Content-Length: 5\r\n\r\nhelloEXTRA\r\n\r\n", 200, "Body longer than expected"),
-        (b"Content-Length: 0\r\n\r\n", 200, "Content-Length = 0"),
+        (b"Content-Length: 0\r\n\r\n", 201, "Content-Length = 0"),
         (b"Content-Length: 70000000\r\n\r\n" + (b"a" * 70000000) + b"\r\n\r\n", 413, "Content-Length > MAX_CLIENT_SIZE"),
-        (b"Transfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n5\r\nworld\r\n0\r\n\r\n", 200, "Valid chunked body"),
-        (b"Transfer-Encoding: chunked\r\n\r\n0\r\n\r\n", 200, "Chunked with size 0"),
+        (b"Transfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n5\r\nworld\r\n0\r\n\r\n", 201, "Valid chunked body"),
+        (b"Transfer-Encoding: chunked\r\n\r\n0\r\n\r\n", 201, "Chunked with size 0"),
         (b"Transfer-Encoding: chunked\r\n\r\nGGGG\r\nhello\r\n0\r\n\r\n", 400, "Chunked with invalid hex size"),
         (b"Transfer-Encoding: chunked\r\n\r\n5hello\r\n0\r\n\r\n", 400, "Chunked missing \\r\\n after size"),
         (b"Transfer-Encoding: chunked\r\n\r\n5\r\nhello0\r\n\r\n", 400, "Chunked missing \\r\\n after data"),
@@ -183,19 +183,19 @@ def test_body_parser():
         (b"Transfer-Encoding: chunked\r\n\r\n2\r\nhello\r\n0\r\n\r\n", 400, "Chunked data longer than announced"),
         (b"Transfer-Encoding: chunked\r\n\r\n-5\r\nhello\r\n0\r\n\r\n", 400, "Chunked with negative size"),
         (b"Transfer-Encoding: chunked\r\n\r\nFFFFFFFFFFFFFFFF\r\nhello\r\n0\r\n\r\n", 400, "Chunked with size overflow"),
-        (b"Content-Length: 100\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n", 200, "Both Content-Length and chunked"),
+        (b"Content-Length: 100\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n", 201, "Both Content-Length and chunked"),
         (b"Transfer-Encoding: chunked\r\n\r\n5;name=value\r\nhello\r\n0\r\n\r\n", 400, "Chunked with extensions"),
         (b"Transfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\nX-trailer: value\r\n\r\n", 400, "Chunked with trailer headers"),
-        (b"Transfer-Encoding: chunked\r\n\r\n1\r\na\r\n1\r\nb\r\n1\r\nc\r\n0\r\n\r\n", 200, "multiple chunks"),
-        (b"Transfer-Encoding: chunked\r\n\r\n100000\r\n" + (b"a" * 100000) + b"\r\n0\r\n\r\n", 200, "Very large single chunk"),
-        (b"Content-Length: 5\r\n\r\nhe\x00lo\r\n\r\n", 200, "Body with null bytes"),
-        (b"\r\n", 200, "No Content-Length or chunked"),
+        (b"Transfer-Encoding: chunked\r\n\r\n1\r\na\r\n1\r\nb\r\n1\r\nc\r\n0\r\n\r\n", 201, "multiple chunks"),
+        (b"Transfer-Encoding: chunked\r\n\r\n100000\r\n" + (b"a" * 1048576) + b"\r\n0\r\n\r\n", 201, "Very large single chunk"),
+        (b"Content-Length: 5\r\n\r\nhe\x00lo\r\n\r\n", 201, "Body with null bytes"),
+        (b"\r\n", 201, "No Content-Length or chunked"),
         (b"Transfer-Encoding: chunked\r\n\r\n5\nhello\n0\n\n", 408, "Chunked with only \\n instead of \\r\\n"),
-        (b"Content-Length: 67108864\r\n\r\n" + (b"a" * 67108864) + b"\r\n\r\n", 200, "Body exactly at MAX_CLIENT_SIZE"),
+        (b"Content-Length: 67108864\r\n\r\n" + (b"a" * 67108864) + b"\r\n\r\n", 201, "Body exactly at MAX_CLIENT_SIZE"),
         (b"Content-Length: 67108865\r\n\r\n" + (b"a" * 67108865) + b"\r\n\r\n", 413, "Body exactly 1 byte over MAX_CLIENT_SIZE"),
         (b"Transfer-Encoding: chunked\r\n\r\n4000000\r\n" + (b"a" * 67108865) + b"\r\n1\r\nx\r\n0\r\n\r\n", 413, "Chunked accumulating to > MAX_CLIENT_SIZE"),
         (b"Transfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n5\r\nworld\r\n0\r\n\r\n", 400, "Empty chunk in the middle"),
-        (b"Content-Length: 10\r\n\r\n\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\r\n\r\n", 200, "Binary data in body")
+        (b"Content-Length: 10\r\n\r\n\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\r\n\r\n", 201, "Binary data in body")
     ]
     
     print("\033[1mTesting body parsing:\033[0m")

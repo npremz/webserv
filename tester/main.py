@@ -5,10 +5,10 @@ from tests.concurrency import timeout_sim, test_concurrent_delete
 
 def main():
     wait = 1
-    # time.sleep(wait)
-    # test_startline_parser()
-    # time.sleep(wait)
-    # test_headers_parser()
+    time.sleep(wait)
+    test_startline_parser()
+    time.sleep(wait)
+    test_headers_parser()
     time.sleep(wait)
     test_body_parser()
     # time.sleep(wait)
@@ -17,10 +17,10 @@ def main():
     # getRequestLargeNb(100)
     # time.sleep(wait)
     # getRequestLargeNb(1000)
-    # time.sleep(wait)
-    # getRequestBadUrl()
-    # time.sleep(wait)
-    # timeout_sim(send_multiple_timeout, 1000, 408)
+    time.sleep(wait)
+    getRequestBadUrl()
+    time.sleep(wait)
+    timeout_sim(send_multiple_timeout, 1000, 408)
     # time.sleep(wait)
     # test_concurrent_delete("/cgi-bin/uploads/test.txt", 50, 404)
 

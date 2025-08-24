@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 10:38:16 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/17 14:10:42 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/24 15:14:28 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,8 +112,10 @@ std::string ErrorHandler::sendError(std::string error)
         case 404: msg = "Not Found"; break;
         case 405: msg = "Method Not Allowed"; break;
         case 408: msg = "Request Timeout"; break;
+        case 412: msg = "Precondition Failed"; break;
         case 413: msg = "Payload Too Large"; break;
         case 414: msg = "URI too long"; break;
+        case 431: msg = "Request Header Fields Too Large"; break;
         case 500: msg = "Internal Server Error"; break;
         case 501: msg = "Not Implemented"; break;
         case 502: msg = "Bad Gateway"; break;

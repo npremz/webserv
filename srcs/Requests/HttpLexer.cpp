@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/22 18:23:25 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/24 15:24:50 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,7 +100,7 @@ HttpLexer::ParseState HttpLexer::_parseStartLine()
     if (target[0] != '/')
             return (_handleStatusError(400, "Illegal URI", PARSE_ERROR));
 
-	if (has_illegal_uri_chars(target))
+	if (hasIllegalURIChars(target))
 		return (_handleStatusError(400, "Illegal chars in URI", PARSE_ERROR));
 
 	_req.targetraw = target;
@@ -164,7 +164,7 @@ std::vector<std::string>	HttpLexer::_splitHeader(std::string header_block)
 }
 
 bool	HttpLexer::_isNonDuplicableHeader(const std::string& key) {
-	std::string lower_key = to_lowercase(key);
+	std::string lower_key = toLowercase(key);
     return lower_key == "host" ||
            lower_key == "content-length" ||
            lower_key == "content-type" ||
@@ -226,6 +226,10 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 
 	std::vector<std::string> header_lines = _splitHeader(_buf.substr(0, pos));
 
+	if (header_lines.size() > MAX_HEADERS)
+		return (_handleStatusError(400, "Headers limit exceeded",
+				PARSE_ERROR));
+
 	for (std::vector<std::string>::iterator it = header_lines.begin(); 
 		it != header_lines.end(); ++it)
 	{
@@ -256,9 +260,28 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
         if (key.empty())
             continue;
 			
-    	Logger::log(Logger::DEBUG, "<" + key + ">:<" + val + ">");
+		Logger::log(Logger::DEBUG, "<" + key + ">:<" + val + ">");
+		
+		Logger::log(Logger::DEBUG, "headerVal size: ");
+		std::cout << val.size() << std::endl;
 
-		if (to_lowercase(key) == "host")
+		if (val.size() > MAX_HEADER_VALUE_SIZE)
+			return (_handleStatusError(431,
+					"Request Header Fields Too Large",
+					PARSE_ERROR));
+
+		if (!isValidHeaderName(key))
+			return (_handleStatusError(400,
+					"Illegal char in header key",
+					PARSE_ERROR));
+
+		if (headerValHasIllegalChars(val))
+			return (_handleStatusError(400,
+					"Illegal char in header value",
+					PARSE_ERROR));
+
+
+		if (toLowercase(key) == "host")
 		{
 			if (!_isValidHostValue(val))
 				return (_handleStatusError(400, "Invalid Host header.", PARSE_ERROR));
@@ -267,7 +290,7 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 			Logger::log(Logger::DEBUG, "Host detected: " + _req.host);
 			Logger::log(Logger::DEBUG, "Request ip: " + ipPortToString(_req.ip_port));
 		}
-		else if (to_lowercase(key) == "content-length")
+		else if (toLowercase(key) == "content-length")
 		{
 			if (!_isValidContentLengthValue(val))
 				return (_handleStatusError(400,
@@ -279,18 +302,18 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 					"The request is larger than the server is willing or able to process.",
 					PARSE_ERROR));
 		}
-		else if (to_lowercase(key) == "transfer-encoding")
+		else if (toLowercase(key) == "transfer-encoding")
 		{
 			if (val == "chunked")
 				_req.ischunked = true;
 			Logger::log(Logger::DEBUG, "transfer-encoding detected: " + val);
 		}
-        else if (to_lowercase(key) == "content-type")
+        else if (toLowercase(key) == "content-type")
 		{
 			_req.contentType = val;
 			Logger::log(Logger::DEBUG, "content-type detected: " + val);
 		}
-		else if (to_lowercase(key) == "expect")
+		else if (toLowercase(key) == "expect")
 		{
 			Logger::log(Logger::DEBUG, "Expect detected: " + val);
 			if (val == "100-continue"){
@@ -314,11 +337,6 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 				_req.headers[key_in_map->first] += "," + val; 
 			}
 		}
-
-		if (_req.headers.size() > MAX_HEADERS)
-			return (_handleStatusError(400,
-					"Headers limit exceeded: " + key_in_map->first,
-					PARSE_ERROR));
 	}
 	_buf.erase(0, pos + 4);
 	return (GOOD);
@@ -349,23 +367,49 @@ HttpLexer::ParseState HttpLexer::_bodyParseChunked()
 		pos = _buf.find("\r\n");
 		if (pos == std::string::npos)
 			return (PAUSE);
-    	ss << _buf.substr(0, pos);
+		std::string chunk_size_line = _buf.substr(0, pos);
+
+		// DEBUG temporaire
+		std::cout << "DEBUG: chunk_size_line = '" << chunk_size_line << "'" << std::endl;
+		std::cout << "DEBUG: chunk_size_line.length() = " << chunk_size_line.length() << std::endl;
+		for (size_t i = 0; i < chunk_size_line.length(); ++i)
+		{
+			std::cout << "DEBUG: char[" << i << "] = '" << chunk_size_line[i] 
+					<< "' (ASCII: " << (int)chunk_size_line[i] << ")" << std::endl;
+		}
+
+		if (!isValidHexString(chunk_size_line))
+			return (_handleStatusError(400, "Illegal chars in chunk Size", PARSE_ERROR));
+			
+    	ss << chunk_size_line;
 		ss >> std::hex >> chunk_size;
 		if (ss.fail())
 			return (_handleStatusError(400, "Invalid Chunk Size", PARSE_ERROR));
+
+		if (chunk_size < 0)
+			return (_handleStatusError(400, "Negative chunk Size", PARSE_ERROR));
+
 		if (chunk_size == 0)
 		{
 			if (_buf.size() < pos + 4)
 				return (PAUSE);
+			if (_buf.substr(pos + 2, 2) != "\r\n")
+        		return (_handleStatusError(400, "Trailer headers not supported", PARSE_ERROR));
+			
 			_buf.erase(0, pos + 4);
+			if (!_buf.empty())
+        		return (_handleStatusError(400, "Data after final chunk", PARSE_ERROR));
 			return (GOOD);
 		}
+
 		if (_buf.size() < ((pos + 2) + chunk_size + 2))
 			return (PAUSE);
+
 		_req.body.append(_buf, pos + 2, chunk_size);
 		_req.receivedoctets = _req.body.size();
 		if (_req.receivedoctets > MAX_CLIENT_SIZE)
 			return (_handleStatusError(413, "Content Too Large", PARSE_ERROR));
+			
 		_buf.erase(0, ((pos + 2) + chunk_size + 2));
 	}
 }

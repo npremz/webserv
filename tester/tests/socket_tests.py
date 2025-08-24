@@ -135,7 +135,7 @@ def test_headers_parser():
         (b"Host: localhost:9999\r\n", 412, "Wrong port number"),
         ((f"Host: localhost:{PORT}\r\n".encode() + b"X-Test: value\r\n" * 3150), 400, "Too many headers (3150)"),
         (f"Host: localhost:{PORT}\r\nThis is invalid header\r\n".encode(), 400, "Invalid header format"),
-        (f"Host: localhost:{PORT}\r\nContent-Length: 70000000\r\n".encode(), 413, "Content-Length too large"),
+        (f"Host: localhost:{PORT}\r\nContent-Length: 7000000000\r\n".encode(), 413, "Content-Length too large"),
         (f"Host: localhost:{PORT}\r\nX-Bad: value\x01here\r\n".encode(), 400, "Control char in header"),
         (f"Host: localhost:{PORT}\r\nX Bad Header: value\r\n".encode(), 400, "Space in header name"),
         (f"Host: localhost:{PORT}\r\nX-Time: 12:34:56\r\n".encode(), 200, "Valid custom header"),
@@ -170,7 +170,7 @@ def test_body_parser():
     host_headers_to_try = [
         (b"Content-Length: 5\r\n\r\nhello\r\n\r\n", 201, "Valid Content-Length body"),
         (b"Content-Length: 10\r\n\r\nhello\r\n\r\n", 408, "Body shorter than Content-Length"),
-        (b"Content-Length: 5\r\n\r\nhelloEXTRA\r\n\r\n", 200, "Body longer than expected"),
+        (b"Content-Length: 5\r\n\r\nhelloEXTRA\r\n\r\n", 201, "Body longer than expected"),
         (b"Content-Length: 0\r\n\r\n", 201, "Content-Length = 0"),
         (b"Content-Length: 70000000\r\n\r\n" + (b"a" * 70000000) + b"\r\n\r\n", 413, "Content-Length > MAX_CLIENT_SIZE"),
         (b"Transfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n5\r\nworld\r\n0\r\n\r\n", 201, "Valid chunked body"),
@@ -193,7 +193,7 @@ def test_body_parser():
         (b"Transfer-Encoding: chunked\r\n\r\n5\nhello\n0\n\n", 408, "Chunked with only \\n instead of \\r\\n"),
         (b"Content-Length: 67108864\r\n\r\n" + (b"a" * 67108864) + b"\r\n\r\n", 201, "Body exactly at MAX_CLIENT_SIZE"),
         (b"Content-Length: 67108865\r\n\r\n" + (b"a" * 67108865) + b"\r\n\r\n", 413, "Body exactly 1 byte over MAX_CLIENT_SIZE"),
-        (b"Transfer-Encoding: chunked\r\n\r\n4000000\r\n" + (b"a" * 67108865) + b"\r\n1\r\nx\r\n0\r\n\r\n", 413, "Chunked accumulating to > MAX_CLIENT_SIZE"),
+        (b"Transfer-Encoding: chunked\r\n\r\n4000000\r\n" + (b"a" * 67108864) + b"\r\n1\r\nx\r\n0\r\n\r\n", 413, "Chunked accumulating to > MAX_CLIENT_SIZE"),
         (b"Transfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n5\r\nworld\r\n0\r\n\r\n", 400, "Empty chunk in the middle"),
         (b"Content-Length: 10\r\n\r\n\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\r\n\r\n", 201, "Binary data in body")
     ]
@@ -269,8 +269,8 @@ def getRequestBadUrl():
     
     tests = [
         (b"GET HTTP/1.1\r\nHost: localhost\r\n\r\n", "Missing URI", 400),
-        (f"GET /index.html HTTP/1.1!!\r\nHost: localhost:{PORT}\r\n\r\n".encode, "Garbage characters in request line", 400),
-        (f"GET / HTTP/1.1\r\nHost: local\0\r\1\2\n\n\n\nhost:{PORT}\r\n\r\n".encode, "Header with illegal characters", 400),
+        (f"GET /index.html HTTP/1.1!!\r\nHost: localhost:{PORT}\r\n\r\n".encode(), "Garbage characters in request line", 400),
+        (f"GET / HTTP/1.1\r\nHost: local\0\r\1\2\n\n\n\nhost:{PORT}\r\n\r\n".encode(), "Header with illegal characters", 400),
         (b"GET / HTTP/1.1\r\nHost: localhost\r\n", "Incomplete request (simulate timeout)", 408),
     ]
     

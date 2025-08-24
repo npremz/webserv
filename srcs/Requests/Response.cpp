@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/22 18:24:52 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/24 15:08:10 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ bool    Response::_setLocation()
         if (*(location.end() - 1) != '/')
             location += "/";
 
-        if (starts_with(path, location))
+        if (startsWith(path, location))
         {
             if (!best_matching_location)
             {
@@ -155,7 +155,7 @@ bool    Response::_isPathLegal()
     Logger::log(Logger::DEBUG, "request root: " + request_root);
     Logger::log(Logger::DEBUG, "request path: " + _req.path);
 
-    if (normalize_path(request_root, _req.path).empty())
+    if (normalizePath(request_root, _req.path).empty())
         return (false);
     return (true);
 }
@@ -199,11 +199,11 @@ std::string Response::createResponseSTR()
         return (RedirectHandler::createRedirect(_location_ctx->getRedirectCode(),
             _location_ctx->getRedirectUrl()));
     if (_location_ctx && (_location_ctx->getClientMaxBodySize() < _req.expectedoctets
-            || _location_ctx->getClientMaxBodySize() < _req.receivedoctets))
+            || _location_ctx->getClientMaxBodySize() < _req.receivedoctets - (_req.ischunked ? 0 : (_req.expectedoctets > 4 ? 4 : 0))))
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     else if (_ctx->getClientMaxBodySize() < _req.expectedoctets
-            || _ctx->getClientMaxBodySize() < _req.receivedoctets)
+            || _ctx->getClientMaxBodySize() < _req.receivedoctets - (_req.ischunked ? 0 : (_req.expectedoctets > 4 ? 4 : 0)))
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     int is_method_supported = _isMethodSupportedByRoute();
@@ -257,11 +257,11 @@ std::string Response::checkRequest()
         return (RedirectHandler::createRedirect(_location_ctx->getRedirectCode(),
             _location_ctx->getRedirectUrl()));
     if (_location_ctx && (_location_ctx->getClientMaxBodySize() < _req.expectedoctets
-            || _location_ctx->getClientMaxBodySize() < _req.receivedoctets))
+            || _location_ctx->getClientMaxBodySize() < _req.receivedoctets - (_req.expectedoctets ? 0 : (_req.ischunked ? 0 : (_req.expectedoctets > 4 ? 4 : 0)))))
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     else if (_ctx->getClientMaxBodySize() < _req.expectedoctets
-            || _ctx->getClientMaxBodySize() < _req.receivedoctets)
+            || _ctx->getClientMaxBodySize() < _req.receivedoctets - (_req.expectedoctets ? 0 : (_req.ischunked ? 0 : (_req.expectedoctets > 4 ? 4 : 0))))
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     int is_method_supported = _isMethodSupportedByRoute();

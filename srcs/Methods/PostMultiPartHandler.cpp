@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/20 12:17:51 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/20 17:36:05 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/24 15:07:43 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ bool PostMultiPartHandler::parseMultipartData()
 
 std::string PostMultiPartHandler::_extractBoundary(const std::string& contentType)
 {
-    std::string lowerContentType = to_lowercase(contentType);
+    std::string lowerContentType = toLowercase(contentType);
     
     size_t boundaryPos = lowerContentType.find("boundary=");
     if (boundaryPos == std::string::npos)

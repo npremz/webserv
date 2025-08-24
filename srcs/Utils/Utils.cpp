@@ -104,7 +104,7 @@ std::string ipPortToString(const s_ip_port& ip_port)
     return (oss.str());
 }
 
-std::string to_lowercase(const std::string& input)
+std::string toLowercase(const std::string& input)
 {
     std::string output = input;
     for (std::string::size_type i = 0; i < output.length(); ++i)
@@ -290,7 +290,7 @@ std::vector<std::string> split_path(const std::string& path) {
     return tokens;
 }
 
-std::string normalize_path(const std::string& document_root, const std::string& request_path) {
+std::string normalizePath(const std::string& document_root, const std::string& request_path) {
     std::string full_path = document_root;
     if (!request_path.empty() && request_path[0] == '/')
         full_path += request_path;
@@ -328,7 +328,7 @@ std::string normalize_path(const std::string& document_root, const std::string& 
     return normalized;
 }
 
-bool starts_with(const std::string& s, const std::string& prefix)
+bool startsWith(const std::string& s, const std::string& prefix)
 {
     return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
 }
@@ -432,7 +432,7 @@ bool validateCgiResponse(const std::string &raw, std::string *why) {
     return true;
 }
 
-bool has_illegal_uri_chars(const std::string& uri)
+bool hasIllegalURIChars(const std::string& uri)
 {
     if (uri.empty()) return true;
 
@@ -474,4 +474,51 @@ std::string removeQuotes(const std::string& str)
         }
     }
     return result;
+}
+
+bool isValidHexString(const std::string& str)
+{
+    if (str.empty())
+        return false;
+    
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
+    {
+        char c = *it;
+        if (!((c >= '0' && c <= '9') || 
+              (c >= 'A' && c <= 'F') || 
+              (c >= 'a' && c <= 'f')))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool headerValHasIllegalChars(const std::string& headerValue)
+{
+    for (std::string::const_iterator it = headerValue.begin(); it != headerValue.end(); ++it) {
+        unsigned char c = static_cast<unsigned char>(*it);
+        if (c < 32 || c > 126 || c == 127) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isValidHeaderName(const std::string& name)
+{
+    if (name.empty())
+        return false;
+    
+    for (size_t i = 0; i < name.length(); ++i)
+    {
+        char c = name[i];
+        if (c <= 32 || c >= 127 || 
+            c == '(' || c == ')' || c == '<' || c == '>' || c == '@' ||
+            c == ',' || c == ';' || c == ':' || c == '\\' || c == '"' ||
+            c == '/' || c == '[' || c == ']' || c == '?' || c == '=' ||
+            c == '{' || c == '}' || c == ' ' || c == '\t')
+            return false;
+    }
+    return true;
 }

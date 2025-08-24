@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/13 11:54:02 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/24 15:07:43 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void    CGI::_initEnvTab()
         std::string env = "HTTP_";
         std::string header_name = it->first;
 
-        std::string lower_key = to_lowercase(header_name);
+        std::string lower_key = toLowercase(header_name);
         if (lower_key == "host" ||
             lower_key == "content-length" ||
             lower_key == "content-type" ||

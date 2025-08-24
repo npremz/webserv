@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/22 17:56:42 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/24 14:55:50 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -189,7 +189,10 @@ void    Client::handleRequest()
         {
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
+            {
+                _lexer->setEndStatus(412);
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
+            }
             Logger::log(Logger::DEBUG, "Checking if request will be rejected...");
             handleChecking();
             return ;
@@ -199,7 +202,7 @@ void    Client::handleRequest()
             _response_ctx = _responseRouting();
             if (_response_ctx == NULL)
             {
-                _lexer->setEndStatus(400);
+                _lexer->setEndStatus(412);
                 Logger::log(Logger::ERROR, "Invalid Request => host not supported");
             }
             Logger::log(Logger::DEBUG, "Request parsed");
@@ -215,7 +218,7 @@ void    Client::handleRequest()
             return ;
         }
         else if (c_status == HttpLexer::ERR)
-            Logger::log(Logger::ERROR, "Invalid Request => lexer error");
+            Logger::log(Logger::ERROR, _lexer->getRequest().errorMsg);
     }
     else if (byte_rec == -1)
         Logger::log(Logger::ERROR, "Request reading error => closing connection.");

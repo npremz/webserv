@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:04:02 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/20 17:32:33 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/22 16:43:26 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ std::string PostHandler::_handleNativePost()
     
     Logger::log(Logger::DEBUG, "Upload path: " + _fullpath);
     
-    if (_req.contentType == "text/plain")
+    if (_req.contentType == "text/plain" || _req.contentType.empty())
         return (_handlePlainText());
     if (_req.contentType.find("multipart/form-data") != std::string::npos)
         return (_handleMultiPart());

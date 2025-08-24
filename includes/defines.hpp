@@ -27,7 +27,7 @@
 # define C_BEIGE   "\033[93m"
 # define C_RESET   "\033[0m"
 
-# define MAX_CLIENT_SIZE 67108864
+# define MAX_CLIENT_SIZE 268435456
 # define MAX_CHUNK_SIZE 8192
 # define EPOLL_TIMEOUT 1000 //miliseconds
 # define EPOLL_MAX_EVENTS 128

@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   HttpLexer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/18 12:34:04 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/22 18:23:25 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../../includes/Requests/HttpLexer.hpp"
 
-HttpLexer::HttpLexer(u_int32_t ip) : _state(START_LINE), _req_size(0)
+HttpLexer::HttpLexer(u_int32_t ip) : _state(START_LINE)
 {
 	_req.endstatus = 200;
 	_req.has_host = false;
@@ -360,10 +360,12 @@ HttpLexer::ParseState HttpLexer::_bodyParseChunked()
 			_buf.erase(0, pos + 4);
 			return (GOOD);
 		}
-		_req.receivedoctets = _buf.size();
 		if (_buf.size() < ((pos + 2) + chunk_size + 2))
 			return (PAUSE);
 		_req.body.append(_buf, pos + 2, chunk_size);
+		_req.receivedoctets = _req.body.size();
+		if (_req.receivedoctets > MAX_CLIENT_SIZE)
+			return (_handleStatusError(413, "Content Too Large", PARSE_ERROR));
 		_buf.erase(0, ((pos + 2) + chunk_size + 2));
 	}
 }
@@ -378,9 +380,8 @@ HttpLexer::ParseState HttpLexer::_parseBody()
 
 HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 {
-	if ((_req_size += len) > MAX_CLIENT_SIZE
-		|| _buf.size() + len > MAX_CLIENT_SIZE)
-	{	
+	if (_buf.size() + len - 4 > MAX_CLIENT_SIZE)
+	{
 		_state = ERROR;
 		_req.endstatus = 413;
 		Logger::log(Logger::ERROR, "Max client size exceeded.");
@@ -411,12 +412,13 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 					_state = ERROR;
 				}
 
-				else if (_req.expectedoctets > 0)
+				else if (_req.expectedoctets > 0 || _req.ischunked)
 					_state = BODY;
 				else
 					_state = DONE;
 				Logger::log(Logger::DEBUG, "Header parsing done");
-				if (_req.received_expected_100 && _req.expectedoctets > 0)
+				if (_req.received_expected_100
+					&& (_req.expectedoctets > 0 || _req.ischunked))
 				{
 					Logger::log(Logger::DEBUG, "Reveived 'Expect: 100-continue'");
 					return (MUST_CHECK);
@@ -429,6 +431,9 @@ HttpLexer::Status HttpLexer::feed(const char *data, size_t len)
 			if (parsing_state == GOOD)
 			{
 				Logger::log(Logger::DEBUG, "Body parsed: " + _req.body);
+				Logger::log(Logger::DEBUG, "received octets");
+				if (DEBUG_MODE)
+					std::cout << "\r" << _req.receivedoctets << std::endl;
 				_state = DONE;
         		Logger::log(Logger::DEBUG, "Body parsing done");
 			}

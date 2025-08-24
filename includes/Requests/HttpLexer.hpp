@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 12:03:24 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/12 17:37:24 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/22 18:13:18 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,6 @@ class HttpLexer
 		std::string 				_buf;
 		State 						_state;
 		parsedRequest				_req;
-		size_t						_req_size;
 		
 		ParseState					_handleStatusError(unsigned int endstatus, std::string errorStr, ParseState state);
 		ParseState					_parseStartLine();

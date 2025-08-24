@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/12 23:24:08 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/22 17:56:42 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -328,6 +328,7 @@ void    Client::handleSend()
             {
                 _removeEpollout();
                 Logger::log(Logger::DEBUG, "Response totally sent");
+                Logger::log(Logger::DEBUG, _response_str);
                 if (state == SENDING_ERROR && _lexer->getRequest().expectedoctets > 0
                     && _lexer->getEndStatus() != 408)
                 {

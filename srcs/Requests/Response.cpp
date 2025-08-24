@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: npremont <npremont@student.s19.be>         +#+  +:+       +#+        */
+/*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 10:24:50 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/17 14:09:57 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/22 18:24:52 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,10 +198,12 @@ std::string Response::createResponseSTR()
     if (_location_ctx && _location_ctx->isRedirectSet())
         return (RedirectHandler::createRedirect(_location_ctx->getRedirectCode(),
             _location_ctx->getRedirectUrl()));
-    if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
+    if (_location_ctx && (_location_ctx->getClientMaxBodySize() < _req.expectedoctets
+            || _location_ctx->getClientMaxBodySize() < _req.receivedoctets))
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
-    else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
+    else if (_ctx->getClientMaxBodySize() < _req.expectedoctets
+            || _ctx->getClientMaxBodySize() < _req.receivedoctets)
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     int is_method_supported = _isMethodSupportedByRoute();
@@ -254,10 +256,12 @@ std::string Response::checkRequest()
     if (_location_ctx && _location_ctx->isRedirectSet())
         return (RedirectHandler::createRedirect(_location_ctx->getRedirectCode(),
             _location_ctx->getRedirectUrl()));
-    if (_location_ctx && _location_ctx->getClientMaxBodySize() < _req.expectedoctets)
+    if (_location_ctx && (_location_ctx->getClientMaxBodySize() < _req.expectedoctets
+            || _location_ctx->getClientMaxBodySize() < _req.receivedoctets))
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
-    else if (_ctx->getClientMaxBodySize() < _req.expectedoctets)
+    else if (_ctx->getClientMaxBodySize() < _req.expectedoctets
+            || _ctx->getClientMaxBodySize() < _req.receivedoctets)
         return (_err->createError(413, "Content Too Large",
             "The request entity was larger than limits defined by server."));
     int is_method_supported = _isMethodSupportedByRoute();

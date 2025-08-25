@@ -212,8 +212,9 @@ This project is part of the 42 School curriculum.
 
 ## 👥 Authors
 
-- Nicolas Prémont (npremont)
-- [Other contributors]
+- npremont
+- kederhet
+- gcools
 
 ## 🙏 Acknowledgments
 

@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/19 11:44:34 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/24 15:07:43 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/25 12:39:36 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,7 +111,7 @@ void    CGI::exec()
     if (pipe(_cgi_pipe_output) == -1)
         Logger::log(Logger::ERROR, "Output pipe error.");
 
-    if (_req.expectedoctets > 0 && pipe(_cgi_pipe_input) == -1)
+    if ((_req.expectedoctets > 0 || _req.ischunked) && pipe(_cgi_pipe_input) == -1)
         Logger::log(Logger::ERROR, "Input pipe error.");
 
     pid_t pid;
@@ -120,7 +120,7 @@ void    CGI::exec()
 
     if (pid == 0)
     {
-        if (_req.expectedoctets > 0)
+        if (_req.expectedoctets > 0 || _req.ischunked)
         {
             dup2(_cgi_pipe_input[0], STDIN_FILENO);
             close(_cgi_pipe_input[0]);
@@ -131,7 +131,8 @@ void    CGI::exec()
         dup2(_cgi_pipe_output[1], STDERR_FILENO);
         close(_cgi_pipe_output[1]);
         _initArgv();
-        try {
+        try
+		{
             _initEnvTab();
         }
         catch (const std::exception& e)
@@ -148,7 +149,7 @@ void    CGI::exec()
         exit(1);
     }
     Logger::log(Logger::DEBUG, "Main process passed fork.");
-    if (_req.expectedoctets > 0)
+    if (_req.expectedoctets > 0 || _req.ischunked)
     {
         _client->addCGIEpollOut(_cgi_pipe_input[1]);
         close(_cgi_pipe_input[0]);

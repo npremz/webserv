@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 09:36:31 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/24 14:55:50 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/25 12:42:23 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -358,6 +358,7 @@ void    Client::handleSend()
             state = FINISHED;
             Logger::log(Logger::ERROR, "Response sending error => closing connection.");
         }
+		else return;
     }
 }
 

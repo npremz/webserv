@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/20 12:17:33 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/20 17:23:21 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/25 13:25:41 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ class PostMultiPartHandler {
         std::string                 _uploadDirectory;
         HttpLexer::parsedRequest    _req;
         std::vector<MultipartPart>  _parts;
+		std::vector<std::string>	_files_saved;
         
         std::string                         _extractBoundary(const std::string& contentType);
         std::vector<std::string>            _splitByBoundary(const std::string& body);
@@ -56,7 +57,8 @@ class PostMultiPartHandler {
         ~PostMultiPartHandler();
         
         bool                                parseMultipartData();
-        bool                                saveUploadedFiles();
+        int                                 saveUploadedFiles();
+		std::string							report();
         
         void                                clear();
 };

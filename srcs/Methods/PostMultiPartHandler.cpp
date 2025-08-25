@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/20 12:17:51 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/24 15:07:43 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/25 13:28:37 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,8 +208,10 @@ bool PostMultiPartHandler::_isValidFileType(const std::string& contentType)
     return false;
 }
 
-bool PostMultiPartHandler::saveUploadedFiles()
+int PostMultiPartHandler::saveUploadedFiles()
 {
+	int created = 0;
+
     for (std::vector<MultipartPart>::iterator it = _parts.begin(); it != _parts.end(); ++it)
     {
         if (!it->isFile)
@@ -228,7 +230,7 @@ bool PostMultiPartHandler::saveUploadedFiles()
         if (!file.is_open())
         {
             Logger::log(Logger::DEBUG, "Cannot open file for writing: " + fullPath);
-            return false;
+            return -1;
         }
         
         file.write(it->content.c_str(), it->content.length());
@@ -236,14 +238,29 @@ bool PostMultiPartHandler::saveUploadedFiles()
         {
             Logger::log(Logger::DEBUG, "Failed to write file: " + fullPath);
             file.close();
-            return false;
+            return -1;
         }
         
         file.close();
+		_files_saved.push_back(safeFilename);
+		created++;
         Logger::log(Logger::INFO, "File saved: " + fullPath);
     }
-    
-    return true;
+
+	return (created);
+}
+
+std::string PostMultiPartHandler::report()
+{
+	std::string res;
+
+	res += "The server created the following files:\n";
+	for (unsigned int i = 0; i < _files_saved.size(); i++)
+	{
+		res += ("- " + _files_saved[i] + "\n");
+	}
+
+	return res;
 }
 
 std::map<std::string, std::string> PostMultiPartHandler::_parseHeaders(const std::string& headerSection)

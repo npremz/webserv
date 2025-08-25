@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/10 21:04:02 by npremont          #+#    #+#             */
-/*   Updated: 2025/08/22 16:43:26 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/25 13:29:17 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,16 +66,22 @@ std::string PostHandler::_handleMultiPart()
     PostMultiPartHandler mp_hdl(_req, _fullpath);
 
     if (mp_hdl.parseMultipartData() == false)
+	{
         return _err->createError(400, "Bad Request",
             "Invalid request format for multipart");
+	}
 
     
-    if (mp_hdl.saveUploadedFiles() == false)
+	int save_res = mp_hdl.saveUploadedFiles();
+	if (save_res == 0)
+		return _err->createError(405, "Unsupported Media Type",
+            "The server does not support this type of data.");
+    if (save_res == -1)
         return _err->createError(500, "Internal Server Error",
             "The server occured an intern error while attempting to upload the files.");
 
     return (ResponseHandler::createResponse(201, "Created",
-        "Ressource created successfully."));
+        mp_hdl.report()));
 }
 
 std::string PostHandler::_handleNativePost()

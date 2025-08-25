@@ -6,7 +6,7 @@
 /*   By: npremont <npremont@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/14 14:39:27 by armetix           #+#    #+#             */
-/*   Updated: 2025/08/24 15:24:50 by npremont         ###   ########.fr       */
+/*   Updated: 2025/08/25 13:10:28 by npremont         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -263,7 +263,8 @@ HttpLexer::ParseState HttpLexer::_parseHeaders()
 		Logger::log(Logger::DEBUG, "<" + key + ">:<" + val + ">");
 		
 		Logger::log(Logger::DEBUG, "headerVal size: ");
-		std::cout << val.size() << std::endl;
+		if (DEBUG_MODE)
+			std::cout << val.size() << std::endl;
 
 		if (val.size() > MAX_HEADER_VALUE_SIZE)
 			return (_handleStatusError(431,
@@ -368,16 +369,7 @@ HttpLexer::ParseState HttpLexer::_bodyParseChunked()
 		if (pos == std::string::npos)
 			return (PAUSE);
 		std::string chunk_size_line = _buf.substr(0, pos);
-
-		// DEBUG temporaire
-		std::cout << "DEBUG: chunk_size_line = '" << chunk_size_line << "'" << std::endl;
-		std::cout << "DEBUG: chunk_size_line.length() = " << chunk_size_line.length() << std::endl;
-		for (size_t i = 0; i < chunk_size_line.length(); ++i)
-		{
-			std::cout << "DEBUG: char[" << i << "] = '" << chunk_size_line[i] 
-					<< "' (ASCII: " << (int)chunk_size_line[i] << ")" << std::endl;
-		}
-
+		
 		if (!isValidHexString(chunk_size_line))
 			return (_handleStatusError(400, "Illegal chars in chunk Size", PARSE_ERROR));
 			

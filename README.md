@@ -49,7 +49,7 @@ server {
     listen 8080;
     server_name localhost;
     
-    root ./www;
+    root /var/www;
     index index.html index.htm;
     
     allow_methods GET POST DELETE;
